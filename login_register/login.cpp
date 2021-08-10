@@ -25,7 +25,6 @@ LOGIN::LOGIN(QWidget *parent) : QWidget(parent),
     ui->setupUi(this);
     this->setWindowTitle("登录");
     ui->lineEditPassword->setEchoMode(QLineEdit::Password); //密码输入模式，隐藏
-    connect(this, SIGNAL(toInputRoomNum(uint32_t)), SLOT(on_InputRoomNum()));
 }
 
 LOGIN::~LOGIN()
@@ -38,41 +37,43 @@ void LOGIN::on_ButtonLogin_clicked()
     QString Username_tmp = ui->lineEditName->text();
     QString Password_tmp = ui->lineEditPassword->text();
 
-    QString md5;
-    QByteArray str = QCryptographicHash::hash(Password_tmp.toLatin1(), QCryptographicHash::Md5);
-    md5.append(str.toHex());
-    //qDebug() << "md5:" << md5 << endl;
+    emit SIG_loginSubmit(Username_tmp, Password_tmp);
 
-    QSqlQuery query(db);
-    QString search = QString("select count(*) from user where username='%1' and passwd='%2'").arg(Username_tmp).arg(md5);
-    //qDebug() << "md5:" << search << endl;
-    if (!query.exec(search))
-    {
-        QMessageBox::information(NULL, "提示", "数据库出错！", QMessageBox::Yes);
-    }
-    else
-    {
-        while (query.next())
-        {
-            if (query.value(0).toInt() == 1)
-            {
-                GlobalUsername = Username_tmp;
-                GlobalPassword = md5;
-                qDebug() << "登陆成功！" << endl;
-                //TODO:登录后修改最后登录时间
-                emit toInputRoomNum(123456);
-                //                Win = new MainWindow();
-                //                Win->show();
-                this->close();
-                break;
-            }
-            else
-            {
-                QMessageBox::information(NULL, "提示", "用户名或密码错误！", QMessageBox::Yes);
-                break;
-            }
-        }
-    }
+//    QString md5;
+//    QByteArray str = QCryptographicHash::hash(Password_tmp.toLatin1(), QCryptographicHash::Md5);
+//    md5.append(str.toHex());
+//    //qDebug() << "md5:" << md5 << endl;
+
+//    QSqlQuery query(db);
+//    QString search = QString("select count(*) from user where username='%1' and passwd='%2'").arg(Username_tmp).arg(md5);
+//    //qDebug() << "md5:" << search << endl;
+//    if (!query.exec(search))
+//    {
+//        QMessageBox::information(NULL, "提示", "数据库出错！", QMessageBox::Yes);
+//    }
+//    else
+//    {
+//        while (query.next())
+//        {
+//            if (query.value(0).toInt() == 1)
+//            {
+//                GlobalUsername = Username_tmp;
+//                GlobalPassword = md5;
+//                qDebug() << "登陆成功！" << endl;
+//                //TODO:登录后修改最后登录时间
+//                emit toInputRoomNum(123456);
+//                //                Win = new MainWindow();
+//                //                Win->show();
+//                this->close();
+//                break;
+//            }
+//            else
+//            {
+//                QMessageBox::information(NULL, "提示", "用户名或密码错误！", QMessageBox::Yes);
+//                break;
+//            }
+//        }
+//    }
 }
 
 void LOGIN::on_ButtonRegister_clicked()
@@ -82,9 +83,3 @@ void LOGIN::on_ButtonRegister_clicked()
     this->close();
 }
 
-void LOGIN::on_InputRoomNum()
-{
-    qDebug() << "输入房间号！" << endl;
-    myqq = new MyQQ();
-    myqq->show();
-}

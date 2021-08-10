@@ -21,11 +21,13 @@ public:
     explicit registerWin(QWidget *parent = nullptr);
     ~registerWin();
 
+signals:
+    void SIG_registerReq(QString name , QString passord);
+
 private slots:
-    void on_pushButton_clicked();
+    void on_ButtonRegister_clicked();
 
-    void on_pushButton_2_clicked();
-
+    void on_ButtonQuit_clicked();
 
 private:
     Ui::registerWin *ui;

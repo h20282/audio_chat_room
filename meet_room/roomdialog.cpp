@@ -37,7 +37,7 @@ void RoomDialog::on_pb_quitRoom_clicked()
     this->close();
 
     //发信号
-     Q_EMIT SIG_quitRoom(m_roomid);
+    emit SIG_quitRoom(m_roomid);
 }
 
 
@@ -66,10 +66,10 @@ void RoomDialog::on_pb_openAudio_clicked()
     }
     if( ui->pb_openAudio->text() == "打开音频" )
     {
-        Q_EMIT SIG_openAudio();
+        emit SIG_openAudio();
         ui->pb_openAudio->setText("关闭音频");
     }else{
-        Q_EMIT SIG_closeAudio();
+        emit SIG_closeAudio();
         ui->pb_openAudio->setText("打开音频");
     }
 }
@@ -85,10 +85,10 @@ void RoomDialog::on_pb_openVideo_clicked()
 
     if( ui->pb_openVideo->text() == "打开视频" )
     {
-        Q_EMIT SIG_openVideo();
+        emit SIG_openVideo();
         ui->pb_openVideo->setText("关闭视频");
     }else{
-        Q_EMIT SIG_closeVideo();
+        emit SIG_closeVideo();
         ui->pb_openVideo->setText("打开视频");
     }
 }

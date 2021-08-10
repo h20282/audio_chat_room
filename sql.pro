@@ -1,4 +1,4 @@
-QT       += core gui sql
+QT       += core gui sql network
 
 RC_ICONS = ./images/message.ico
 
@@ -11,6 +11,7 @@ CONFIG += c++11
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+LIBS += -lWs2_32
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -20,6 +21,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 include($$PWD/login_register/login_register.pri)
 include($$PWD/meet_room/meet_room.pri)
 include($$PWD/common/common.pri)
+include($$PWD/net_api/net_api.pri)
 
 
 SOURCES += \
@@ -27,23 +29,26 @@ SOURCES += \
     #chatdialog.cpp \
     main.cpp \
     mainwindow.cpp \
-    myqq.cpp \
+    mychatroom.cpp \
     #useritem.cpp \
+    useritem.cpp \
     videoitem.cpp
 
 HEADERS += \
     IMToolBox.h \
     #chatdialog.h \
     mainwindow.h \
-    myqq.h \
+    mychatroom.h \
     #useritem.h \
+    useritem.h \
     videoitem.h
 
 FORMS += \
     #chatdialog.ui \
     mainwindow.ui \
-    myqq.ui \
+    mychatroom.ui \
     #useritem.ui \
+    useritem.ui \
     videoitem.ui
 
 # Default rules for deployment.

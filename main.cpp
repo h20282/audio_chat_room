@@ -9,10 +9,13 @@
 #include "mainwindow.h"
 #include "./login_register/login.h"
 #include "./login_register/common.h"
+#include "./net_api/udp_net.h"
+#include "mychatroom.h"
 
 #include <QApplication>
 #include <QProcess>
 #include <QDebug>
+#include <QFile>
 #include <QStyleFactory> //修改风格1步
 #include <QSqlDatabase>
 #include <QMessageBox>
@@ -47,10 +50,24 @@ int main(int argc, char *argv[])
     if (!createconnection())
         return true;
 
+    qDebug() << "test!" << endl;
+    UdpNet* udpConnect = new UdpNet();
+    QByteArray data;
+    data.resize(1);
+    data[0] = 0xfE;
+
+
+
+    QFile file(":/qss/default.css");
+    file.open(QIODevice::ReadOnly);
+    qApp->setStyleSheet( file.readAll());
+
     //初始化，进入登录界面。
-    LOGIN w;
+    MyChatRoom mychatroom;
 
     //MainWindow w;
-    w.show();
+    mychatroom.hide();
+    udpConnect->SendData(data, "119.91.116.26");
+
     return a.exec();
 }
