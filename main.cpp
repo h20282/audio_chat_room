@@ -20,37 +20,11 @@
 #include <QSqlDatabase>
 #include <QMessageBox>
 
-QSqlDatabase db;
-static bool createconnection()
-{
-    db = QSqlDatabase::addDatabase("QODBC");
-    db.setHostName("127.0.0.1");
-    db.setPort(3306);
-    db.setDatabaseName("user");
-    db.setUserName("root");
-    db.setPassword("123"); //设置数据库连接账号的密码
-    bool ok = db.open();
-    if (ok)
-    {
-        qDebug() << "数据库连接成功";
-        return 1;
-    }
-    else
-    {
-        QMessageBox::information(NULL, "提示", "连接数据库失败!", QMessageBox::Yes);
-        return 0;
-    }
-}
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QProcess process;
-    process.start("D:/Program files/mysql-8.0.26-winx64/bin/mysqld.exe");
-    if (!createconnection())
-        return true;
 
-    qDebug() << "test!" << endl;
     UdpNet* udpConnect = new UdpNet();
     QByteArray data;
     data.resize(1);
@@ -62,11 +36,13 @@ int main(int argc, char *argv[])
     file.open(QIODevice::ReadOnly);
     qApp->setStyleSheet( file.readAll());
 
+
     //初始化，进入登录界面。
     MyChatRoom mychatroom;
 
     //MainWindow w;
     mychatroom.hide();
+    qDebug() << "udp连接" << endl;
     udpConnect->SendData(data, "119.91.116.26");
 
     return a.exec();

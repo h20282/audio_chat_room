@@ -7,12 +7,48 @@ RoomDialog::RoomDialog(QWidget *parent) :
     ui(new Ui::RoomDialog),m_roomid(123456)
 {
     ui->setupUi(this);
+    //initUi();
 }
 
 RoomDialog::~RoomDialog()
 {
     delete ui;
 }
+
+void RoomDialog::initUi()
+{
+//    QPoint globalPos = this->mapToGlobal(QPoint(0, 0));
+//    listwidget = new UserListWidget(this);
+//    listwidget->move(globalPos.x() + 200, globalPos.y() + 80);
+//    listwidget->setIconSize(QSize(50, 50));  //设置item图标大小
+//    listwidget->setFocusPolicy(Qt::NoFocus);  //这样可禁用tab键和上下方向键并且除去复选框
+//    listwidget->setFixedHeight(400);
+//    listwidget->setFixedWidth(300);
+//    listwidget->setFont(QFont("宋体", 10, QFont::DemiBold));
+//    listwidget->setStyleSheet("*{outline:0px;}");
+//    listwidget->setStyleSheet("QListWidget{background:rgb(245, 245, 247); border:0px; margin:0px 0px 0px 0px;}");
+//    listwidget->setStyleSheet("QListWidget::Item{height:40px; border:0px; padding-left:14px; color:rgba(200, 40, 40, 255);}");
+//    listwidget->setStyleSheet("QListWidget::Item:hover{color:rgba(40, 40, 200, 255);}");
+//    listwidget->setStyleSheet("QListWidget::Item:selected{background:rgb(230, 231, 234); color:rgba(40, 40, 200, 255); border-left:4px solid rgb(180, 0, 0);}");
+//    listwidget->setStyleSheet("QListWidget::Item:selected:active{background:rgb(230, 231, 234); color:rgba(40, 40, 200, 255); border-left:4px solid rgb(180, 0, 0);}");
+
+
+
+//    UserListWidgetItem *item = new UserListWidgetItem(listwidget);
+//    item->setSizeHint(QSize(50, 50));
+//    item->setText("textasfafas");
+
+
+
+
+
+//    QVBoxLayout *layout = new QVBoxLayout(this);
+//    layout->setSpacing(0);
+//    layout->addWidget(listwidget);
+//    layout->setContentsMargins(0, 0, 0, 0);
+//    setLayout(layout);
+}
+
 
 //最小化
 void RoomDialog::on_pb_min_clicked()
@@ -32,12 +68,12 @@ void RoomDialog::on_pb_quitRoom_clicked()
     {
         return;
     }
-    //清空控件
-    clear();
-    this->close();
+//    //清空控件
+//    clear();
+//    this->close();
 
     //发信号
-    emit SIG_quitRoom(m_roomid);
+    emit SIG_quitRoomSubmit();
 }
 
 
@@ -99,7 +135,7 @@ Ui::RoomDialog *RoomDialog::getUi() const
 }
 
 //设置房间id
-void RoomDialog::setRoomid(const quint32 &roomid)
+void RoomDialog::setRoomid(const int &roomid)
 {
     m_roomid = roomid;
     ui->lb_tittle->setText(QString("房间号:%1").arg(m_roomid));
@@ -109,3 +145,17 @@ void RoomDialog::on_pb_max_clicked()
 {
     this->slot_showMax();
 }
+
+//void RoomDialog::contextMenuEvent ( QContextMenuEvent * event )
+//{
+//    QMenu* popMenu = new QMenu(listwidget);
+//    popMenu->addAction(new QAction("添加", this));
+//    popMenu->addAction(new QAction("删除", this));
+//    if(listwidget->itemAt(mapFromGlobal(QCursor::pos())) != NULL) //如果有item则添加"修改"菜单 [1]*
+//    {
+//        popMenu->addAction(new QAction("修改", this));
+//    }
+
+//    popMenu->exec(QCursor::pos()); // 菜单出现的位置为当前鼠标的位置
+//}
+

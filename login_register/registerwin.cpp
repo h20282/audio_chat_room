@@ -47,7 +47,7 @@ void registerWin::on_ButtonRegister_clicked()
         return;
     }
 
-    emit SIG_registerReq(Username_register, Password_register);
+    emit SIG_registerSubmit(Username_register, Password_register);
 
 
 //    QSqlQuery IdAll(db);
@@ -100,17 +100,18 @@ void registerWin::on_ButtonRegister_clicked()
 //            }
 //        }
 //    }
-    QMessageBox::information(NULL,"提示","注册成功！",QMessageBox::Yes);
-    login = new LOGIN();
-    login->show();
-    this->close();
+//    QMessageBox::information(NULL,"提示","注册成功！",QMessageBox::Yes);
+//    login = new LOGIN();
+//    login->show();
+//    this->close();
 }
 
 
 
 void registerWin::on_ButtonQuit_clicked()
 {
-    login = new LOGIN();
-    login->show();
-    this->close();
+//    login = new LOGIN();
+//    login->show();
+//    this->close();
+    emit SIG_backToLoginInterface();
 }

@@ -2,7 +2,10 @@
 #define ROOMDIALOG_H
 
 #include <QDialog>
+#include <QPoint>
+#include <QMenu>
 #include "../common/customwidget.h"
+#include "userlist.h"
 
 namespace Ui {
 class RoomDialog;
@@ -15,12 +18,14 @@ class RoomDialog : public CustomMoveDialog
 public:
     explicit RoomDialog(QWidget *parent = nullptr);
     ~RoomDialog();
-    void setRoomid(const quint32 &roomid);
+    void setRoomid(const int &roomid);
 
     Ui::RoomDialog *getUi() const;
 
+    void initUi();
+
 signals:
-    void SIG_quitRoom(int id);
+    void SIG_quitRoomSubmit();
 
     void SIG_openAudio();
     void SIG_openVideo();
@@ -41,10 +46,15 @@ private slots:
 
     void on_pb_max_clicked();
 
+   // void contextMenuEvent ( QContextMenuEvent * event );
+
+
+
 private:
     Ui::RoomDialog *ui;
+    UserListWidget *listwidget;
 
-    quint32 m_roomid;
+    int m_roomid;
 
 };
 

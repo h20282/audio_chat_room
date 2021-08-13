@@ -4,7 +4,7 @@ RC_ICONS = ./images/message.ico
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++11 resources_big
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -22,33 +22,26 @@ include($$PWD/login_register/login_register.pri)
 include($$PWD/meet_room/meet_room.pri)
 include($$PWD/common/common.pri)
 include($$PWD/net_api/net_api.pri)
+include($$PWD/audio/audio.pri)
 
 
 SOURCES += \
     IMToolBox.cpp \
-    #chatdialog.cpp \
     main.cpp \
     mainwindow.cpp \
     mychatroom.cpp \
-    #useritem.cpp \
-    useritem.cpp \
     videoitem.cpp
 
 HEADERS += \
     IMToolBox.h \
-    #chatdialog.h \
     mainwindow.h \
     mychatroom.h \
-    #useritem.h \
     useritem.h \
     videoitem.h
 
 FORMS += \
-    #chatdialog.ui \
     mainwindow.ui \
     mychatroom.ui \
-    #useritem.ui \
-    useritem.ui \
     videoitem.ui
 
 # Default rules for deployment.

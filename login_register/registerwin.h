@@ -22,7 +22,9 @@ public:
     ~registerWin();
 
 signals:
-    void SIG_registerReq(QString name , QString passord);
+    void SIG_registerSubmit(QString name , QString passord);
+
+    void SIG_backToLoginInterface();
 
 private slots:
     void on_ButtonRegister_clicked();

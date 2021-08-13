@@ -179,57 +179,19 @@
        <height>541</height>
       </size>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="topMargin">
-       <number>0</number>
+     <widget class="QPushButton" name="pushButton">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>10</y>
+        <width>300</width>
+        <height>50</height>
+       </rect>
       </property>
-      <property name="bottomMargin">
-       <number>0</number>
+      <property name="text">
+       <string>用户列表</string>
       </property>
-      <item>
-       <widget class="VideoItem" name="wdg_left" native="true"/>
-      </item>
-      <item>
-       <widget class="IMToolBox" name="wdg_right" native="true">
-        <property name="minimumSize">
-         <size>
-          <width>201</width>
-          <height>541</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>201</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <widget class="QListWidget" name="listWidget">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>221</width>
-           <height>541</height>
-          </rect>
-         </property>
-         <item>
-          <property name="text">
-           <string>用户列表</string>
-          </property>
-          <property name="font">
-           <font>
-            <family>Source Code Pro</family>
-            <pointsize>18</pointsize>
-           </font>
-          </property>
-          <property name="textAlignment">
-           <set>AlignCenter</set>
-          </property>
-         </item>
-        </widget>
-       </widget>
-      </item>
-     </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -277,7 +239,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="pb_adjust_volumn">
         <property name="text">
          <string>显示音量</string>
         </property>
@@ -302,19 +264,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>IMToolBox</class>
-   <extends>QWidget</extends>
-   <header>imtoolbox.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>VideoItem</class>
-   <extends>QWidget</extends>
-   <header>videoitem.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

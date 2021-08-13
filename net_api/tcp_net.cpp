@@ -60,6 +60,7 @@ bool TcpNet::InitNetWork(char *szBufIP, unsigned short port)
 
     //创建线程--recv
     m_hThread = (HANDLE)_beginthreadex(NULL, 0, &ThreadProc, this, 0, 0);
+    qDebug() << "connect to tcp secess!" << endl;
 
     return true;
 }

@@ -21,10 +21,10 @@ const int DEF_PACK_COUNT = 100;
 
 //ip和端口
 const unsigned short kServerPort = 10004;
-const QString kServerIp = "119.91.116.26";
+const QString kServerIp = "192.168.201.129";
 
 typedef enum NetPACKDef
-{
+{  
     kPackRegisterQequest = 10000,
     kPackRegisterQesponse,
 
@@ -36,6 +36,13 @@ typedef enum NetPACKDef
 
     kPackJoinRoomQequest,
     kPackJoinRoomQesponse,
+
+    kPackRoomMemberHeaderQequest,
+    kPackRoomMemberQequest,
+
+    kPackRoomListRefreshHeadRequest,
+    kPackRoomListRefreshHeadResponse,
+    kPackRoomListQesponse,
 
     kPackQuitRoomQequest,
     kPackQuitRoomQesponse,
@@ -49,8 +56,14 @@ typedef enum NetPACKDef
     kPackAdjustUserVolumeQequest,
     kPackAdjustUserVolumeQesponse,
 
+    kPackOfflineRequest,
+    kPackOfflineQesponse,
+
     kPackAudioQequest,
     kPackAudioQesponse,
+
+    kPackVideoQequest,
+    kPackVideoQesponse,
 } Net_PACK;
 
 //注册请求结果
@@ -139,13 +152,13 @@ typedef struct StructRegisterRequest
     StructRegisterRequest()
     {
         m_pack_type = kPackRegisterQequest;
-        memset(m_szUser,0,kMaxSize);
-        memset(m_szPassword,0,kMaxSize);
+        memset(m_user_name,0,kMaxSize);
+        memset(m_user_passwd,0,kMaxSize);
     }
 
     PackType m_pack_type;   //包类型
-    char     m_szUser[kMaxSize] ; //用户名
-    char     m_szPassword[kMaxSize];  //密码
+    char     m_user_name[kMaxSize] ; //用户名
+    char     m_user_passwd[kMaxSize];  //密码
 
 }StructRegisterRequest;
 
@@ -183,11 +196,12 @@ typedef struct StructCreateRoomRespose
         m_pack_type= kPackCreateRoomQesponse;
         m_create_room_result = 0;
         m_room_id = 0;
+        m_room_owner_id = 0;
     }
     PackType m_pack_type;   //包类型
     int  m_create_room_result ;    //创建房间结果
     int  m_room_id;
-
+    int  m_room_owner_id;
 }StructCreateRoomRespose;
 
 //加入房间请求
@@ -197,13 +211,12 @@ typedef struct StructJoinRoomRequest
     {
         m_pack_type = kPackJoinRoomQequest;
         m_user_id = 0;
-        m_room_id = 0;
+        m_room_id = 0;       
     }
 
     PackType m_pack_type;   //包类型
     int m_user_id;
-    int m_room_id;
-
+    int m_room_id;   
 }StructJoinRoomRequest;
 
 //加入房间回复
@@ -214,11 +227,83 @@ typedef struct StructJoinRoomResponse
         m_pack_type= kPackJoinRoomQesponse;
         m_join_room_result = 0;
         m_room_id = 0;
+        m_room_owner_id = 0;
     }
     PackType m_pack_type;   //包类型
     int  m_join_room_result ;    //加入房间结果
     int m_room_id;
+    int  m_room_owner_id;
 }StructJoinRoomResponse;
+
+
+
+//房间成员头部请求
+typedef struct StructRoomMemberHeaderResponse
+{
+    StructRoomMemberHeaderResponse()
+    {
+        m_nType = kPackRoomMemberHeaderQequest;
+        m_user_id = 0;
+        memset(m_sz_user, 0, kMaxSize);
+    }
+    PackType m_nType; //包类型
+    int m_user_id;
+    char m_sz_user[kMaxSize];
+
+} StructRoomMemberHeaderResponse;
+
+//房间成员请求
+typedef struct StructRoomMemberResponse
+{
+    StructRoomMemberResponse()
+    {
+        m_nType = kPackRoomMemberQequest;
+        m_user_id = 0;
+        memset(m_sz_user, 0, kMaxSize);
+    }
+    PackType m_nType; //包类型
+    int m_user_id;
+    char m_sz_user[kMaxSize];
+
+} StructRoomMemberResponse;
+
+//房间列表头部请求
+typedef struct StructRoomListRefreshHeaderRequest
+{
+    StructRoomListRefreshHeaderRequest()
+    {
+        m_nType = kPackRoomListRefreshHeadRequest;
+        m_user_id = 0;
+    }
+    PackType m_nType; //包类型
+    int m_user_id;
+} StructRoomListRefreshHeaderRequest;
+//房间列表头部回复
+typedef struct StructRoomListRefreshHeaderResponse
+{
+    StructRoomListRefreshHeaderResponse()
+    {
+        m_nType = kPackRoomListRefreshHeadResponse;
+        m_user_id = 0;
+    }
+    PackType m_nType; //包类型
+    int m_user_id;
+} StructRoomListRefreshHeaderResponse;
+
+//房间列表回复
+typedef struct StructRoomListResponse
+{
+    StructRoomListResponse()
+    {
+        m_nType = kPackRoomListQesponse;
+        m_room_num = 0;
+        memset(m_owner_name, 0, kMaxSize);
+    }
+    PackType m_nType; //包类型
+    int m_room_num;
+    char m_owner_name[kMaxSize];
+} StructRoomListResponse;
+
 
 //退出房间请求
 typedef struct StructQuitRoomRequest
@@ -229,10 +314,10 @@ typedef struct StructQuitRoomRequest
         m_user_id = 0;
         m_room_id = 0;
     }
-    PackType   m_pack_type;   //包类型
-    int    m_user_id; //用户ID
-    int    m_room_id;
-}StructQuitRoomRequest;
+    PackType m_pack_type; //包类型
+    int m_user_id;        //用户ID
+    int m_room_id;
+} StructQuitRoomRequest;
 
 //退出房间回复
 typedef struct StructQuitRoomResponse
@@ -243,26 +328,36 @@ typedef struct StructQuitRoomResponse
         m_user_id = 0;
         memset(szUserName, 0, kMaxSize);
     }
-    PackType   m_pack_type;   //包类型
+    PackType m_pack_type; //包类型
     int m_user_id;
     char szUserName[kMaxSize];
 
-}StructQuitRoomResponse;
+} StructQuitRoomResponse;
 
 typedef struct UserInfo
 {
     UserInfo()
     {
-         m_fd = 0;
-         m_id = 0;
-         m_state= 0;
-         memset(m_user_name, 0 , kMaxSize);;
+        m_fd = 0;
+        m_id = 0;
+        m_state = 0;
+        m_room_id = 0;
+        memset(m_user_name, 0, kMaxSize);
     }
-    int  m_fd;
-    int  m_id;
-    int  m_state;
+    UserInfo(int fd, int id, int room_id)
+    {
+        m_fd = fd;
+        m_id = id;
+        m_state = 0;
+        m_room_id = room_id;
+        memset(m_user_name, 0, kMaxSize);
+    }
+    int m_fd;
+    int m_id;
+    int m_state;
+    int m_room_id;
     char m_user_name[kMaxSize];
-}UserInfo;
+} UserInfo;
 
 
-#endif __PACKDEF__
+#endif

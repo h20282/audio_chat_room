@@ -35,16 +35,21 @@ public:
 signals:
     void SIG_loginSubmit(QString name, QString password);
 
+    void SIG_JumpToRegisterInterface();
+
+    void SIG_SkipLogin();
+
 private slots:
     void on_ButtonLogin_clicked();
 
     void on_ButtonRegister_clicked();
 
+    void on_ButtonPass_clicked();
+
 private:
     Ui::LOGIN *ui;
     MainWindow *Win;
     registerWin *register_win;
-    //MyChatRoom *myChatRoom;
 };
 
 #endif // LOGIN_H
