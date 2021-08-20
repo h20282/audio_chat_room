@@ -75,13 +75,12 @@ private slots:
 
     void on_pb_max_clicked();
 
-    // void contextMenuEvent ( QContextMenuEvent * event );
-
     void on_pb_unmute_clicked();
 
     void on_pb_setting_clicked();
 
     void on_pb_userlist_clicked();
+
 
 private:
     Ui::RoomDialog *ui;

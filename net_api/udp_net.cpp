@@ -2,13 +2,13 @@
  * @Author: FengYanBin
  * @Date: 2021-08-09 11:19:42
  * @LastEditors: FengYanBin
- * @LastEditTime: 2021-08-19 17:02:27
+ * @LastEditTime: 2021-08-20 15:42:54
  * @Description: file content
  * @FilePath: \sql\net_api\udp_net.cpp
  */
 #include "udp_net.h"
 
-UdpNet::UdpNet(int room_id) : port_(kServerPort), m_roomId(room_id)
+UdpNet::UdpNet() : port_(kServerPort), m_roomId(0)
 {
     InitNet();
 }
@@ -53,6 +53,11 @@ bool UdpNet::SendBroadCast(QByteArray data)
     return false;
 }
 
+void UdpNet::setRoomId(int room_id)
+{
+    m_roomId = room_id;
+}
+
 // 收到一个来自服务器的音频帧，交给AudioSynthesizer(合成声音)
 void UdpNet::onUdpReadyRead()
 {
@@ -93,7 +98,7 @@ void UdpNet::onUdpReadyRead()
 //另一个是用户可以静音某个人的声音，这个考虑用户这里用一个set保存自己静音的所有用户。然后播放的时候判断一下是否在集合中。
 void UdpNet::onAudioFrameReady(AudioFrame frame)
 {
-
+    //qDebug() << "收到音频" << endl;
     char buff[1 + 4 + 16 + sizeof(AudioFrame)];
     memset(buff, 0, sizeof(buff));
     //qDebug() << "我当前静音状态m_isMuted=" << m_isMuted << endl;

@@ -28,8 +28,8 @@
 #include "./net_api/qmytcp_client.h"
 #include "./net_api/pack_def.h"
 #include "./common/customwidget.h"
-#include "./audio/audio_read.h"
-#include "./audio/audio_write.h"
+//#include "./audio/audio_read.h"
+//#include "./audio/audio_write.h"
 #include "./audio/audiodevices.h"
 #include "./audio/audioplayer.h"
 #include "./audio/audiolevel.h"
@@ -56,6 +56,7 @@
 #include <string.h>
 #include <list>
 #include <QList>
+#include <QTimer>
 
 namespace Ui
 {
@@ -219,14 +220,11 @@ private:
 
     int m_user_id;
     int m_room_num;
-    int m_pre_room_id;
     int m_room_owener_id;       //因为只能加入一个房间，因此给一个房主id，用于区分房主和普通用户的功能。
     QString m_room_owner_name;
     QAudioDeviceInfo m_device_info;
     bool is_muted;              //自己是否被静音
-    bool is_first_create;
-    bool is_first_open_video;
-    bool is_first_join;
+    bool is_first_connect;
     const QString m_server_ip;
     const unsigned short m_server_port;
 

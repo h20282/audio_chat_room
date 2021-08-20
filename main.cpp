@@ -12,6 +12,7 @@
 #include "./net_api/udp_net.h"
 #include "mychatroom.h"
 
+#include <QCoreApplication>
 #include <QApplication>
 #include <QProcess>
 #include <QDebug>
@@ -20,11 +21,33 @@
 //#include <QSqlDatabase>
 #include <QMessageBox>
 
+extern "C"{
+
+#include <libavcodec/avcodec.h>
+
+#include <libavformat/avformat.h>
+
+#include <libswscale/swscale.h>
+
+#include <libavdevice/avdevice.h>
+
+#include <libavformat/version.h>
+
+#include <libavutil/time.h>
+
+#include <libavutil/mathematics.h>
+
+}
+
+
 QString g_userName;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+
+//    qDebug()<<QString(avcodec_configuration());
+//    qDebug()<<"version:"<<QString::number(avcodec_version());
 
 
     QFile file(":/qss/default.css");

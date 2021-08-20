@@ -176,7 +176,7 @@ void RoomDialog::removeUserWidget(UserWidget *user_widget)
 
 void RoomDialog::setPb_openAudioText()
 {
-    ui->pb_openAudio->setText("打开音频");
+    ui->pb_openAudio->setText("关闭音频");
 }
 
 QVBoxLayout* RoomDialog::getuserListLayout()
@@ -216,3 +216,4 @@ void RoomDialog::on_pb_userlist_clicked()
 {
     emit SIG_refreshUserList();
 }
+

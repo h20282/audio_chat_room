@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = audiodevices
+TARGET = audio-chat-room
 
 QT       += core gui network
 
@@ -15,6 +15,21 @@ CONFIG += c++11 resources_big
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 LIBS += -lWs2_32
+
+INCLUDEPATH += ../ffmpeglib/include
+LIBS += ../ffmpeglib/lib/avcodec.lib  \
+
+        ../ffmpeglib/lib/avdevice.lib  \
+
+        ../ffmpeglib/lib/avfilter.lib  \
+
+        ../ffmpeglib/lib/avformat.lib  \
+
+        ../ffmpeglib/lib/avutil.lib  \
+
+        ../ffmpeglib/lib/swresample.lib  \
+
+        ../ffmpeglib/lib/swscale.lib
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -42,6 +57,37 @@ HEADERS += \
 FORMS += \
     mainwindow.ui \
     mychatroom.ui \
+
+#new:
+
+win32:CONFIG(release, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavcodec
+else:win32:CONFIG(debug, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavcodec
+else:unix: LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavcodec
+
+INCLUDEPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+DEPENDPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+
+win32:CONFIG(release, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lswresample
+else:win32:CONFIG(debug, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lswresample
+else:unix: LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lswresample
+
+INCLUDEPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+DEPENDPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+
+win32:CONFIG(release, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavutil
+else:win32:CONFIG(debug, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavutil
+else:unix: LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavutil
+
+INCLUDEPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+DEPENDPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+
+win32:CONFIG(release, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavformat
+else:win32:CONFIG(debug, debug|release): LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavformat
+else:unix: LIBS += -LD:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/ -lavformat
+
+INCLUDEPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+DEPENDPATH += D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include
+
 
 
 # Default rules for deployment.

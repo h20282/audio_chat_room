@@ -9,7 +9,7 @@ QAudioInput *AudioCollector::createAudioInput(QAudioDeviceInfo info)
     format.setCodec("audio/pcm");
     format.setSampleType(QAudioFormat::SignedInt);
     format.setByteOrder(QAudioFormat::LittleEndian);
-    m_playState = state_stop;
+    //m_playState = state_play;
     return new QAudioInput(info, format);
 }
 
@@ -42,9 +42,9 @@ void AudioCollector::setInputDevice(QAudioDeviceInfo info)
     connect(m_inputDevice, &QIODevice::readyRead, this, &AudioCollector::onReadyRead);
 }
 
-void AudioCollector::Init(int room_id)
+void AudioCollector::Init()
 {
-    m_connector = new UdpNet(room_id);
+    m_connector = new UdpNet();
 
     //qDebug() << "???" << endl;
     //m_collector.start();
@@ -52,7 +52,7 @@ void AudioCollector::Init(int room_id)
     m_player.setProvider(&m_synthesizer);
     m_player.start();
     m_synthesizer.start();
-    m_playState = state_stop;
+    m_playState = state_play;
     /*      +---------+
                                |        3|
                 4              v         | f
@@ -89,6 +89,11 @@ void AudioCollector::Init(int room_id)
     //        qDebug() << list;
             emit sig_userListReady(list);
         });
+}
+
+void AudioCollector::setUdpRoomId(int room_id)
+{
+    m_connector->setRoomId(room_id);
 }
 
 void AudioCollector::run()

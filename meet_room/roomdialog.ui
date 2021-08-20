@@ -277,21 +277,14 @@
       <item>
        <widget class="QPushButton" name="pb_openAudio">
         <property name="text">
-         <string>打开音频</string>
+         <string>关闭音频</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pb_openVideo">
         <property name="text">
-         <string>打开视频</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pb_adjust_volumn">
-        <property name="text">
-         <string>显示音量</string>
+         <string>关闭视频</string>
         </property>
        </widget>
       </item>

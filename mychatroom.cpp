@@ -19,8 +19,8 @@
 
 MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
                                           ui(new Ui::MyChatRoom),
-                                          m_user_id(0), m_room_num(0), m_server_ip(kServerIp), m_server_port(kServerPort), m_audioRead(nullptr),
-                                          m_pre_room_id(0), is_first_open_video(true), is_first_join(true)
+                                          m_user_id(0), m_room_num(0), m_server_ip(kServerIp), m_server_port(kServerPort), is_first_connect(true),
+                                          m_audioRead(nullptr), m_device_info(QAudioDeviceInfo::defaultInputDevice())
 {
     ui->setupUi(this);
     ui->pb_title->setFocusPolicy(Qt::NoFocus);
@@ -63,6 +63,8 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
     connect(m_user_list_widget, SIGNAL(SIG_kick_out_ofUser(int)), this, SLOT(SLOT_kick_out_ofOneUser(int)));
     connect(m_user_list_widget, SIGNAL(SIG_adjustVolumnUser(int)), this, SLOT(SLOT_AdjustUserVolume(int)));
 
+    //创建音频采集,TODO，this对不对，还是m_roomDialog。
+    m_audioRead = new AudioCollector();
     m_audio_device = new AudioTest();
 
 
@@ -77,7 +79,7 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
     //定时器心跳检测
     timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(HeartDetect()));
-    timer->start(50000);
+    timer->start(5000);
 }
 
 void MyChatRoom::InitRoomDialogUi()
@@ -122,11 +124,11 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
     //用户列表清空
     this->m_user_list_widget->clear();
     //退出房间后音频也关闭
-    if (m_audioRead)
+    if (m_audioRead )
     {
-//        m_audioRead->PauseAudio();
-        delete m_audioRead;
-        m_audioRead = nullptr;
+        m_audioRead->PauseAudio();
+//        delete m_audioRead;
+//        m_audioRead = nullptr;
     }
     m_roomdialog->setPb_openAudioText();
 
@@ -157,17 +159,13 @@ MyChatRoom::~MyChatRoom()
 
 void MyChatRoom::HeartDetect()
 {
-    //qDebug() << "heart!" << endl;
-    char *buf = new char[8];
-    char *tmp = buf;
+    qDebug() << "heart!" << endl;
+    StructHeartDetectRequest rq;
+    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    rq.m_time = t1;
+    rq.m_user_id = m_user_id;
 
-    *(int *)tmp = kPackHeartDetect;
-    tmp += sizeof(int);
-
-    *(int *)tmp = m_user_id;
-
-    m_tcp_client->SendData(buf, sizeof(buf));
-    delete[] buf;
+    m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
 
 void MyChatRoom::SLOT_loginSubmit(QString name, QString passwd)
@@ -294,15 +292,7 @@ void MyChatRoom::SLOT_openAudio()
 {
     if (m_audioRead)
     {
-        if (is_first_open_video) {
-            QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice();
-            m_device_info = info;
-            m_audioRead->ResumeAudio(info);
-        } else {
-            m_audioRead->ResumeAudio(m_device_info);
-        }
-
-
+        m_audioRead->ResumeAudio(m_device_info);
     }
 }
 
@@ -518,13 +508,6 @@ void MyChatRoom::SLOT_dealClientData(char *buf, int len)
     case kPackKickOutOfUserQesponse:
         Dealkick_out_ofOneUserResponse(buf, len);
         break;
-
-    case kPackAdjustUserVolumeQesponse:;
-        break;
-
-    case kPackAudioQequest:
-        //DealAudioData(buf, len);
-        break;
     }
 }
 
@@ -581,8 +564,7 @@ void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
 
         m_user_list.insert(this->m_user_name.toStdString());
 
-        //创建音频采集,TODO，this对不对，还是m_roomDialog。
-        m_audioRead = new AudioCollector();
+
 
         QObject::connect(m_audioRead, &AudioCollector::sig_collectorVolumeReady, [this](double volume)
                          { m_level.setLevel(volume); });
@@ -592,7 +574,16 @@ void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
                              if (m_userWidegets.find(name) != m_userWidegets.end())
                                  this->m_userWidegets[name]->setVol(volume);
                          });
-        m_audioRead->Init(m_room_num);
+        if (is_first_connect) {
+            m_audioRead->Init();
+            m_audioRead->setUdpRoomId(m_room_num);
+            is_first_connect = false;
+            Sleep(200);
+            m_audioRead->ResumeAudio(m_device_info);
+            return;
+        }
+        m_audioRead->ResumeAudio(m_device_info);
+
     }
 }
 
@@ -614,8 +605,8 @@ void MyChatRoom::DealJoinRoomResponse(char *buf, int len)
             m_roomdialog->show();
             m_roomdialog->addInputWidget(m_level);
             m_user_list.insert(this->m_user_name.toStdString());
-            //创建音频采集
-            m_audioRead = new AudioCollector();
+//            //创建音频采集
+//            m_audioRead = new AudioCollector();
 
             QObject::connect(m_audioRead, &AudioCollector::sig_collectorVolumeReady, [this](double volume)
                              { m_level.setLevel(volume); });
@@ -625,7 +616,16 @@ void MyChatRoom::DealJoinRoomResponse(char *buf, int len)
                                  if (m_userWidegets.find(name) != m_userWidegets.end())
                                      this->m_userWidegets[name]->setVol(volume);
                              });
-            m_audioRead->Init(m_room_num);
+
+            if (is_first_connect) {
+                m_audioRead->Init();
+                m_audioRead->setUdpRoomId(m_room_num);
+                is_first_connect = false;
+                Sleep(200);
+                m_audioRead->ResumeAudio(m_device_info);
+                return;
+            }
+            m_audioRead->ResumeAudio(m_device_info);
         }
     }
     else {

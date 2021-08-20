@@ -14,6 +14,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QDateTime>
+#include <chrono>
 #include <winsock2.h>
 
 const int DEF_PACK_BASE = 10000;
@@ -21,7 +22,8 @@ const int DEF_PACK_COUNT = 100;
 
 //ip和端口
 const unsigned short kServerPort = 9527;        //tcp和udp都是这个端口，并不影响
-const QString kServerIp = "119.91.116.26";
+//const QString kServerIp = "119.91.116.26";
+const QString kServerIp = "192.168.201.129";
 const QString kVmServerIp = "192.168.201.129";
 
 typedef enum NetPACKDef
@@ -513,6 +515,21 @@ typedef struct StructKickOutOfUserResponse
     char kickrUserName[kMaxSize];
 } StructKickOutOfUserResponse;
 
+//心跳检测回复
+typedef struct StructHeartDetectRequest
+{
+    StructHeartDetectRequest()
+    {
+        m_pack_type = kPackHeartDetect;
+        m_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    std::chrono::steady_clock::time_point m_time;
+    char szUserName[kMaxSize];
+} StructHeartDetectRequest;
+
 //音频
 struct AudioFrame{
     int len; // 长度，按字节数
@@ -566,6 +583,8 @@ typedef struct UserInfo
     bool is_muted;              //是否被静音
     char m_user_name[kMaxSize];
 } UserInfo;
+
+
 
 
 #endif

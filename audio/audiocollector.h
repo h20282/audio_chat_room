@@ -34,7 +34,9 @@ public:
     void run() override;
     void setInputDevice(QAudioDeviceInfo info);
 
-    void Init(int room_id);
+    void Init();
+
+    void setUdpRoomId(int room_id);
 
 
     // 加入房间，同一个房间内的人互相能听到声音（开启声音采集、传输、合成、播放）

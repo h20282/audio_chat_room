@@ -21,7 +21,7 @@ class UdpNet : public QObject
 {
     Q_OBJECT
 public:
-    UdpNet(int room_id);
+    UdpNet();
     ~UdpNet(){ CloseNet(); }
 
     void changeMuteState();             //静音状态变化
@@ -42,6 +42,7 @@ public:
 
     bool SendBroadCast(QByteArray data);
 
+    void setRoomId(int room_id);
 
 signals:
     void SIG_oneMsgReady(Msg msg);
