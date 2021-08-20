@@ -99,7 +99,7 @@ const int kJoinSuccess     = 1;
 
 //音频
 
-const int AUDIO_SAM_RATE = 44100;
+const int AUDIO_SAM_RATE = 8000;
 const int AUDIO_SAM_SIZE = 16;
 const int AUDIO_SAM_COUNT = 2;
 #define AUDIO_FRAME_LEN AUDIO_SAM_RATE*AUDIO_SAM_SIZE*AUDIO_SAM_COUNT/8/25  // 1/25s(0.04s)的音频数据

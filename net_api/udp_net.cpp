@@ -8,6 +8,8 @@
  */
 #include "udp_net.h"
 
+//#define CODEC
+
 UdpNet::UdpNet() : port_(kUdpServerPort), m_roomId(0)
 {
     m_encoder = new Encoder(); // 获取编码器实例（初始化）
@@ -78,6 +80,11 @@ void UdpNet::onUdpReadyRead()
         //没有静音
         if (buff[0] == 'F')
         {
+#ifndef CODEC
+            qDebug() << "收到了" << endl;
+            emit SIG_oneMsgReady(*reinterpret_cast<Msg *>(buff + 1));
+#endif
+#ifdef CODEC
             QString name(buff + 1);
             //编码：
             int zipedFrameLen = *reinterpret_cast<int *>(buff + 1 + 16);
@@ -109,8 +116,12 @@ void UdpNet::onUdpReadyRead()
             msg.frame.len = pcm_len;                   // pcm帧长度
             memcpy(msg.frame.buff, pcm_buff, pcm_len); // pcm数据
 
+
             emit SIG_oneMsgReady(*reinterpret_cast<Msg *>(buff + 1));
+
+
             delete pcm_buff;
+#endif
         }
         else if (buff[0] == 'f')
         { //静音
@@ -129,6 +140,8 @@ void UdpNet::onUdpReadyRead()
 //另一个是用户可以静音某个人的声音，这个考虑用户这里用一个set保存自己静音的所有用户。然后播放的时候判断一下是否在集合中。
 void UdpNet::onAudioFrameReady(AudioFrame frame)
 {
+
+#ifdef CODEC
     if (m_isMuted)
     {
         char buff[1 + 4 + 16];
@@ -165,16 +178,21 @@ void UdpNet::onAudioFrameReady(AudioFrame frame)
         }
     }
 
-    //    //qDebug() << "收到音频" << endl;
-    //    char buff[1 + 4 + 16 + sizeof(AudioFrame)];
-    //    memset(buff, 0, sizeof(buff));
-    //    //qDebug() << "我当前静音状态m_isMuted=" << m_isMuted << endl;
-    //    buff[0] = m_isMuted ? 'f' : 'F';
-    //    *reinterpret_cast<int *>(buff + 1) = m_roomId;
-    //    memcpy(buff + 1 + 4, g_userName.toLatin1().data(), g_userName.size());
-    //    memcpy(buff + 1 + 4 + 16, &frame, sizeof(AudioFrame));
+#endif
 
-    //    m_udpSocket->writeDatagram(buff, m_isMuted ? (1 + 4 + 16) : sizeof(buff), m_destaddr, kServerPort);
+#ifndef CODEC
+        qDebug() << "发送音频" << endl;
+        char buff[1 + 4 + 16 + sizeof(AudioFrame)];
+        memset(buff, 0, sizeof(buff));
+        //qDebug() << "我当前静音状态m_isMuted=" << m_isMuted << endl;
+        buff[0] = m_isMuted ? 'f' : 'F';
+        *reinterpret_cast<int *>(buff + 1) = m_roomId;
+        memcpy(buff + 1 + 4, g_userName.toLatin1().data(), g_userName.size());
+        memcpy(buff + 1 + 4 + 16, &frame, sizeof(AudioFrame));
+
+        m_udpSocket->writeDatagram(buff, m_isMuted ? (1 + 4 + 16) : sizeof(buff), m_destaddr, kUdpServerPort);
+
+#endif
 }
 
 void UdpNet::changeMuteState()
