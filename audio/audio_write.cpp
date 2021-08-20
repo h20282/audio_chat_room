@@ -1,11 +1,11 @@
-#include "audio_write.h" 
+#include "audio_write.h"
 
-Audio_Write::Audio_Write()
+AudioWrite::AudioWrite()
 {
-    //speex初始化
-    speex_bits_init(&bits_dec);
-    Dec_State = speex_decoder_init(speex_lib_get_mode(SPEEX_MODEID_NB));
-//    Dec_State = speex_decoder_init(&speex_nb_mode);
+//    //speex初始化
+//    speex_bits_init(&bits_dec);
+//    Dec_State = speex_decoder_init(speex_lib_get_mode(SPEEX_MODEID_NB));
+////    Dec_State = speex_decoder_init(&speex_nb_mode);
  
     QAudioFormat format;
     // set up the format you want, eg.
@@ -33,7 +33,7 @@ Audio_Write::Audio_Write()
     //timer2->start(10 * INTERVAL);
     //timer2->start(5);
 }
-Audio_Write::~Audio_Write()
+AudioWrite::~AudioWrite()
 {
 //    audio_out->stop();
     if(audio_out)
@@ -41,7 +41,7 @@ Audio_Write::~Audio_Write()
     audio_out = NULL;
 }
 
-void Audio_Write::finishedPlaying(QAudio::State state)
+void AudioWrite::finishedPlaying(QAudio::State state)
  {
 //   if(state == QAudio::IdleState) {
 //     audio_out->stop();
@@ -56,7 +56,7 @@ void Audio_Write::finishedPlaying(QAudio::State state)
 *参数:data:接收的数据
 **********************************************************************/
  
-void Audio_Write::slot_net_rx(QByteArray ba)
+void AudioWrite::SLOT_recvAndPlay(QByteArray ba)
 {
     char bytes[800] = {0};
     int i = 0;
@@ -113,7 +113,7 @@ void Audio_Write::slot_net_rx(QByteArray ba)
 
 }
  
-void Audio_Write::update2()
+void AudioWrite::update2()
 {
     char bytes[800] = {0};
     int i = 0;

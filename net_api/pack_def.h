@@ -20,8 +20,9 @@ const int DEF_PACK_BASE = 10000;
 const int DEF_PACK_COUNT = 100;
 
 //ip和端口
-const unsigned short kServerPort = 10004;
-const QString kServerIp = "192.168.201.129";
+const unsigned short kServerPort = 9527;        //tcp和udp都是这个端口，并不影响
+const QString kServerIp = "119.91.116.26";
+const QString kVmServerIp = "192.168.201.129";
 
 typedef enum NetPACKDef
 {  
@@ -39,6 +40,7 @@ typedef enum NetPACKDef
 
     kPackRoomMemberHeaderQequest,
     kPackRoomMemberQequest,
+    kPackRoomMemberQesponse,
 
     kPackRoomListRefreshHeadRequest,
     kPackRoomListRefreshHeadResponse,
@@ -53,6 +55,12 @@ typedef enum NetPACKDef
     kPackMuteOneUserQequest,
     kPackMuteOneUserQesponse,
 
+    kPackTransferUserQequest,
+    kPackTransferUserQesponse,
+
+    kPackKickOutOfUserQequest,
+    kPackKickOutOfUserQesponse,
+
     kPackAdjustUserVolumeQequest,
     kPackAdjustUserVolumeQesponse,
 
@@ -64,6 +72,8 @@ typedef enum NetPACKDef
 
     kPackVideoQequest,
     kPackVideoQesponse,
+
+    kPackHeartDetect,
 } Net_PACK;
 
 //注册请求结果
@@ -83,6 +93,18 @@ const int kCreateSuccess   = 1;
 //加入房间结果
 const int kRoomNotExist    = 0;
 const int kJoinSuccess     = 1;
+
+//音频
+
+const int AUDIO_SAM_RATE = 8000;
+const int AUDIO_SAM_SIZE = 16;
+const int AUDIO_SAM_COUNT = 2;
+#define AUDIO_FRAME_LEN AUDIO_SAM_RATE*AUDIO_SAM_SIZE*AUDIO_SAM_COUNT/8/25  // 1/25s(0.04s)的音频数据
+
+
+#define UDP_SERVER_IP "119.91.116.26"
+//#define SERVER_IP "192.168.11.129"
+#define UDP_SERVER_PORT 9527
 
 //上传请求结果
 #define file_is_exist        0
@@ -138,9 +160,11 @@ typedef struct StructLoginRespose
     StructLoginRespose()
     {
         m_pack_type= kPackLoginQesponse;
+        memset(m_user_name, 0, kMaxSize);
     }
     PackType m_pack_type;   //包类型
     int  m_user_id;     //用户id
+    char m_user_name[kMaxSize] ; //用户名
     int  m_login_result ; //登录结果
 
 }StructLoginRespose;
@@ -197,11 +221,13 @@ typedef struct StructCreateRoomRespose
         m_create_room_result = 0;
         m_room_id = 0;
         m_room_owner_id = 0;
+        memset(m_room_owner_name,0,kMaxSize);
     }
     PackType m_pack_type;   //包类型
     int  m_create_room_result ;    //创建房间结果
     int  m_room_id;
     int  m_room_owner_id;
+    char m_room_owner_name[kMaxSize] ; //用户名
 }StructCreateRoomRespose;
 
 //加入房间请求
@@ -227,12 +253,18 @@ typedef struct StructJoinRoomResponse
         m_pack_type= kPackJoinRoomQesponse;
         m_join_room_result = 0;
         m_room_id = 0;
+        m_join_id = 0;
         m_room_owner_id = 0;
+        memset(m_room_owner_name,0,kMaxSize);
+        memset(m_join_name,0,kMaxSize);
     }
     PackType m_pack_type;   //包类型
     int  m_join_room_result ;    //加入房间结果
     int m_room_id;
+    int m_join_id;
     int  m_room_owner_id;
+    char m_room_owner_name[kMaxSize] ; //用户名
+    char m_join_name[kMaxSize];
 }StructJoinRoomResponse;
 
 
@@ -253,11 +285,26 @@ typedef struct StructRoomMemberHeaderResponse
 } StructRoomMemberHeaderResponse;
 
 //房间成员请求
+typedef struct StructRoomMemberRequset
+{
+    StructRoomMemberRequset()
+    {
+        m_nType = kPackRoomMemberQequest;
+        m_user_id = 0;
+        memset(m_sz_user, 0, kMaxSize);
+    }
+    PackType m_nType; //包类型
+    int m_user_id;
+    char m_sz_user[kMaxSize];
+
+} StructRoomMemberRequset;
+
+//房间成员回复
 typedef struct StructRoomMemberResponse
 {
     StructRoomMemberResponse()
     {
-        m_nType = kPackRoomMemberQequest;
+        m_nType = kPackRoomMemberQesponse;
         m_user_id = 0;
         memset(m_sz_user, 0, kMaxSize);
     }
@@ -334,6 +381,164 @@ typedef struct StructQuitRoomResponse
 
 } StructQuitRoomResponse;
 
+//静音某人请求
+typedef struct StructMuteUserRequest
+{
+    StructMuteUserRequest()
+    {
+        m_pack_type = kPackMuteOneUserQequest;
+        m_user_id = 0;
+        mute_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    int mute_user_id;
+    char szUserName[kMaxSize];
+
+} StructMuteUserRequest;
+
+//静音某人回复
+typedef struct StructMuteUserResponse
+{
+    StructMuteUserResponse()
+    {
+        m_pack_type = kPackMuteOneUserQesponse;
+        m_user_id = 0;
+        mute_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+        memset(muteUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    int mute_user_id;
+    char szUserName[kMaxSize];
+    char muteUserName[kMaxSize];
+} StructMuteUserResponse;
+
+//解除静音请求
+typedef struct StructUnMuteRequest
+{
+    StructUnMuteRequest()
+    {
+        m_pack_type = kPackUnmuteQequest;
+        m_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    char szUserName[kMaxSize];
+
+} StructUnMuteRequest;
+
+//解除静音回复
+typedef struct StructUnMuteResponse
+{
+    StructUnMuteResponse()
+    {
+        m_pack_type = kPackUnmuteQesponse;
+        m_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    char szUserName[kMaxSize];
+} StructUnMuteResponse;
+
+//转让房主请求
+typedef struct StructTransferUserRequest
+{
+    StructTransferUserRequest()
+    {
+        m_pack_type = kPackTransferUserQequest;
+        m_user_id = 0;
+        transfer_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    int transfer_user_id;
+    char szUserName[kMaxSize];
+} StructTransferUserRequest;
+
+//转让房主回复
+typedef struct StructTransferUserResponse
+{
+    StructTransferUserResponse()
+    {
+        m_pack_type = kPackTransferUserQesponse;
+        m_user_id = 0;
+        transfer_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+        memset(transferUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    int transfer_user_id;
+    char szUserName[kMaxSize];
+    char transferUserName[kMaxSize];
+} StructTransferUserResponse;
+
+//踢出用户请求
+typedef struct StructKickOutOfUserRequest
+{
+    StructKickOutOfUserRequest()
+    {
+        m_pack_type = kPackKickOutOfUserQequest;
+        m_user_id = 0;
+        kick_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    int kick_user_id;
+    char szUserName[kMaxSize];
+} StructKickOutOfUserRequest;
+
+//踢出用户回复
+typedef struct StructKickOutOfUserResponse
+{
+    StructKickOutOfUserResponse()
+    {
+        m_pack_type = kPackKickOutOfUserQesponse;
+        m_user_id = 0;
+        kick_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+        memset(kickrUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;
+    int kick_user_id;
+    char szUserName[kMaxSize];
+    char kickrUserName[kMaxSize];
+} StructKickOutOfUserResponse;
+
+//音频
+struct AudioFrame{
+    int len; // 长度，按字节数
+    char buff[AUDIO_FRAME_LEN];
+
+    //获取最大量化值，用来显示当前最大音量的
+    double getMaxVolume(){
+        if (AUDIO_SAM_COUNT==2){
+            auto p = reinterpret_cast<short*>(buff);
+            auto maxVol = p[0];
+            for ( int i=0; i<len/2; i++ ) {
+                maxVol = qMax(maxVol, p[i]);
+            }
+            return double(maxVol)/32768;
+        } else {
+            qDebug() << "not implement!!! AUDIO_SAM_COUNT: " << AUDIO_SAM_COUNT;
+            return 0;
+        }
+    }
+};
+
+struct Msg{
+    char name[16];
+    AudioFrame frame;
+};
+
 typedef struct UserInfo
 {
     UserInfo()
@@ -342,20 +547,23 @@ typedef struct UserInfo
         m_id = 0;
         m_state = 0;
         m_room_id = 0;
+        is_muted = false;
         memset(m_user_name, 0, kMaxSize);
     }
     UserInfo(int fd, int id, int room_id)
     {
         m_fd = fd;
         m_id = id;
-        m_state = 0;
+        m_state = 0;            //心跳检测用
         m_room_id = room_id;
+        is_muted = false;
         memset(m_user_name, 0, kMaxSize);
     }
     int m_fd;
     int m_id;
     int m_state;
     int m_room_id;
+    bool is_muted;              //是否被静音
     char m_user_name[kMaxSize];
 } UserInfo;
 

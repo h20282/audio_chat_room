@@ -8,16 +8,33 @@
 #include <QThread>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QMap>
+#include <unordered_set>
 
-const quint16 PORT = 10004;
-const QString SERVERIP = "119.91.116.26";
+#include "net_api/pack_def.h"
+//#include "./mychatroom.h"
+
+extern QString g_userName;
 
 // 从collector中获取音频，通过udp传输到服务器，接收服务器中的数据，通过 getAudioFrame() 提供出去
-class UdpNet : public QThread
+class UdpNet : public QObject
 {
+    Q_OBJECT
 public:
-    explicit UdpNet();
+    UdpNet(int room_id);
     ~UdpNet(){ CloseNet(); }
+
+    void changeMuteState();             //静音状态变化
+
+    void MuteUser();
+
+    void UnMuteUser();
+
+    bool getIsMuted();                  //获取是否被静音
+
+    void insertMuteUser(std::string name);              //在set中插入静音用户
+
+    void delMuteUser(std::string name);
 
     virtual bool InitNet( ); //资源的创建包括 网络库的加载 创建socket 及conn_info 打开线程 以及线程处理
     virtual void CloseNet();
@@ -25,9 +42,17 @@ public:
 
     bool SendBroadCast(QByteArray data);
 
-    void run() override;
+
+signals:
+    void SIG_oneMsgReady(Msg msg);
+    void SIG_oneEmptyFrameReady(QString name);
+
+public slots:
+    void onAudioFrameReady(AudioFrame frame);
 
 private slots:
+
+
     void onUdpReadyRead();
 
 private:
@@ -35,11 +60,17 @@ private:
 
     QUdpSocket *m_udpSocket;
     QHostAddress m_destaddr;
+   // MyChatRoom* m_chat_room;
     quint16 port_;
 
     //AudioCollector *m_collector;
 
     QMutex m_mutex;
+
+
+    int m_roomId;
+    bool m_isMuted = false;
+    std::unordered_set<std::string> m_setMuteUsers;      //被静音的用户列表
 };
 
 #endif // UDP_NET_H

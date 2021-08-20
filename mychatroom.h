@@ -17,19 +17,26 @@
 #ifndef MYCHATROOM_H
 #define MYCHATROOM_H
 
+#include "./common/IMToolBox.h"
 #include "./login_register/login.h"
 #include "./login_register/registerwin.h"
 #include "./meet_room/roomdialog.h"
 #include "./meet_room/useritem.h"
 #include "./meet_room/userlist.h"
+#include "./meet_room/userwidget.h"
 #include "./net_api/udp_net.h"
 #include "./net_api/qmytcp_client.h"
 #include "./net_api/pack_def.h"
 #include "./common/customwidget.h"
 #include "./audio/audio_read.h"
 #include "./audio/audio_write.h"
+#include "./audio/audiodevices.h"
+#include "./audio/audioplayer.h"
+#include "./audio/audiolevel.h"
+#include "./audio/audiocollector.h"
+#include "./audio/audiosynthesizer.h"
 
-#include "IMToolBox.h"
+
 
 #include <QWidget>
 #include <QDebug>
@@ -40,9 +47,13 @@
 #include <QCryptographicHash>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QStringListModel>
+#include <QStandardItemModel>
 
 #include <QMap>
 #include <map>
+#include <unordered_set>
+#include <string.h>
 #include <list>
 #include <QList>
 
@@ -61,6 +72,10 @@ public:
     void setServerIP();
 
     void InitRoomDialogUi();
+
+    void InitRoomListUi();
+
+    void clearQuitRoomInfo(QString name);
 
     QByteArray GetMD5(QString str);
 
@@ -82,6 +97,8 @@ signals:
     void SIG_RefreshRoomList();                     //刷新房间列表
 
 public slots:
+    void HeartDetect();                                 //心跳检测槽函数
+
     void SLOT_loginSubmit(QString name, QString passwd); //登录槽函数，发送用户名、密码给服务端验证
 
     void SLOT_registerSubmit(QString name, QString passwd); //注册槽函数
@@ -102,11 +119,27 @@ public slots:
 
     void SLOT_closeAudio();     //关闭声音
 
-    void SLOT_UnMute(int user_id); //用户向服务端发出解除静音信号槽函数
+    void SLOT_sendAudioData(QByteArray ba);            //
 
-    void SLOT_MuteOneUser(int user_id); //关闭房间内指定用户的声音
+    void SLOT_UnMute(); //用户自己被房主静音，解除静音。
 
-    void SLOT_AdjustUserVolume(int user_id); //调节房间内指定用户的音量
+    void SLOT_MuteOneUser(int mute_user_id); //关闭房间内指定用户的声音
+
+    void SLOT_transferOneUser(int transfer_user_id); //转让房主
+
+    void SLOT_kick_out_ofOneUser(int kick_user_id);  //踢人
+
+    void SLOT_AdjustUserVolume(int adjust_user_id); //调节房间内指定用户的音量
+
+    void SLOT_closeVolumn(QString name);         //用户关闭某人声音
+
+    void SLOT_unBlock(QString name);             //用户恢复某人声音
+
+    void SLOT_AudioSetting();               //用户声音设置
+
+    void SLOT_devicedChanged(QList<QAudioDeviceInfo> audio_list);             //用户音频设备改变
+
+    void SLOT_refreshUserList();        //刷新用户列表
 
     void SLOT_dealClientData(char* buf, int len); //客户端收到可读信号，触发SLOT_dealClientData槽函数，其中封装了下面的登录、注册等等各个槽函数。可用策略模式完成。
 
@@ -128,14 +161,21 @@ public slots:
 
     void DealQuitRoomResponse(char* buf, int len); //退出房间回复
 
-//    void DealUnmuteQequest();   //静音
+    void DealMuteOneUserResponse(char* buf, int len);  //静音用户回复
 
-    void DealAudioData(char* buf, int len); //接收服务端发来的数据进行混音等操作，调用音频处理模块的SLOT_PlayAudio()。
+    void DealtransferOneUserResponse(char* buf, int len);                 //转让房主回复
+
+    void Dealkick_out_ofOneUserResponse(char* buf, int len);              //踢人回复
+
+    void DealAdjustUserVolumeResponse(char* buf, int len);                //调节音量回复
+
+    void DealUnmuteQequest(char* buf, int len);   //静音,客户端实现
+
+    //void DealAudioData(char* buf, int len); //接收服务端发来的数据进行混音等操作，调用音频处理模块的SLOT_PlayAudio()。
 
     void DealForceQuitRoom(char* buf, int len); //处理服务端发来的踢人处理结果,判断是否是自己。是自己调用退出房间函数。
 
     void DealClientQuitResponse(char* buf, int len); //服务器向客户端发出某个客户端退出信号,在槽函数中处理，将客户端在线列表中的退出用户清除。
-
 
     void DealJumpToRegisterInterface();
 
@@ -153,24 +193,15 @@ private slots:
 
     void on_pb_close_clicked();
 
-
-    void on_pushButton_clicked();
-
-    void on_pushButton_2_clicked();
-
-    void on_pushButton_3_clicked();
-
     void on_ButtonRefreshRoomList_clicked();
 
-    void ProvideContextMenu(const QPoint &);
 
 
 private:
     Ui::MyChatRoom *ui;
     RoomDialog *m_roomdialog;
-    //UserListWidget *listwidget;
-    QListWidget* listWidget;
-    QMenu *m_MainMenu;
+    UserListWidget *m_user_list_widget;
+    RoomListWidget* m_room_widget;
     LOGIN *m_login;
     registerWin *m_register;
 
@@ -178,22 +209,39 @@ private:
     UdpNet *m_udp_client;
     IMToolItem *m_userList;
 
+    QTimer* timer;
+
     QString m_user_name;
 
-    //std::map<int, UserInfo *> m_mapIDToUserInfo;           //全部用户的信息
-    //std::map<int, char*> m_mapRoomIDToUserList; //房间和房主用户信息
 
-    //    QMap<int , UserItem *> m_mapIDToUserItem;
-    //    QMap<int , ChatDialog *> m_mapIDToChatDialog;
-    //    QMap<int , VideoItem *> m_mapIDToVideoItem;
-    //    QMap<int , Audio_Write*> m_mapIDToAudioWrite;
+    //QMap<int , AudioWrite*> m_mapIDToAudioWrite;
 
-    //IMToolItem *m_videoList;
+
     int m_user_id;
     int m_room_num;
+    int m_pre_room_id;
     int m_room_owener_id;       //因为只能加入一个房间，因此给一个房主id，用于区分房主和普通用户的功能。
+    QString m_room_owner_name;
+    QAudioDeviceInfo m_device_info;
+    bool is_muted;              //自己是否被静音
+    bool is_first_create;
+    bool is_first_open_video;
+    bool is_first_join;
     const QString m_server_ip;
     const unsigned short m_server_port;
+
+    std::unordered_set<std::string> m_user_list;        //当前房间用户列表
+
+//    AudioRead *m_audioRead;
+    AudioCollector* m_audioRead;
+    AudioLevel m_level;
+    AudioTest* m_audio_device;
+
+    QStandardItemModel userListModel;
+//    AudioCollector m_chater;
+//    AudioLevel m_level;
+
+    QMap<QString, UserWidget*> m_userWidegets;
 
 };
 

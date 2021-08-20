@@ -1,28 +1,28 @@
-#ifndef AUDIO_READ_H
-#define AUDIO_READ_H
+#ifndef AudioRead_H
+#define AudioRead_H
 
 #include "world.h"
 #include<QTimer>
 
 
-class Audio_Read : public QObject
+class AudioRead : public QObject
 {
     Q_OBJECT
 public:
-    Audio_Read();
-    ~Audio_Read();
+    AudioRead();
+    ~AudioRead();
 signals:
     /*********************************************************************
     *                           发送网络帧
     *参数:frame:发送的报文
     **********************************************************************/
 
-    void sig_net_tx_frame(QByteArray frame);
+    void SIG_audioDataSendReady(QByteArray frame);
 
 public slots:
     void readMore();
     void PauseAudio();
-    void ResumeAudio();
+    void ResumeAudio(QAudioDeviceInfo info);
     void UnInit();
 private:
 
@@ -33,15 +33,15 @@ private:
 //    SpeexPreprocessState * m_st;
 //    SpeexEchoState *echo_state;
 
-    //webrtc 降噪NSX
-    NsxHandle *pNS_inst  ;
-    //webrtc VAD
-    VadInst *handle;
+//    //webrtc 降噪NSX
+//    NsxHandle *pNS_inst  ;
+//    //webrtc VAD
+//    VadInst *handle;
     //webrtc AGC
     void *agcHandle ;
 
-    //SPEEX相关全局变量
-    SpeexBits bits_enc;
+//    //SPEEX相关全局变量
+//    SpeexBits bits_enc;
     void *Enc_State;
     QAudioFormat format;
 
@@ -55,4 +55,4 @@ private:
     QTimer *timer;
 };
 
-#endif // AUDIO_READ_H
+#endif // AudioRead_H

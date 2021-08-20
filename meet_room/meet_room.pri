@@ -6,7 +6,8 @@ SOURCES += \
 HEADERS += \
     $$PWD/roomdialog.h \
     $$PWD/useritem.h \
-    $$PWD/userlist.h
+    $$PWD/userlist.h \
+    $$PWD/userwidget.h
 
 FORMS += \
     $$PWD/roomdialog.ui

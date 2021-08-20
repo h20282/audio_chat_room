@@ -17,18 +17,13 @@
 #include <QDebug>
 #include <QFile>
 #include <QStyleFactory> //修改风格1步
-#include <QSqlDatabase>
+//#include <QSqlDatabase>
 #include <QMessageBox>
 
-
+QString g_userName;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    UdpNet* udpConnect = new UdpNet();
-    QByteArray data;
-    data.resize(1);
-    data[0] = 0xfE;
 
 
 
@@ -36,14 +31,9 @@ int main(int argc, char *argv[])
     file.open(QIODevice::ReadOnly);
     qApp->setStyleSheet( file.readAll());
 
-
     //初始化，进入登录界面。
     MyChatRoom mychatroom;
-
-    //MainWindow w;
     mychatroom.hide();
-    qDebug() << "udp连接" << endl;
-    udpConnect->SendData(data, "119.91.116.26");
 
     return a.exec();
 }

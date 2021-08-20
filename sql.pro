@@ -1,4 +1,7 @@
-QT       += core gui sql network
+TEMPLATE = app
+TARGET = audiodevices
+
+QT       += core gui network
 
 RC_ICONS = ./images/message.ico
 
@@ -18,6 +21,7 @@ LIBS += -lWs2_32
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+include(../shared/shared.pri)
 include($$PWD/login_register/login_register.pri)
 include($$PWD/meet_room/meet_room.pri)
 include($$PWD/common/common.pri)
@@ -26,28 +30,26 @@ include($$PWD/audio/audio.pri)
 
 
 SOURCES += \
-    IMToolBox.cpp \
     main.cpp \
     mainwindow.cpp \
     mychatroom.cpp \
-    videoitem.cpp
 
 HEADERS += \
-    IMToolBox.h \
     mainwindow.h \
     mychatroom.h \
     useritem.h \
-    videoitem.h
 
 FORMS += \
     mainwindow.ui \
     mychatroom.ui \
-    videoitem.ui
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+target.path = $$PWD/audio
 
 RESOURCES += \
     resource.qrc

@@ -7,16 +7,16 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-Audio_Read::Audio_Read()
+AudioRead::AudioRead()
 {
-    //speex编码初始化
-    speex_bits_init(&bits_enc);
-    Enc_State = speex_encoder_init(speex_lib_get_mode(SPEEX_MODEID_NB));
-    //Enc_State = speex_encoder_init(&speex_nb_mode);
-    //设置压缩质量
-    //设置质量为8(15kbps)
-    int tmp = SPEEX_QUALITY;
-    speex_encoder_ctl(Enc_State,SPEEX_SET_QUALITY,&tmp);
+//    //speex编码初始化
+//    speex_bits_init(&bits_enc);
+//    Enc_State = speex_encoder_init(speex_lib_get_mode(SPEEX_MODEID_NB));
+//    //Enc_State = speex_encoder_init(&speex_nb_mode);
+//    //设置压缩质量
+//    //设置质量为8(15kbps)
+//    int tmp = SPEEX_QUALITY;
+//    speex_encoder_ctl(Enc_State,SPEEX_SET_QUALITY,&tmp);
 
     //声卡采样格式
     // set up the format you want, eg.
@@ -26,21 +26,29 @@ Audio_Read::Audio_Read()
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     //format.setByteOrder(QAudioFormat::BigEndian);
-    format.setSampleType(QAudioFormat::UnSignedInt);
-    //format.setSampleType(QAudioFormat::SignedInt);
+    //format.setSampleType(QAudioFormat::UnSignedInt);
+    format.setSampleType(QAudioFormat::SignedInt);
     QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice();
     if (!info.isFormatSupported(format)) {
       // qWarning()<<"default format not supported try to use nearest";
        QMessageBox::information(NULL , "提示", "打开音频设备失败");
        format = info.nearestFormat(format);
     }
-    audio_in = NULL;
+
+//    if(audio_in)
+//    {
+//        delete audio_in;
+//        audio_in=nullptr;
+//    }
+
+    audio_in = new QAudioInput(format, this);
     m_playState = state_stop;
     // Records audio for 3000ms
     //qDebug() <<"record begin!" ;
 
+
     //////////////webrtc 静音VAD和降噪NSX//////////////////
-#if   DEF_USE_WEBRTC
+#if   USE_WEBRTC
     int nSample = 8000;//采样率
     int nMode = 2; //降噪等级 0 1 2 3 越大降噪效果越好 一般使用1和2 2效果更好 但是2声音太小
     if (0 != WebRtcNsx_Create(&pNS_inst))
@@ -89,17 +97,17 @@ Audio_Read::Audio_Read()
     timer = NULL;
 }
 
-Audio_Read::~Audio_Read()
+AudioRead::~AudioRead()
 {
 
-    WebRtcNsx_Free(pNS_inst);
-    WebRtcVad_Free(handle);
-    WebRtcAgc_Free(agcHandle);
+//    WebRtcNsx_Free(pNS_inst);
+//    WebRtcVad_Free(handle);
+//    WebRtcAgc_Free(agcHandle);
     this->UnInit();
     delete audio_in;
 
 }
-void Audio_Read::readMore()
+void AudioRead::readMore()
 {
     char bytes[800] = {0};
     int i = 0;
@@ -125,7 +133,7 @@ void Audio_Read::readMore()
     frame.clear();
 
     //////////////webrtc 静音和降噪//////////////////
-#if  DEF_USE_WEBRTC
+#if  USE_WEBRTC
     char* pInData = (char*)m_buffer.data() ; //m_buffer 共640字节 对于short是320个点
     //下面 每80个点处理一次
     short shBufferIn[80] = {0};
@@ -208,20 +216,20 @@ void Audio_Read::readMore()
         //  qDebug() << "nbytes = " << nbytes;
         frame.append(bytes,nbytes);
 
-        emit sig_net_tx_frame(frame);
+        emit SIG_audioDataSendReady(frame);
         return;
     }
 #endif
 
-    frame.append(buf, 640);
+    frame.append(m_buffer.data(), 640);
  //   memcpy( m_buffer.data() , buf, 640 );
     //    m_buffer = qCompress(m_buffer,5);
     //    qDebug()<<"qCompress:"<<m_buffer.size();
-    emit sig_net_tx_frame(/*m_buffer*/frame);
+    emit SIG_audioDataSendReady(/*m_buffer*/frame);
 
 }
 
-void Audio_Read::UnInit()
+void AudioRead::UnInit()
 {
     if(timer)
         timer->stop();
@@ -230,11 +238,19 @@ void Audio_Read::UnInit()
 
 }
 
-void Audio_Read::ResumeAudio()
+void AudioRead::ResumeAudio(QAudioDeviceInfo info)
 {
+    qDebug() << "ResumeAudio" << endl;
+//    if (!info.isFormatSupported(format)) {
+//      // qWarning()<<"default format not supported try to use nearest";
+//        qDebug() << "aaas！" << endl;
+//       QMessageBox::information(NULL , "提示", "打开音频设备失败");
+//       format = info.nearestFormat(format);
+//    }
+
     if( m_playState == state_stop )
     {
-        audio_in = new QAudioInput(format, this);
+        audio_in = new QAudioInput(info, format, this);
         myBuffer_in = audio_in->start();
 //       connect(myBuffer_in, SIGNAL(readyRead()), this, SLOT(readMore())  );
     }
@@ -243,18 +259,19 @@ void Audio_Read::ResumeAudio()
         if(audio_in)
         {
             delete audio_in;
-            audio_in = new QAudioInput(format, this);
+
+            audio_in = new QAudioInput(info, format, this);
             myBuffer_in = audio_in->start();
         }
     }
     m_playState = state_play;
 
     timer = new QTimer(this);
-    connect( timer , &QTimer::timeout , this , &Audio_Read::readMore );
+    connect( timer , &QTimer::timeout , this , &AudioRead::readMore );
     timer->start(1000/40);
 }
 
-void Audio_Read::PauseAudio()
+void AudioRead::PauseAudio()
 {
     if(timer)
         timer->stop();
@@ -262,7 +279,7 @@ void Audio_Read::PauseAudio()
     {
         m_playState = state_pause;
         if(audio_in)
-        audio_in->stop();
+            audio_in->stop();
     }
 }
 

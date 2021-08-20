@@ -12,4 +12,16 @@ void UserListWidgetItem::setUpIcon(const QIcon &icon, const QIcon &icon_hover)
     setIcon(Img);
 }
 
+RoomListWidgetItem::RoomListWidgetItem(QListWidget *view) :
+    QListWidgetItem(view)
+{
+}
+
+void RoomListWidgetItem::setUpIcon(const QIcon &icon, const QIcon &icon_hover)
+{
+    Img = icon;
+    Img_hover = icon_hover;
+    setIcon(Img);
+}
+
 

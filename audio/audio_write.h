@@ -1,14 +1,14 @@
-#ifndef AUDIO_WRITE_H
-#define AUDIO_WRITE_H
+#ifndef AudioWrite_H
+#define AudioWrite_H
  
 #include"world.h"
  
-class Audio_Write : public QObject
+class AudioWrite : public QObject
 {
     Q_OBJECT
 public:
-    Audio_Write();
-    ~Audio_Write();
+    AudioWrite();
+    ~AudioWrite();
 signals:
  
 public slots:
@@ -19,7 +19,7 @@ public slots:
     *参数:data:接收的数据
     **********************************************************************/
  
-    void slot_net_rx(QByteArray data);
+    void SLOT_recvAndPlay(QByteArray data);
  
     void update2();
  
@@ -33,12 +33,12 @@ private:
 //    SpeexPreprocessState * m_st;
 //    SpeexEchoState *echo_state;
 
-    //SPEEX相关全局变量
-    SpeexBits bits_dec;
+//    //SPEEX相关全局变量
+//    SpeexBits bits_dec;
     void *Dec_State;
  
     short output_frame[SPEEX_FRAME_BYTE / 2];           //speex解压输出存储区
  
 };
  
-#endif // AUDIO_WRITE_H
+#endif // AudioWrite_H
