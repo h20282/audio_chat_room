@@ -14,12 +14,15 @@ TcpNet::~TcpNet()
 
 bool TcpNet::InitNetWork(char *szBufIP, unsigned short port)
 {
+    qDebug() << "try to connect to tcp! ip=" << *szBufIP << endl;
     //加载库
     WORD wVersionRequested;
     WSADATA wsaData;
     int err;
 
     m_port = port;
+
+    qDebug() << "m_port=!" << m_port << endl;
 
     /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
     wVersionRequested = MAKEWORD(2, 2);
@@ -32,7 +35,6 @@ bool TcpNet::InitNetWork(char *szBufIP, unsigned short port)
 
     if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
     {
-
         UnInitNetWork();
         return false;
     }
@@ -54,6 +56,7 @@ bool TcpNet::InitNetWork(char *szBufIP, unsigned short port)
 
     if (SOCKET_ERROR == connect(m_sockClient, (const sockaddr *)&addr, sizeof(addr)))
     {
+        qDebug() << "aas" << endl;
         UnInitNetWork();
         return false;
     }

@@ -21,10 +21,11 @@ const int DEF_PACK_BASE = 10000;
 const int DEF_PACK_COUNT = 100;
 
 //ip和端口
-const unsigned short kServerPort = 9527;        //tcp和udp都是这个端口，并不影响
-//const QString kServerIp = "119.91.116.26";
-const QString kServerIp = "192.168.201.129";
-const QString kVmServerIp = "192.168.201.129";
+const unsigned short kServerPort = 9527;        //tcp和udp公用一个端口并不影响，这里只代表tcp
+const int kUdpServerPort = 9528;
+
+const QString kServerIp = "119.91.116.26";
+//const QString kServerIp = "192.168.201.129";
 
 typedef enum NetPACKDef
 {  
@@ -98,15 +99,15 @@ const int kJoinSuccess     = 1;
 
 //音频
 
-const int AUDIO_SAM_RATE = 8000;
+const int AUDIO_SAM_RATE = 44100;
 const int AUDIO_SAM_SIZE = 16;
 const int AUDIO_SAM_COUNT = 2;
 #define AUDIO_FRAME_LEN AUDIO_SAM_RATE*AUDIO_SAM_SIZE*AUDIO_SAM_COUNT/8/25  // 1/25s(0.04s)的音频数据
 
+//定时器刷新心跳检测时间
+const int kHeartDetectTime = 30000;
 
-#define UDP_SERVER_IP "119.91.116.26"
-//#define SERVER_IP "192.168.11.129"
-#define UDP_SERVER_PORT 9527
+
 
 //上传请求结果
 #define file_is_exist        0
@@ -154,6 +155,7 @@ typedef struct StructLoginRequest
     PackType m_pack_type;   //包类型
     char     m_user_name[kMaxSize] ; //用户名
     char     m_user_passwd[kMaxSize];  //密码
+    std::chrono::steady_clock::time_point m_time;
 }StructLoginRequest;
 
 //登录回复

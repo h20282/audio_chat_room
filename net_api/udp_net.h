@@ -12,7 +12,8 @@
 #include <unordered_set>
 
 #include "net_api/pack_def.h"
-//#include "./mychatroom.h"
+#include "../audio_codec/Decoder.h"
+#include "../audio_codec/Encoder.h"
 
 extern QString g_userName;
 
@@ -22,7 +23,7 @@ class UdpNet : public QObject
     Q_OBJECT
 public:
     UdpNet();
-    ~UdpNet(){ CloseNet(); }
+    ~UdpNet();
 
     void changeMuteState();             //静音状态变化
 
@@ -32,9 +33,9 @@ public:
 
     bool getIsMuted();                  //获取是否被静音
 
-    void insertMuteUser(std::string name);              //在set中插入静音用户
+//    void insertMuteUser(std::string name);              //在set中插入静音用户
 
-    void delMuteUser(std::string name);
+//    void delMuteUser(std::string name);
 
     virtual bool InitNet( ); //资源的创建包括 网络库的加载 创建socket 及conn_info 打开线程 以及线程处理
     virtual void CloseNet();
@@ -57,21 +58,17 @@ private slots:
     void onUdpReadyRead();
 
 private:
-    //QQueue<AudioFrame> m_queue;
-
     QUdpSocket *m_udpSocket;
     QHostAddress m_destaddr;
-   // MyChatRoom* m_chat_room;
     quint16 port_;
 
-    //AudioCollector *m_collector;
-
     QMutex m_mutex;
+
+    Encoder *m_encoder = nullptr;
 
 
     int m_roomId;
     bool m_isMuted = false;
-    std::unordered_set<std::string> m_setMuteUsers;      //被静音的用户列表
 };
 
 #endif // UDP_NET_H

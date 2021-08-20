@@ -42,6 +42,7 @@ include($$PWD/meet_room/meet_room.pri)
 include($$PWD/common/common.pri)
 include($$PWD/net_api/net_api.pri)
 include($$PWD/audio/audio.pri)
+include($$PWD/audio_codec/audio_codec.pri)
 
 
 SOURCES += \

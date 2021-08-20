@@ -76,10 +76,7 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
 
     connect(m_audio_device, SIGNAL(SIG_devicedChanged(QList<QAudioDeviceInfo>)), this, SLOT(SLOT_devicedChanged(QList<QAudioDeviceInfo>)));
 
-    //定时器心跳检测
-    timer = new QTimer();
-    connect(timer, SIGNAL(timeout()), this, SLOT(HeartDetect()));
-    timer->start(5000);
+
 }
 
 void MyChatRoom::InitRoomDialogUi()
@@ -181,6 +178,7 @@ void MyChatRoom::SLOT_loginSubmit(QString name, QString passwd)
     //QByteArray ba = GetMD5(passwd);
     QByteArray ba = passwd.toUtf8();
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
+    //rq.m_time = std::chrono::steady_clock::now();
 
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
@@ -413,14 +411,11 @@ void MyChatRoom::SLOT_AdjustUserVolume(int adjust_user_id)
 void MyChatRoom::SLOT_closeVolumn(QString name)
 {
     std::string str = name.toStdString();
-    m_audioRead->insertMuteUser(str);
     QMessageBox::information(this, "提示", QString("该用户已经被您屏蔽！"));
 }
 
 void MyChatRoom::SLOT_unBlock(QString name)
 {
-    std::string str = name.toStdString();
-    m_audioRead->delMuteUser(str);
     QMessageBox::information(this, "提示", QString("解除对该用户的屏蔽！"));
 }
 
@@ -528,6 +523,13 @@ void MyChatRoom::DealLoginResponse(char *buf, int len)
         this->ui->lb_name->setText(m_user_name);
         this->m_user_id = rs->m_user_id;
         g_userName = this->m_user_name;
+        //开启定时器心跳检测
+        timer = new QTimer();
+        connect(timer, SIGNAL(timeout()), this, SLOT(HeartDetect()));
+        timer->start(kHeartDetectTime);
+        break;
+    case kUserOnLine:
+        QMessageBox::information(this->m_login, "提示", "用户已经在线，请勿重复登录！");
         break;
     }
 }
@@ -578,7 +580,7 @@ void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
             m_audioRead->Init();
             m_audioRead->setUdpRoomId(m_room_num);
             is_first_connect = false;
-            Sleep(200);
+            Sleep(300);
             m_audioRead->ResumeAudio(m_device_info);
             return;
         }

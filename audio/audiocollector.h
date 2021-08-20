@@ -59,15 +59,6 @@ public:
         m_connector->UnMuteUser();
     }
 
-    void insertMuteUser(std::string name) {
-        m_connector->insertMuteUser(name);
-    }
-
-    void delMuteUser (std::string name) {
-        m_connector->delMuteUser(name);
-    }
-
-
 
 signals:
     void sig_audioFrameReady(AudioFrame frame);
