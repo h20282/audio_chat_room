@@ -584,6 +584,7 @@ void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
             m_audioRead->ResumeAudio(m_device_info);
             return;
         }
+        m_audioRead->setUdpRoomId(m_room_num);
         m_audioRead->ResumeAudio(m_device_info);
 
     }
@@ -627,6 +628,7 @@ void MyChatRoom::DealJoinRoomResponse(char *buf, int len)
                 m_audioRead->ResumeAudio(m_device_info);
                 return;
             }
+            m_audioRead->setUdpRoomId(m_room_num);
             m_audioRead->ResumeAudio(m_device_info);
         }
     }

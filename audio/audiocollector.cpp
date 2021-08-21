@@ -53,6 +53,7 @@ void AudioCollector::Init()
     m_player.start();
     m_synthesizer.start();
     m_playState = state_play;
+    is_first_connect = true;
     /*      +---------+
                                |        3|
                 4              v         | f
@@ -89,6 +90,11 @@ void AudioCollector::Init()
     //        qDebug() << list;
             emit sig_userListReady(list);
         });
+}
+
+void AudioCollector::firstConnect()
+{
+
 }
 
 void AudioCollector::setUdpRoomId(int room_id)
@@ -136,7 +142,16 @@ void AudioCollector::ResumeAudio(QAudioDeviceInfo info)
     {
         if (m_input)
         {
-            setInputDevice(info);
+            if (is_first_connect && info == QAudioDeviceInfo::defaultInputDevice())
+            {
+                qDebug() << "第一次！" << endl;
+                m_inputDevice = m_input->start();
+                connect(m_inputDevice, &QIODevice::readyRead, this, &AudioCollector::onReadyRead);
+                is_first_connect = false;
+
+            }
+            else
+                setInputDevice(info);
             //            delete m_input;
             //            m_input = new QAudioInput(info, format, this);
             //            m_inputDevice = m_input->start();

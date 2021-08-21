@@ -36,6 +36,8 @@ public:
 
     void Init();
 
+    void firstConnect();
+
     void setUdpRoomId(int room_id);
 
 
@@ -84,6 +86,8 @@ private:
     UdpNet       *m_connector;
     AudioPlayer         m_player;
     AudioSynthesizer    m_synthesizer;
+
+    bool is_first_connect;
 
     QMutex m_mutex;
 
