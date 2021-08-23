@@ -20,18 +20,23 @@ AudioCollector::AudioCollector()
 
 AudioCollector::~AudioCollector()
 {
+    if (is_first_connect) {
+        if (m_connector)
+            delete m_connector;
+        m_playState = state_stop;
+        this->m_input->stop();
+        this->requestInterruption();
+        msleep(100);
+        delete m_input;
+        if (m_inputDevice)
+            delete m_inputDevice;
+    }
 
-    m_playState = state_stop;
-    this->m_input->stop();
-    this->requestInterruption();
-    msleep(100);
-    delete m_input;
-    delete m_inputDevice;
-    delete m_connector;
 }
 
 void AudioCollector::setInputDevice(QAudioDeviceInfo info)
 {
+    qDebug() << "asd" << endl;
     QMutexLocker locker(&m_mutex);
     this->m_input->stop();
     delete m_input;

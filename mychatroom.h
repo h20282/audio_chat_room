@@ -78,6 +78,8 @@ public:
 
     void clearQuitRoomInfo(QString name);
 
+    void releaseSource();
+
     QByteArray GetMD5(QString str);
 
     ~MyChatRoom();
@@ -207,7 +209,6 @@ private:
     registerWin *m_register;
 
     QMyTcpClient *m_tcp_client;
-    UdpNet *m_udp_client;
     IMToolItem *m_userList;
 
     QTimer* timer;

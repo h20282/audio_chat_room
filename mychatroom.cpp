@@ -143,6 +143,42 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
     }
 }
 
+void MyChatRoom::releaseSource()
+{
+    if (m_audio_device) {
+        delete m_audio_device;
+        m_audio_device = nullptr;
+    }
+    if (m_audioRead) {
+        delete m_audioRead;
+        m_audioRead = nullptr;
+    }
+    if (timer) {
+        delete timer;
+        timer = nullptr;
+    }
+    if (m_tcp_client) {
+        delete m_tcp_client;
+        m_tcp_client = nullptr;
+    }
+    if (m_roomdialog) {
+        delete m_roomdialog;
+        m_roomdialog = nullptr;
+    }
+    if (m_room_widget) {
+        delete m_room_widget;
+        m_room_widget = nullptr;
+    }
+    if (m_login) {
+        delete m_login;
+        m_login = nullptr;
+    }
+    if (m_register) {
+        delete m_register;
+        m_register = nullptr;
+    }
+}
+
 QByteArray MyChatRoom::GetMD5(QString str)
 {
     QByteArray md5 = QCryptographicHash::hash(str.toLatin1(), QCryptographicHash::Md5);
@@ -178,7 +214,6 @@ void MyChatRoom::SLOT_loginSubmit(QString name, QString passwd)
     //QByteArray ba = GetMD5(passwd);
     QByteArray ba = passwd.toUtf8();
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
-    //rq.m_time = std::chrono::steady_clock::now();
 
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
@@ -862,6 +897,12 @@ void MyChatRoom::on_pb_close_clicked()
 {
     if (QMessageBox::question(this, "提示", "是否退出应用?") == QMessageBox::Yes)
     {
+        StructOffLineRequest rq;
+        rq.m_user_id = this->m_user_id;
+        m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
+
+        clearQuitRoomInfo(this->m_user_name);
+        releaseSource();
         this->close();
     }
 }

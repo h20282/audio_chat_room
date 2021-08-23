@@ -16,20 +16,6 @@ CONFIG += c++11 resources_big
 DEFINES += QT_DEPRECATED_WARNINGS
 LIBS += -lWs2_32
 
-INCLUDEPATH += ../ffmpeglib/include
-LIBS += ../ffmpeglib/lib/avcodec.lib  \
-
-        ../ffmpeglib/lib/avdevice.lib  \
-
-        ../ffmpeglib/lib/avfilter.lib  \
-
-        ../ffmpeglib/lib/avformat.lib  \
-
-        ../ffmpeglib/lib/avutil.lib  \
-
-        ../ffmpeglib/lib/swresample.lib  \
-
-        ../ffmpeglib/lib/swscale.lib
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.

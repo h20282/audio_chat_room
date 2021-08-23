@@ -2,7 +2,7 @@
  * @Author: FengYanBin
  * @Date: 2021-08-09 11:19:42
  * @LastEditors: FengYanBin
- * @LastEditTime: 2021-08-20 19:53:10
+ * @LastEditTime: 2021-08-23 10:50:02
  * @Description: file content
  * @FilePath: \sql\net_api\udp_net.cpp
  */
@@ -75,13 +75,13 @@ void UdpNet::onUdpReadyRead()
     {
         static char buff[sizeof(Msg) + 128];
         auto recvLen = m_udpSocket->readDatagram(buff, sizeof(buff));
-        qDebug() << "recvLen = " << recvLen << endl;
+        //qDebug() << "recvLen = " << recvLen << endl;
 
         //没有静音
         if (buff[0] == 'F')
         {
 #ifndef CODEC
-            qDebug() << "收到了" << endl;
+            //qDebug() << "收到了" << endl;
             emit SIG_oneMsgReady(*reinterpret_cast<Msg *>(buff + 1));
 #endif
 #ifdef CODEC
@@ -116,9 +116,7 @@ void UdpNet::onUdpReadyRead()
             msg.frame.len = pcm_len;                   // pcm帧长度
             memcpy(msg.frame.buff, pcm_buff, pcm_len); // pcm数据
 
-
             emit SIG_oneMsgReady(*reinterpret_cast<Msg *>(buff + 1));
-
 
             delete pcm_buff;
 #endif
@@ -181,16 +179,16 @@ void UdpNet::onAudioFrameReady(AudioFrame frame)
 #endif
 
 #ifndef CODEC
-        qDebug() << "发送音频" << endl;
-        char buff[1 + 4 + 16 + sizeof(AudioFrame)];
-        memset(buff, 0, sizeof(buff));
-        //qDebug() << "我当前静音状态m_isMuted=" << m_isMuted << endl;
-        buff[0] = m_isMuted ? 'f' : 'F';
-        *reinterpret_cast<int *>(buff + 1) = m_roomId;
-        memcpy(buff + 1 + 4, g_userName.toLatin1().data(), g_userName.size());
-        memcpy(buff + 1 + 4 + 16, &frame, sizeof(AudioFrame));
+    //qDebug() << "发送音频" << endl;
+    char buff[1 + 4 + 16 + sizeof(AudioFrame)];
+    memset(buff, 0, sizeof(buff));
+    //qDebug() << "我当前静音状态m_isMuted=" << m_isMuted << endl;
+    buff[0] = m_isMuted ? 'f' : 'F';
+    *reinterpret_cast<int *>(buff + 1) = m_roomId;
+    memcpy(buff + 1 + 4, g_userName.toLatin1().data(), g_userName.size());
+    memcpy(buff + 1 + 4 + 16, &frame, sizeof(AudioFrame));
 
-        m_udpSocket->writeDatagram(buff, m_isMuted ? (1 + 4 + 16) : sizeof(buff), m_destaddr, kUdpServerPort);
+    m_udpSocket->writeDatagram(buff, m_isMuted ? (1 + 4 + 16) : sizeof(buff), m_destaddr, kUdpServerPort);
 
 #endif
 }

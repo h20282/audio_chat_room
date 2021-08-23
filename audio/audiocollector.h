@@ -87,7 +87,7 @@ private:
     AudioPlayer         m_player;
     AudioSynthesizer    m_synthesizer;
 
-    bool is_first_connect;
+    bool is_first_connect = false;
 
     QMutex m_mutex;
 

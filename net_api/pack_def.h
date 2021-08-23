@@ -24,8 +24,8 @@ const int DEF_PACK_COUNT = 100;
 const unsigned short kServerPort = 9527;        //tcp和udp公用一个端口并不影响，这里只代表tcp
 const int kUdpServerPort = 9528;
 
-const QString kServerIp = "119.91.116.26";
-//const QString kServerIp = "192.168.201.129";
+//const QString kServerIp = "119.91.116.26";
+const QString kServerIp = "192.168.201.129";
 
 typedef enum NetPACKDef
 {  
@@ -105,7 +105,7 @@ const int AUDIO_SAM_COUNT = 2;
 #define AUDIO_FRAME_LEN AUDIO_SAM_RATE*AUDIO_SAM_SIZE*AUDIO_SAM_COUNT/8/25  // 1/25s(0.04s)的音频数据
 
 //定时器刷新心跳检测时间
-const int kHeartDetectTime = 30000;
+const int kHeartDetectTime = 10000;
 
 
 
@@ -384,6 +384,20 @@ typedef struct StructQuitRoomResponse
     char szUserName[kMaxSize];
 
 } StructQuitRoomResponse;
+
+//下线请求
+typedef struct StructOffLineRequest
+{
+    StructOffLineRequest()
+    {
+        m_pack_type = kPackOfflineRequest;
+        m_user_id = 0;
+        memset(szUserName, 0, kMaxSize);
+    }
+    PackType m_pack_type; //包类型
+    int m_user_id;        //用户ID
+    char szUserName[kMaxSize];
+} StructOffLineRequest;
 
 //静音某人请求
 typedef struct StructMuteUserRequest
