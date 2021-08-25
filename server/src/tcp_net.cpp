@@ -14,7 +14,8 @@ int TcpNet::InitNetWork()
         return false;
     }
     serveraddr.sin_port = htons(kServerPort);
-    //创建Socket
+	cout << "port=" << kServerPort << endl;
+	//创建Socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror("Create Socket Error!");

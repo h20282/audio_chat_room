@@ -6,7 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-//#include <pthread.h>
 #include <time.h>
 #include <map>
 #include <utility>
@@ -47,7 +46,7 @@ ostream &operator<<(ostream &out, Addr a)
 
 int main()
 {
-    //      freopen("log.txt", "w", stdout);
+	freopen("log.txt", "w", stdout);
     int server_fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (server_fd < 0)
     {
@@ -71,7 +70,6 @@ int main()
     char buf[BUFF_LEN];
     struct sockaddr_in addr_client;
     socklen_t sock_len = sizeof(addr_client);
-    cout << "sock_len = " << sock_len << endl;
 
     while (true)
     {
@@ -89,8 +87,6 @@ int main()
             break;
         }
 
-        //              if ( rand()%10==1 ) {
-        //                      /*
         for (int i = 0; i < recv_cnt; i++)
         {
             if (i % 16 == 0)
@@ -100,10 +96,7 @@ int main()
             printf("%d\t", buf[i]);
         }
         cout << endl;
-        //                      */
-        //              }
 
-        //              for ( int i=0; i<1; i++){
         int sendret = sendto(server_fd, buf, recv_cnt, 0,
                              (struct sockaddr *)&addr_client, sock_len);
         cout << "sendret = " << sendret << endl;

@@ -24,6 +24,7 @@ int CMysql::ConnectMysql(char *server, char *user, char *password, char *databas
 int CMysql::SelectMysql(char *szSql, int nColumn, list<string> &lst)
 {
     results = NULL;
+	mysql_query(conn, "set names utf8");
     if (mysql_query(conn, szSql))
         return false;
     results = mysql_store_result(conn);
@@ -35,7 +36,6 @@ int CMysql::SelectMysql(char *szSql, int nColumn, list<string> &lst)
         for (int i = 0; i < nColumn; i++)
         {
             lst.push_back(record[i]);
-            //     q_Push(pQueue,(void*)record[i]);
         }
     }
     return true;
