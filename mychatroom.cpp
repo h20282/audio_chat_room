@@ -660,12 +660,12 @@ void MyChatRoom::DealtransferOneUserResponse(char *buf, int len)
         this->m_room_owener_id = rs->transfer_user_id;
         m_roomdialog->setRoomOwner(rs->transferUserName);
     }
-//    else
-//    {
-//        QMessageBox::information(this, "提示", "当前房主已经更改，位于列表第一位！");
-//        this->m_room_owener_id = rs->transfer_user_id;
-//        m_roomdialog->setRoomOwner(rs->transferUserName);
-//    }
+    else
+    {
+        //QMessageBox::information(this, "提示", "当前房主已经更改，位于列表第一位！");
+        this->m_room_owener_id = rs->transfer_user_id;
+        m_roomdialog->setRoomOwner(rs->transferUserName);
+    }
 }
 
 void MyChatRoom::Dealkick_out_ofOneUserResponse(char *buf, int len)

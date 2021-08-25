@@ -92,9 +92,10 @@ AudioFrame AudioSynthesizer::synthese() {
 QList<QString> AudioSynthesizer::getUserList(){
     QList<QString> ret;
 //    QMutexLocker locker(&m_mutex);
-    for ( auto iter=m_queues.begin(); iter!=m_queues.end(); iter++ ) {
+    for ( auto iter=m_lastOnlineTime.begin(); iter!=m_lastOnlineTime.end(); iter++ ) {
         QString name = iter.key();
-        if (time(nullptr)-m_lastOnlineTime[name]<1){
+        auto lastTime = iter.value();
+        if (time(nullptr)-lastTime < 2) {
             ret.push_back(name);
         }
     }
