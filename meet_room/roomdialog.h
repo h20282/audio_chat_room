@@ -40,6 +40,7 @@ public:
     QVBoxLayout* getuserListLayout();
     Ui::RoomDialog *getUi() const;
     void initUi();
+    void reCheckInputDevice(); // 重新检测输入设备
 
 signals:
     void SIG_quitRoomSubmit();
@@ -50,6 +51,7 @@ signals:
     void SIG_closeAudio();
     void SIG_closeVideo();
     void SIG_refreshUserList();
+    void SIG_setInputDevice(QAudioDeviceInfo deviceInfo);
 
 private slots:
     void on_pb_min_clicked();
@@ -62,6 +64,10 @@ private slots:
     void on_pb_unmute_clicked();
     void on_pb_setting_clicked();
     void on_pb_userlist_clicked();
+
+    void on_reCheckBtn_clicked();
+
+    void on_audioInputComboBox_activated(const QString &arg1);
 
 private:
     Ui::RoomDialog *ui;

@@ -6,6 +6,7 @@ RoomDialog::RoomDialog(QWidget *parent) : CustomMoveDialog(parent),
                                           ui(new Ui::RoomDialog), m_roomid(123456)
 {
     ui->setupUi(this);
+    this->reCheckInputDevice();
     //initUi();
 }
 
@@ -40,6 +41,16 @@ void RoomDialog::initUi()
     //    layout->addWidget(listwidget);
     //    layout->setContentsMargins(0, 0, 0, 0);
     //    setLayout(layout);
+}
+
+void RoomDialog::reCheckInputDevice(){
+    ui->audioInputComboBox->clear();
+
+    QAudioDeviceInfo info;
+    for (auto curr_info : QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+        qDebug() << curr_info.deviceName();
+        ui->audioInputComboBox->addItem(curr_info.deviceName());
+    }
 }
 
 //最小化
@@ -217,3 +228,20 @@ void RoomDialog::on_pb_userlist_clicked()
     emit SIG_refreshUserList();
 }
 
+
+void RoomDialog::on_reCheckBtn_clicked()
+{
+    this->reCheckInputDevice();
+}
+
+void RoomDialog::on_audioInputComboBox_activated(const QString &name)
+{
+    for (auto curr_info : QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+        if ( curr_info.deviceName() == name ) {
+            emit SIG_setInputDevice(curr_info);
+            QMessageBox::information(this, "设置成功", "已设置为：" + name);
+            return;
+        }
+    }
+    QMessageBox::information(this, "设置失败", "未找到输入设备：" + name + "，请点击“检测”");
+}

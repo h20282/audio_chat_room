@@ -590,6 +590,9 @@ void MyChatRoom::JoinRoom() {
     m_chat = new AudioChat();
     m_chat->joinRoom(this->m_user_name, this->m_room_num);
 
+    QObject::connect(m_roomdialog, &RoomDialog::SIG_setInputDevice, [this](QAudioDeviceInfo deviceInfo){
+        m_chat->setInputDevice(deviceInfo);
+    });
 
     QObject::connect(m_chat, &AudioChat::sig_userListReady, [this](QList<QString> list){
           userListModel.clear();
