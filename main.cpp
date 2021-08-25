@@ -28,8 +28,6 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-
-
     QFile file(":/qss/default.css");
     file.open(QIODevice::ReadOnly);
     qApp->setStyleSheet( file.readAll());

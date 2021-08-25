@@ -31,7 +31,6 @@ LOGIN::~LOGIN()
 
 void LOGIN::on_ButtonLogin_clicked()
 {
-    //qDebug() << "发出登录请求！" << endl;
     QString Username_tmp = ui->lineEditName->text();
     QString Password_tmp = ui->lineEditPassword->text();
 
@@ -46,6 +45,5 @@ void LOGIN::on_ButtonRegister_clicked()
 
 void LOGIN::on_ButtonPass_clicked()
 {
-    qDebug() <<"skip" << endl;
     emit SIG_SkipLogin();
 }

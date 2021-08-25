@@ -39,17 +39,13 @@ public:
     void setPb_openAudioText();
     QVBoxLayout* getuserListLayout();
     Ui::RoomDialog *getUi() const;
-    void initUi();
     void reCheckInputDevice(); // 重新检测输入设备
 
 signals:
     void SIG_quitRoomSubmit();
     void SIG_unMute();
-    void SIG_setAudio();
     void SIG_openAudio();
-    void SIG_openVideo();
     void SIG_closeAudio();
-    void SIG_closeVideo();
     void SIG_refreshUserList();
     void SIG_setInputDevice(QAudioDeviceInfo deviceInfo);
 
@@ -59,14 +55,10 @@ private slots:
     void on_pb_close_clicked();
     void clear();
     void on_pb_openAudio_clicked();
-    void on_pb_openVideo_clicked();
     void on_pb_max_clicked();
     void on_pb_unmute_clicked();
-    void on_pb_setting_clicked();
     void on_pb_userlist_clicked();
-
     void on_reCheckBtn_clicked();
-
     void on_audioInputComboBox_activated(const QString &arg1);
 
 private:

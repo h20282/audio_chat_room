@@ -40,7 +40,6 @@ SOURCES += \
 HEADERS += \
     mainwindow.h \
     mychatroom.h \
-    useritem.h \
 
 FORMS += \
     mainwindow.ui \

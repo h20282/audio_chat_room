@@ -55,32 +55,19 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
     connect(m_roomdialog, SIGNAL(SIG_refreshUserList()), this, SLOT(SLOT_refreshUserList()));
     connect(m_roomdialog, SIGNAL(SIG_quitRoomSubmit()), this, SLOT(SLOT_quitRoomSubmit()));
     connect(m_roomdialog, SIGNAL(SIG_unMute()), this, SLOT(SLOT_UnMute()));
-    connect(m_roomdialog, SIGNAL(SIG_setAudio()), this, SLOT(SLOT_AudioSetting()));
     connect(m_user_list_widget, SIGNAL(SIG_muteUser(int)), this, SLOT(SLOT_MuteOneUser(int)));
-    connect(m_user_list_widget, SIGNAL(SIG_closeVolumn(QString)), this, SLOT(SLOT_closeVolumn(QString)));
-    connect(m_user_list_widget, SIGNAL(SIG_unBlock(QString)), this, SLOT(SLOT_unBlock(QString)));
     connect(m_user_list_widget, SIGNAL(SIG_transferUser(int)), this, SLOT(SLOT_transferOneUser(int)));
     connect(m_user_list_widget, SIGNAL(SIG_kick_out_ofUser(int)), this, SLOT(SLOT_kick_out_ofOneUser(int)));
-    connect(m_user_list_widget, SIGNAL(SIG_adjustVolumnUser(int)), this, SLOT(SLOT_AdjustUserVolume(int)));
-
-    //创建音频采集,TODO，this对不对，还是m_roomDialog。
-//    m_audio_device = new AudioTest();
-
 
     //客户端处理加入房间和创建房间请求
     connect(m_room_widget, SIGNAL(SIG_joinRoom(int)), SLOT(SLOT_joinRoomSubmit(int)));
     connect(this, SIGNAL(SIG_joinRoomSubmit(int)), SLOT(SLOT_joinRoomSubmit(int)));
     connect(this, SIGNAL(SIG_createRoomSubmit(int)), this, SLOT(SLOT_createRoomSubmit(int)));
     connect(this, SIGNAL(SIG_RefreshRoomList()), this, SLOT(SLOT_RefreshRoomList()));
-
-//    connect(m_audio_device, SIGNAL(SIG_devicedChanged(QList<QAudioDeviceInfo>)), this, SLOT(SLOT_devicedChanged(QList<QAudioDeviceInfo>)));
-
-
 }
 
 void MyChatRoom::InitRoomDialogUi()
 {
-
     m_user_list_widget = new UserListWidget(m_roomdialog);
     QPoint globalPos = m_roomdialog->mapToGlobal(QPoint(0, 0));
     m_user_list_widget->move(globalPos.x() + 480, globalPos.y() + 88);
@@ -120,11 +107,9 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
     //用户列表清空
     this->m_user_list_widget->clear();
     //退出房间后音频也关闭
-    if (m_chat )
+    if (m_chat)
     {
         delete m_chat;
-//        delete m_audioRead;
-//        m_audioRead = nullptr;
     }
     m_roomdialog->setPb_openAudioText();
 
@@ -144,10 +129,6 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
 
 void MyChatRoom::releaseSource()
 {
-//    if (m_audio_device) {
-//        delete m_audio_device;
-//        m_audio_device = nullptr;
-//    }
     if (m_chat) {
         delete m_chat;
         m_chat = nullptr;
@@ -193,10 +174,7 @@ void MyChatRoom::HeartDetect()
 {
     qDebug() << "heart!" << endl;
     StructHeartDetectRequest rq;
-    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-    rq.m_time = t1;
     rq.m_user_id = m_user_id;
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
 
@@ -210,10 +188,9 @@ void MyChatRoom::SLOT_loginSubmit(QString name, QString passwd)
     this->m_user_name = name;
     strcpy_s(rq.m_user_name, buf);
 
-    //QByteArray ba = GetMD5(passwd);
-    QByteArray ba = passwd.toUtf8();
+    //QByteArray ba = passwd.toUtf8();
+    QByteArray ba = GetMD5(passwd);
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
 
@@ -226,10 +203,9 @@ void MyChatRoom::SLOT_registerSubmit(QString name, QString passwd)
     char *buf = const_cast<char *>(strTmp.c_str());
     strcpy_s(rq.m_user_name, buf);
 
-    //QByteArray ba = GetMD5(passwd);
-    QByteArray ba = passwd.toUtf8();
+    //QByteArray ba = passwd.toUtf8();
+    QByteArray ba = GetMD5(passwd);
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
 
@@ -250,10 +226,8 @@ void MyChatRoom::SLOT_SkipLogin()
     this->m_user_name = "davy";
 
     QString passwd = "123";
-    //QByteArray ba = GetMD5(passwd);
     QByteArray ba = passwd.toUtf8();
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
     m_login->close();
     this->show();
@@ -265,7 +239,6 @@ void MyChatRoom::SLOT_createRoomSubmit(int user_id)
     //发送给服务器
     StructCreateRoomRequest rq;
     rq.m_user_id = user_id;
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
 
@@ -276,10 +249,7 @@ void MyChatRoom::SLOT_joinRoomSubmit(int room_num)
     StructJoinRoomRequest rq;
     rq.m_user_id = this->m_user_id;
     rq.m_room_id = room_num;
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
-
-    //udp连接，进入房间后选择打开音频
 }
 
 void MyChatRoom::SLOT_quitRoomSubmit()
@@ -290,7 +260,6 @@ void MyChatRoom::SLOT_quitRoomSubmit()
     StructQuitRoomRequest rq;
     rq.m_user_id = m_user_id;
     rq.m_room_id = m_room_num;
-
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 
     //退出房间，暂停声音
@@ -299,14 +268,6 @@ void MyChatRoom::SLOT_quitRoomSubmit()
         delete m_chat;
         m_chat = nullptr;
     }
-
-    //销毁声音播放
-    //    for (auto it = m_mapIDToAudioWrite.begin(); it != m_mapIDToAudioWrite.end();)
-    //    {
-    //        delete *it;
-    //        //清空map
-    //        it = m_mapIDToAudioWrite.erase(it);
-    //    }
     m_room_num = 0;
     m_roomdialog->close();
     this->show();
@@ -325,7 +286,6 @@ void MyChatRoom::SLOT_openAudio()
 {
     if (m_chat)
     {
-//        m_audioRead->ResumeAudio(m_device_info);
         m_chat->setIsMuted(false);
     }
 }
@@ -337,35 +297,6 @@ void MyChatRoom::SLOT_closeAudio()
     {
         m_chat->setIsMuted(true);
     }
-}
-
-void MyChatRoom::SLOT_sendAudioData(QByteArray ba)
-{
-    ///音频数据帧
-    /// 成员描述
-    /// int type;
-    /// int userId;
-    /// int roomId;
-    /// QByteArray audioFrame;
-    /// q
-    // qDebug() << "发送音频数据！" << endl;
-    int nlen = ba.size() + 12;
-    char *buf = new char[nlen];
-    char *tmp = buf;
-
-    *(int *)tmp = kPackAudioQequest;
-    tmp += sizeof(int);
-
-    *(int *)tmp = m_user_id;
-    tmp += sizeof(int);
-
-    *(int *)tmp = m_room_num;
-    tmp += sizeof(int);
-
-    memcpy(tmp, ba.data(), ba.size());
-
-    m_tcp_client->SendData(buf, nlen);
-    delete[] buf;
 }
 
 void MyChatRoom::SLOT_UnMute()
@@ -439,41 +370,6 @@ void MyChatRoom::SLOT_kick_out_ofOneUser(int kick_user_id)
 
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 }
-
-void MyChatRoom::SLOT_AdjustUserVolume(int adjust_user_id)
-{
-}
-
-void MyChatRoom::SLOT_closeVolumn(QString name)
-{
-    std::string str = name.toStdString();
-    QMessageBox::information(this, "提示", QString("该用户已经被您屏蔽！"));
-}
-
-void MyChatRoom::SLOT_unBlock(QString name)
-{
-    QMessageBox::information(this, "提示", QString("解除对该用户的屏蔽！"));
-}
-
-void MyChatRoom::SLOT_AudioSetting()
-{
-    //TODO:弹出设置界面
-//    m_audio_device->show();
-}
-
-//void MyChatRoom::SLOT_devicedChanged(QList<QAudioDeviceInfo> audio_list)
-//{
-//    QString device_name = m_audio_device->GetCurrentDevice();
-//    qDebug() << "当前设备名称：" << device_name << endl;
-//    QAudioDeviceInfo info;
-//    for (auto it = audio_list.begin(); it != audio_list.end(); ++it) {
-//        if ((*it).deviceName() == device_name)
-//            info = (*it);
-//    }
-//    m_device_info = info;
-//    if (m_audioRead)
-//        m_audioRead->ResumeAudio(info);
-//}
 
 void MyChatRoom::SLOT_refreshUserList()
 {
@@ -831,10 +727,6 @@ void MyChatRoom::Dealkick_out_ofOneUserResponse(char *buf, int len)
     }
 }
 
-void MyChatRoom::DealAdjustUserVolumeResponse(char *buf, int len)
-{
-}
-
 void MyChatRoom::DealUnmuteQequest(char *buf, int len)
 {
     qDebug() << "接收解除静音回复！" << endl;
@@ -852,14 +744,6 @@ void MyChatRoom::DealUnmuteQequest(char *buf, int len)
     {
         QMessageBox::information(this, "提示", QString("用户：%1解除静音").arg(rs->szUserName));
     }
-}
-
-//void MyChatRoom::DealForceQuitRoom(char *buf, int len)
-//{
-//}
-
-void MyChatRoom::DealClientQuitResponse(char *buf, int len)
-{
 }
 
 void MyChatRoom::DealJumpToRegisterInterface()

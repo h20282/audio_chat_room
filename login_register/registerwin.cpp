@@ -26,7 +26,6 @@ registerWin::~registerWin()
 
 void registerWin::on_ButtonRegister_clicked()
 {
-
     QString Username_register=ui->lineEditName->text();
     QString Password_register=ui->lineEditNew->text();
     QString Password_ensure=ui->lineEditEnsure->text();
@@ -48,8 +47,6 @@ void registerWin::on_ButtonRegister_clicked()
 
     emit SIG_registerSubmit(Username_register, Password_register);
 }
-
-
 
 void registerWin::on_ButtonQuit_clicked()
 {

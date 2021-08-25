@@ -27,6 +27,12 @@ const int kUdpServerPort = 9528;
 const QString kServerIp = "119.91.116.26";
 //const QString kServerIp = "192.168.201.129";
 
+//定时器刷新心跳检测时间
+const int kHeartDetectTime = 2000;
+
+const int kMaxSize          = 60;
+typedef int PackType;
+
 typedef enum NetPACKDef
 {  
     kPackRegisterQequest = 10000,
@@ -64,17 +70,8 @@ typedef enum NetPACKDef
     kPackKickOutOfUserQequest,
     kPackKickOutOfUserQesponse,
 
-    kPackAdjustUserVolumeQequest,
-    kPackAdjustUserVolumeQesponse,
-
     kPackOfflineRequest,
     kPackOfflineQesponse,
-
-    kPackAudioQequest,
-    kPackAudioQesponse,
-
-    kPackVideoQequest,
-    kPackVideoQesponse,
 
     kPackHeartDetect,
 } Net_PACK;
@@ -96,44 +93,6 @@ const int kCreateSuccess   = 1;
 //加入房间结果
 const int kRoomNotExist    = 0;
 const int kJoinSuccess     = 1;
-
-
-//定时器刷新心跳检测时间
-const int kHeartDetectTime = 2000;
-
-
-
-//上传请求结果
-#define file_is_exist        0
-#define file_uploaded        1
-#define file_uploadrq_sucess 2
-#define file_upload_refuse   3
-
-//上传回复结果
-#define fileblock_failed     0
-#define fileblock_success    1
-
-//下载请求结果
-#define file_downrq_failed   0
-#define file_downrq_success  1
-
-#define _downloadfileblock_fail  0
-#define _downloadfileblock_success	1
-
-const int kMaxPath          = 260;
-const int kMaxSize          = 60;
-const int kHobbyCount       = 8;
-const int kMaxContentLength = 4096;
-
-/////////////////////网络//////////////////////////////////////
-
-
-const int kMaxBuffer        = 1024;
-const int kBufferSize	    = 4096;
-
-typedef int PackType;
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //登录请求
@@ -265,8 +224,6 @@ typedef struct StructJoinRoomResponse
     char m_join_name[kMaxSize];
 }StructJoinRoomResponse;
 
-
-
 //房间成员头部请求
 typedef struct StructRoomMemberHeaderResponse
 {
@@ -348,7 +305,6 @@ typedef struct StructRoomListResponse
     int m_room_num;
     char m_owner_name[kMaxSize];
 } StructRoomListResponse;
-
 
 //退出房间请求
 typedef struct StructQuitRoomRequest
@@ -567,8 +523,4 @@ typedef struct UserInfo
     bool is_muted;              //是否被静音
     char m_user_name[kMaxSize];
 } UserInfo;
-
-
-
-
 #endif

@@ -305,20 +305,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pb_openVideo">
-        <property name="text">
-         <string>关闭视频</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pb_setting">
-        <property name="text">
-         <string>设置</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="pb_unmute">
         <property name="text">
          <string>解除静音</string>

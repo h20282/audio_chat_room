@@ -31,8 +31,6 @@
 
 #include "audio/AudioChat.h"
 
-
-
 #include <QWidget>
 #include <QDebug>
 #include <QMessageBox>
@@ -47,7 +45,6 @@
 
 #include <QMap>
 #include <map>
-#include <unordered_set>
 #include <string.h>
 #include <list>
 #include <QList>
@@ -94,16 +91,10 @@ public slots:
     void SLOT_RefreshRoomList();    //刷新房间列表槽函数
     void SLOT_openAudio();      //打开声音
     void SLOT_closeAudio();     //关闭声音
-    void SLOT_sendAudioData(QByteArray ba);            //
     void SLOT_UnMute(); //用户自己被房主静音，解除静音。
     void SLOT_MuteOneUser(int mute_user_id); //关闭房间内指定用户的声音
     void SLOT_transferOneUser(int transfer_user_id); //转让房主
     void SLOT_kick_out_ofOneUser(int kick_user_id);  //踢人
-    void SLOT_AdjustUserVolume(int adjust_user_id); //调节房间内指定用户的音量
-    void SLOT_closeVolumn(QString name);         //用户关闭某人声音
-    void SLOT_unBlock(QString name);             //用户恢复某人声音
-    void SLOT_AudioSetting();               //用户声音设置
-//    void SLOT_devicedChanged(QList<QAudioDeviceInfo> audio_list);             //用户音频设备改变
     void SLOT_refreshUserList();        //刷新用户列表
     void SLOT_dealClientData(char* buf, int len); //客户端收到可读信号，触发SLOT_dealClientData槽函数，其中封装了下面的登录、注册等等各个槽函数。可用策略模式完成。
     void DealLoginResponse(char* buf, int len); //接收服务端的登录回复
@@ -118,11 +109,7 @@ public slots:
     void DealMuteOneUserResponse(char* buf, int len);  //静音用户回复
     void DealtransferOneUserResponse(char* buf, int len);                 //转让房主回复
     void Dealkick_out_ofOneUserResponse(char* buf, int len);              //踢人回复 如果被踢的是自己，则退出房间
-    void DealAdjustUserVolumeResponse(char* buf, int len);                //调节音量回复
     void DealUnmuteQequest(char* buf, int len);   //静音,客户端实现
-    //void DealAudioData(char* buf, int len); //接收服务端发来的数据进行混音等操作，调用音频处理模块的SLOT_PlayAudio()。
-//    void DealForceQuitRoom(char* buf, int len); //处理服务端发来的踢人处理结果,判断是否是自己。是自己调用退出房间函数。
-    void DealClientQuitResponse(char* buf, int len); //服务器向客户端发出某个客户端退出信号,在槽函数中处理，将客户端在线列表中的退出用户清除。
     void DealJumpToRegisterInterface();
 
 private slots:
@@ -160,15 +147,10 @@ private:
 
     std::unordered_set<std::string> m_user_list;        //当前房间用户列表
 
-//    AudioRead *m_audioRead;
-//    AudioCollector* m_audioRead;
     AudioChat *m_chat;
     AudioLevel m_level;
-//    AudioTest* m_audio_device;
 
     QStandardItemModel userListModel;
-//    AudioCollector m_chater;
-//    AudioLevel m_level;
 
     QMap<QString, UserWidget*> m_userWidegets;
 

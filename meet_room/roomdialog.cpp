@@ -7,40 +7,11 @@ RoomDialog::RoomDialog(QWidget *parent) : CustomMoveDialog(parent),
 {
     ui->setupUi(this);
     this->reCheckInputDevice();
-    //initUi();
 }
 
 RoomDialog::~RoomDialog()
 {
     delete ui;
-}
-
-void RoomDialog::initUi()
-{
-    //    QPoint globalPos = this->mapToGlobal(QPoint(0, 0));
-    //    listwidget = new UserListWidget(this);
-    //    listwidget->move(globalPos.x() + 200, globalPos.y() + 80);
-    //    listwidget->setIconSize(QSize(50, 50));  //设置item图标大小
-    //    listwidget->setFocusPolicy(Qt::NoFocus);  //这样可禁用tab键和上下方向键并且除去复选框
-    //    listwidget->setFixedHeight(400);
-    //    listwidget->setFixedWidth(300);
-    //    listwidget->setFont(QFont("宋体", 10, QFont::DemiBold));
-    //    listwidget->setStyleSheet("*{outline:0px;}");
-    //    listwidget->setStyleSheet("QListWidget{background:rgb(245, 245, 247); border:0px; margin:0px 0px 0px 0px;}");
-    //    listwidget->setStyleSheet("QListWidget::Item{height:40px; border:0px; padding-left:14px; color:rgba(200, 40, 40, 255);}");
-    //    listwidget->setStyleSheet("QListWidget::Item:hover{color:rgba(40, 40, 200, 255);}");
-    //    listwidget->setStyleSheet("QListWidget::Item:selected{background:rgb(230, 231, 234); color:rgba(40, 40, 200, 255); border-left:4px solid rgb(180, 0, 0);}");
-    //    listwidget->setStyleSheet("QListWidget::Item:selected:active{background:rgb(230, 231, 234); color:rgba(40, 40, 200, 255); border-left:4px solid rgb(180, 0, 0);}");
-
-    //    UserListWidgetItem *item = new UserListWidgetItem(listwidget);
-    //    item->setSizeHint(QSize(50, 50));
-    //    item->setText("textasfafas");
-
-    //    QVBoxLayout *layout = new QVBoxLayout(this);
-    //    layout->setSpacing(0);
-    //    layout->addWidget(listwidget);
-    //    layout->setContentsMargins(0, 0, 0, 0);
-    //    setLayout(layout);
 }
 
 void RoomDialog::reCheckInputDevice(){
@@ -71,10 +42,6 @@ void RoomDialog::on_pb_quitRoom_clicked()
     {
         return;
     }
-    //    //清空控件
-    //    clear();
-    //    this->close();
-
     //发信号
     emit SIG_quitRoomSubmit();
 }
@@ -89,7 +56,6 @@ void RoomDialog::on_pb_close_clicked()
 void RoomDialog::clear()
 {
     ui->pb_openAudio->setText("打开音频");
-    ui->pb_openVideo->setText("打开视频");
     ui->lb_tittle->setText("房间号:---");
     ui->lb_name->setText("用户名:---");
     ui->lb_owner->setText("房主名：---");
@@ -116,26 +82,6 @@ void RoomDialog::on_pb_openAudio_clicked()
     }
 }
 
-//打开视频
-void RoomDialog::on_pb_openVideo_clicked()
-{
-    if (0 == m_roomid)
-    {
-        QMessageBox::about(this, "提示", "先加入房间");
-        return;
-    }
-
-    if (ui->pb_openVideo->text() == "打开视频")
-    {
-        emit SIG_openVideo();
-        ui->pb_openVideo->setText("关闭视频");
-    }
-    else
-    {
-        emit SIG_closeVideo();
-        ui->pb_openVideo->setText("打开视频");
-    }
-}
 
 Ui::RoomDialog *RoomDialog::getUi() const
 {
@@ -200,28 +146,11 @@ void RoomDialog::on_pb_max_clicked()
     this->slot_showMax();
 }
 
-//void RoomDialog::contextMenuEvent ( QContextMenuEvent * event )
-//{
-//    QMenu* popMenu = new QMenu(listwidget);
-//    popMenu->addAction(new QAction("添加", this));
-//    popMenu->addAction(new QAction("删除", this));
-//    if(listwidget->itemAt(mapFromGlobal(QCursor::pos())) != NULL) //如果有item则添加"修改"菜单 [1]*
-//    {
-//        popMenu->addAction(new QAction("修改", this));
-//    }
-
-//    popMenu->exec(QCursor::pos()); // 菜单出现的位置为当前鼠标的位置
-//}
-
 void RoomDialog::on_pb_unmute_clicked()
 {
     emit SIG_unMute();
 }
 
-void RoomDialog::on_pb_setting_clicked()
-{
-    emit SIG_setAudio();
-}
 
 void RoomDialog::on_pb_userlist_clicked()
 {

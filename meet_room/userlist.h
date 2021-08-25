@@ -49,14 +49,6 @@ signals:
 
     void SIG_kick_out_ofUser(int);
 
-    void SIG_adjustVolumnUser(int);
-
-    void SIG_closeVolumn(QString);
-
-    void SIG_unBlock(QString);
-
-
-
 private slots:
     void updateSelectedIcon();
 
@@ -65,12 +57,6 @@ private slots:
     void transferItem();
 
     void kick_out_of_roomItem();
-
-    void adjustVolumnItem();
-
-    void closeVolumn();
-
-    void unBlock();
 };
 
 class RoomListWidget : public QListWidget
@@ -104,9 +90,6 @@ private slots:
     void updateSelectedIcon();
 
     void joinItem();
-
 };
-
-
 
 #endif // USERLIST_H

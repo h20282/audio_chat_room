@@ -3,7 +3,6 @@
 UserListWidget::UserListWidget(QWidget *parent) :
     QListWidget(parent)
 {
-    //mouseMoveEvent(QMouseEvent *event);//需要该属性
     setMouseTracking(true);
    // 当前被选中项发生变化时，触发item图标的更新
     connect(this, &UserListWidget::itemSelectionChanged, this, &UserListWidget::updateSelectedIcon);
@@ -45,11 +44,7 @@ void UserListWidget::contextMenuEvent(QContextMenuEvent *event)
             popMenu->addAction("静音用户", this, SLOT(muteItem()));
             popMenu->addAction("转让房主", this, SLOT(transferItem()));
             popMenu->addAction("踢出房间", this, SLOT(kick_out_of_roomItem()));
-            popMenu->addAction("调节音量", this, SLOT(adjustVolumnItem()));
-            popMenu->addAction("屏蔽用户", this, SLOT(closeVolumn()));
-            popMenu->addAction("解除屏蔽", this, SLOT(unBlock()));
         }
-
         popMenu->exec(QCursor::pos()); // 菜单出现的位置为当前鼠标的位置
 }
 
@@ -89,7 +84,6 @@ void UserListWidget::updateSelectedIcon()
 
 void UserListWidget::muteItem()
 {
-
     emit SIG_muteUser(this->user_id);
 }
 
@@ -100,7 +94,6 @@ void UserListWidget::transferItem()
         qDebug() << "转让房主！" << endl;
         qDebug() << "transfer_num=" << this->user_id << endl;
         emit SIG_transferUser(this->user_id);
-        //this->close();
     }
 }
 
@@ -112,26 +105,10 @@ void UserListWidget::kick_out_of_roomItem()
     }
 }
 
-void UserListWidget::adjustVolumnItem()
-{
-    emit SIG_adjustVolumnUser(this->user_id);
-}
-
-void UserListWidget::closeVolumn()
-{
-    emit SIG_closeVolumn(this->user_name);
-}
-
-void UserListWidget::unBlock()
-{
-    emit SIG_unBlock(this->user_name);
-}
-
 
 RoomListWidget::RoomListWidget(QWidget *parent) :
     QListWidget(parent)
 {
-    //mouseMoveEvent(QMouseEvent *event);//需要该属性
     setMouseTracking(true);
    // 当前被选中项发生变化时，触发item图标的更新
     connect(this, &RoomListWidget::itemSelectionChanged, this, &RoomListWidget::updateSelectedIcon);
@@ -140,15 +117,6 @@ RoomListWidget::RoomListWidget(QWidget *parent) :
 //处理鼠标hover时，item的图标需要变成hover状态
 void RoomListWidget::mouseMoveEvent(QMouseEvent *event)
 {
-//    oldHighlightItem = theHighlightItem;
-//    theHighlightItem = static_cast<UserListWidgetItem *>(itemAt(event->pos()));
-
-//    //旧的hover的item图标回复原状(条件是该item没有被选中)
-//    //新的hover的iten图标变成hover状态(条件是该item没有被选中)
-//    if(oldHighlightItem != theHighlightItem){
-//        if(oldHighlightItem && !oldHighlightItem->isSelected()) oldHighlightItem->setIcon(oldHighlightItem->Img);
-//        if(theHighlightItem && !theHighlightItem->isSelected()) theHighlightItem->setIcon(theHighlightItem->Img_hover);
-//    }
 }
 
 //鼠标按下时，startPos记录单击位置
@@ -167,10 +135,6 @@ void RoomListWidget::mouseReleaseEvent(QMouseEvent *event)
 //处理鼠标离开后，hover图标回复正常状态
 void RoomListWidget::leaveEvent(QEvent *event)
 {
-//    Q_UNUSED(event);
-//    oldHighlightItem = theHighlightItem;
-//    if(oldHighlightItem && !oldHighlightItem->isSelected()) oldHighlightItem->setIcon(oldHighlightItem->Img);
-    //    oldHighlightItem = theHighlightItem = nullptr;
 }
 
 void RoomListWidget::contextMenuEvent(QContextMenuEvent *event)
@@ -184,7 +148,6 @@ void RoomListWidget::contextMenuEvent(QContextMenuEvent *event)
             popMenu->addAction("加入房间", this, SLOT(joinItem()));
 
         }
-
         popMenu->exec(QCursor::pos()); // 菜单出现的位置为当前鼠标的位置
 }
 
@@ -216,8 +179,6 @@ void RoomListWidget::joinItem()
 {
     if( QMessageBox::question( this , "提示","是否加入房间?") == QMessageBox::Yes )
     {
-//        QString str = this->itemAt(mapFromGlobal(QCursor::pos()))->text();
-//        int num = GetNum(str);
         qDebug() << "num=" << this->room_num << endl;
         emit SIG_joinRoom(this->room_num);
     }

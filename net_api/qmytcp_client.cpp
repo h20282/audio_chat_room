@@ -15,8 +15,6 @@ bool QMyTcpClient::InitNetWork(char* szBufIP , unsigned short port)
     return m_pTcp->InitNetWork(szBufIP,port);
 }
 
-
-
 void QMyTcpClient::UnInitNetWork()
 {
     m_pTcp->UnInitNetWork();
@@ -31,7 +29,6 @@ int QMyTcpClient::ConnectToServer( char* szBufIP)
 {
     return m_pTcp->ConnectToServer(szBufIP);
 }
-
 
 void QMyTcpClient::DealData(char* szbuf , int nLen)
 {
