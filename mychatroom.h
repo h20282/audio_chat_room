@@ -116,7 +116,6 @@ private slots:
     void on_pb_search_clicked();
     void on_le_search_returnPressed();
     void on_ButtonCreateRoom_clicked();
-    void on_ButtonSetting_clicked();
     void on_pb_min_clicked();
     void on_pb_close_clicked();
     void on_ButtonRefreshRoomList_clicked();

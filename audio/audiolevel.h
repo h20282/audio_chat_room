@@ -52,12 +52,14 @@
 #define AUDIOLEVEL_H
 
 #include <QWidget>
+#include <QDebug>
 
-class AudioLevel : public QWidget
+ class AudioLevel : public QWidget
 {
     Q_OBJECT
 public:
-    explicit AudioLevel(QWidget *parent = 0);
+    explicit AudioLevel(QWidget *parent = nullptr);
+     ~AudioLevel() {qDebug() << "AudioLevel" << endl;}
 
     // Using [0; 1.0] range
     void setLevel(qreal level);

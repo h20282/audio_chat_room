@@ -2,7 +2,7 @@
  * @Author: FengYanBin
  * @Date: 2021-08-05 15:00:11
  * @LastEditors: FengYanBin
- * @LastEditTime: 2021-08-18 09:29:08
+ * @LastEditTime: 2021-08-25 14:39:54
  * @Description: file content
  * @FilePath: \sql\mychatroom.cpp
  */
@@ -114,7 +114,8 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
     m_roomdialog->setPb_openAudioText();
 
     //音量界面也关闭
-    if (m_userWidegets.find(name) != m_userWidegets.end()) {
+    if (m_userWidegets.find(name) != m_userWidegets.end())
+    {
         m_roomdialog->removeUserWidget(m_userWidegets[name]);
         auto it = m_userWidegets.find(name);
         m_userWidegets.erase(it);
@@ -129,31 +130,33 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
 
 void MyChatRoom::releaseSource()
 {
-    if (m_chat) {
+    if (m_chat)
+    {
         delete m_chat;
         m_chat = nullptr;
     }
-    if (timer) {
+    if (timer)
+    {
         delete timer;
         timer = nullptr;
     }
-    if (m_tcp_client) {
+    if (m_tcp_client)
+    {
         delete m_tcp_client;
         m_tcp_client = nullptr;
     }
-    if (m_roomdialog) {
-        delete m_roomdialog;
-        m_roomdialog = nullptr;
-    }
-    if (m_room_widget) {
+    if (m_room_widget)
+    {
         delete m_room_widget;
         m_room_widget = nullptr;
     }
-    if (m_login) {
+    if (m_login)
+    {
         delete m_login;
         m_login = nullptr;
     }
-    if (m_register) {
+    if (m_register)
+    {
         delete m_register;
         m_register = nullptr;
     }
@@ -172,7 +175,7 @@ MyChatRoom::~MyChatRoom()
 
 void MyChatRoom::HeartDetect()
 {
-    qDebug() << "heart!" << endl;
+    //qDebug() << "heart!" << endl;
     StructHeartDetectRequest rq;
     rq.m_user_id = m_user_id;
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
@@ -188,7 +191,6 @@ void MyChatRoom::SLOT_loginSubmit(QString name, QString passwd)
     this->m_user_name = name;
     strcpy_s(rq.m_user_name, buf);
 
-    //QByteArray ba = passwd.toUtf8();
     QByteArray ba = GetMD5(passwd);
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
@@ -203,7 +205,6 @@ void MyChatRoom::SLOT_registerSubmit(QString name, QString passwd)
     char *buf = const_cast<char *>(strTmp.c_str());
     strcpy_s(rq.m_user_name, buf);
 
-    //QByteArray ba = passwd.toUtf8();
     QByteArray ba = GetMD5(passwd);
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
@@ -225,8 +226,8 @@ void MyChatRoom::SLOT_SkipLogin()
     strcpy_s(rq.m_user_name, buf);
     this->m_user_name = "davy";
 
-    QString passwd = "123";
-    QByteArray ba = passwd.toUtf8();
+    QString passwd = "0";
+    QByteArray ba = GetMD5(passwd);
     memcpy(rq.m_user_passwd, ba.data(), static_cast<size_t>(ba.length()));
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
     m_login->close();
@@ -481,41 +482,40 @@ void MyChatRoom::DealRegisterResponse(char *buf, int len)
 }
 
 // 加入房间：m_chat = new ; 设置用户名、房间号
-void MyChatRoom::JoinRoom() {
-
+void MyChatRoom::JoinRoom()
+{
     m_chat = new AudioChat();
     m_chat->joinRoom(this->m_user_name, this->m_room_num);
 
-    QObject::connect(m_roomdialog, &RoomDialog::SIG_setInputDevice, [this](QAudioDeviceInfo deviceInfo){
-        m_chat->setInputDevice(deviceInfo);
-    });
+    QObject::connect(m_roomdialog, &RoomDialog::SIG_setInputDevice, [this](QAudioDeviceInfo deviceInfo)
+                     { m_chat->setInputDevice(deviceInfo); });
 
-    QObject::connect(m_chat, &AudioChat::sig_userListReady, [this](QList<QString> list){
-          userListModel.clear();
-          for (auto &userName : list){
-              userListModel.appendRow(new QStandardItem(userName));
-              if ( m_userWidegets.find(userName) == m_userWidegets.end() ) {
-                  UserWidget *newOne = new UserWidget(userName, m_chat, this);
-                  connect(newOne, &UserWidget::sig_sliderMoved, [this, userName](int val){
-                      this->m_chat->setUserVolume(userName, val);
-                  });
+    QObject::connect(m_chat, &AudioChat::sig_userListReady, [this](QList<QString> list)
+                     {
+                         userListModel.clear();
+                         for (auto &userName : list)
+                         {
+                             userListModel.appendRow(new QStandardItem(userName));
+                             if (m_userWidegets.find(userName) == m_userWidegets.end())
+                             {
+                                 UserWidget *newOne = new UserWidget(userName, m_chat, this);
+                                 connect(newOne, &UserWidget::sig_sliderMoved, [this, userName](int val)
+                                         { this->m_chat->setUserVolume(userName, val); });
 
-                  m_userWidegets[userName] = newOne;
-                  m_roomdialog->addUserWidget(newOne);
-              }
-          }
-      });
+                                 m_userWidegets[userName] = newOne;
+                                 m_roomdialog->addUserWidget(newOne);
+                             }
+                         }
+                     });
 
-      QObject::connect(m_chat, &AudioChat::sig_collectorVolumeReady, [this](double volume){
-          m_level.setLevel(volume);
-      });
+    QObject::connect(m_chat, &AudioChat::sig_collectorVolumeReady, [this](double volume)
+                     { m_level.setLevel(volume); });
 
-      QObject::connect(m_chat, &AudioChat::sig_userVolumeReady, [this](QString name, double volume){
-          if (m_userWidegets.find(name)!=m_userWidegets.end())
-              this->m_userWidegets[name]->setVol(volume);
-      });
-
-
+    QObject::connect(m_chat, &AudioChat::sig_userVolumeReady, [this](QString name, double volume)
+                     {
+                         if (m_userWidegets.find(name) != m_userWidegets.end())
+                             this->m_userWidegets[name]->setVol(volume);
+                     });
 }
 
 void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
@@ -534,8 +534,6 @@ void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
         m_roomdialog->show();
         m_roomdialog->addInputWidget(m_level);
 
-        m_user_list.insert(this->m_user_name.toStdString());
-
         this->JoinRoom();
     }
 }
@@ -544,7 +542,8 @@ void MyChatRoom::DealJoinRoomResponse(char *buf, int len)
 {
     //解析
     StructJoinRoomResponse *rs = reinterpret_cast<StructJoinRoomResponse *>(buf);
-    if (rs->m_join_id == this->m_user_id) {
+    if (rs->m_join_id == this->m_user_id)
+    {
         if (rs->m_join_room_result) //结果成功
         {                           //设置房间标志
             this->m_room_num = rs->m_room_id;
@@ -557,17 +556,10 @@ void MyChatRoom::DealJoinRoomResponse(char *buf, int len)
             m_roomdialog->setInfo(rs->m_room_id, this->m_user_name, this->m_room_owner_name);
             m_roomdialog->show();
             m_roomdialog->addInputWidget(m_level);
-            m_user_list.insert(this->m_user_name.toStdString());
-//            //创建音频采集
-//            m_audioRead = new AudioCollector();
 
             this->JoinRoom();
         }
     }
-    else {
-        m_user_list.insert(rs->m_join_name);
-    }
-
 }
 
 void MyChatRoom::DealRefreshRoomListHeader(char *buf, int len)
@@ -585,7 +577,7 @@ void MyChatRoom::DealRefreshRoomList(char *buf, int len)
     //显示房间列表到客户端，要求显示房间号，房主。房主就是用户列表的头部。
     int num = rs->m_room_num;
     QString name = rs->m_owner_name;
-    QString text = QString("    '%1'     '%2'").arg(num).arg(name);
+    QString text = QString(" '%1'        '%2'").arg(num).arg(name);
     RoomListWidgetItem *item = new RoomListWidgetItem(m_room_widget);
     item->setSizeHint(QSize(50, 50));
     item->setText(text);
@@ -597,12 +589,11 @@ void MyChatRoom::DealRefreshUserListHeader(char *buf, int len)
     //清空用户列表
     m_user_list_widget->clear();
     //清空用户音量显示
-    for (auto it = m_userWidegets.begin(); it != m_userWidegets.end(); ++it) {
+    for (auto it = m_userWidegets.begin(); it != m_userWidegets.end(); ++it)
+    {
         m_roomdialog->removeUserWidget(it.value());
-
     }
     m_userWidegets.clear();
-    qDebug() << "清空了！"  << endl;
 }
 
 // 服务器每次发送用户列表中的一个
@@ -610,8 +601,6 @@ void MyChatRoom::DealRefreshUserList(char *buf, int len)
 {
     qDebug() << "更新用户列表！" << endl;
     StructRoomMemberResponse *rs = reinterpret_cast<StructRoomMemberResponse *>(buf);
-    if (m_user_list.find(rs->m_sz_user) == m_user_list.end())
-        m_user_list.insert(this->m_user_name.toStdString());
     int user_id = rs->m_user_id;
     QString name = rs->m_sz_user;
     QString text = QString("    '%1'         '%2'").arg(user_id).arg(name);
@@ -619,28 +608,6 @@ void MyChatRoom::DealRefreshUserList(char *buf, int len)
     UserListWidgetItem *item = new UserListWidgetItem(m_user_list_widget);
     item->setSizeHint(QSize(50, 50));
     item->setText(text);
-
-//    //声音图像显示
-//    //逻辑：udp接收到服务器数据SIG_oneMsgReady，AudioSynthesizer::onOneFrameIn处理，进行合成，并当i=10也就是收到10个数据后会发送sig_userListReady信号。
-//    //TODO:他设置了心跳检测，将用户说话声音大于3s的才加入队列。我一开始是静音的，那么需要点两次才能让队列里有内容。
-
-//    QObject::connect(m_audioRead, &AudioCollector::sig_userListReady, [this](QList<QString> list)
-//                     {
-//                         //it代表用户名
-//                         for (auto &item : list)
-//                         {
-//                             //QString item = QString::fromStdString(it);
-//                             if (m_userWidegets.find(item) == m_userWidegets.end())
-//                             {
-//                                 UserWidget *newOne = new UserWidget(item, m_audioRead, m_room_widget);
-//                                 connect(newOne, &UserWidget::sig_sliderMoved, [this, item](int val)
-//                                         { this->m_audioRead->setUserVolume(item, val); });
-
-//                                 m_userWidegets[item] = newOne;
-//                                 m_roomdialog->addUserWidget(newOne);
-//                             }
-//                         }
-//                     });
 }
 
 //这里有个逻辑问题，其实服务器应该返回给数据才关闭。但是客户端自己关闭就够了。
@@ -654,8 +621,6 @@ void MyChatRoom::DealQuitRoomResponse(char *buf, int len)
     if (rs->m_user_id == this->m_user_id)
     {
         clearQuitRoomInfo(rs->szUserName);
-        m_user_list.erase(this->m_user_name.toStdString());
-
     }
 }
 
@@ -669,7 +634,6 @@ void MyChatRoom::DealMuteOneUserResponse(char *buf, int len)
     {
         is_muted = true;
         QMessageBox::information(this, "提示", "您已经被静音！");
-//        m_audioRead->MuteUser();
         m_chat->setIsMuted(true);
     }
     else
@@ -688,7 +652,6 @@ void MyChatRoom::DealtransferOneUserResponse(char *buf, int len)
     {
         QMessageBox::information(this, "提示", "您被转让成为房主！");
         this->m_room_owener_id = rs->transfer_user_id;
-
         m_roomdialog->setRoomOwner(rs->transferUserName);
     }
     else if (this->m_user_id == rs->m_user_id)
@@ -697,12 +660,12 @@ void MyChatRoom::DealtransferOneUserResponse(char *buf, int len)
         this->m_room_owener_id = rs->transfer_user_id;
         m_roomdialog->setRoomOwner(rs->transferUserName);
     }
-    else
-    {
-        QMessageBox::information(this, "提示", "当前房主已经更改，位于列表第一位！");
-        this->m_room_owener_id = rs->transfer_user_id;
-        m_roomdialog->setRoomOwner(rs->transferUserName);
-    }
+//    else
+//    {
+//        QMessageBox::information(this, "提示", "当前房主已经更改，位于列表第一位！");
+//        this->m_room_owener_id = rs->transfer_user_id;
+//        m_roomdialog->setRoomOwner(rs->transferUserName);
+//    }
 }
 
 void MyChatRoom::Dealkick_out_ofOneUserResponse(char *buf, int len)
@@ -714,7 +677,6 @@ void MyChatRoom::Dealkick_out_ofOneUserResponse(char *buf, int len)
     if (this->m_user_id == rs->kick_user_id)
     {
         QMessageBox::information(this, "提示", "您已被踢出房间！");
-        m_user_list.erase(this->m_user_name.toStdString());
         clearQuitRoomInfo(rs->szUserName);
     }
     else if (this->m_user_id == rs->m_user_id)
@@ -730,7 +692,6 @@ void MyChatRoom::Dealkick_out_ofOneUserResponse(char *buf, int len)
 void MyChatRoom::DealUnmuteQequest(char *buf, int len)
 {
     qDebug() << "接收解除静音回复！" << endl;
-
     //解析包
     StructUnMuteResponse *rs = reinterpret_cast<StructUnMuteResponse *>(buf);
     //如果是自己发出的
@@ -769,12 +730,6 @@ void MyChatRoom::on_ButtonCreateRoom_clicked()
     emit SIG_createRoomSubmit(m_user_id);
 }
 
-void MyChatRoom::on_ButtonSetting_clicked()
-{
-    //TODO:弹出设置界面
-//    m_audio_device->show();
-}
-
 void MyChatRoom::on_pb_min_clicked()
 {
     this->showMinimized();
@@ -788,7 +743,6 @@ void MyChatRoom::on_pb_close_clicked()
         rq.m_user_id = this->m_user_id;
         m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 
-        clearQuitRoomInfo(this->m_user_name);
         releaseSource();
         this->close();
     }
