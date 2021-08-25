@@ -3,6 +3,27 @@
 
 #include <qdebug.h>
 #include <utility>
+#include "Config.h"
+
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <bitset>
+extern "C"{
+#include <libavcodec\avcodec.h>
+#include <libavutil\frame.h>
+#include <libavformat\avformat.h>
+#include <libswresample\swresample.h>
+}
+
+#pragma comment(lib, "avformat.lib")
+#pragma comment(lib, "avutil.lib")
+#pragma comment(lib, "avcodec.lib")
+#pragma comment(lib, "swscale.lib")
+#pragma comment(lib, "swresample.lib")
+
+#define cout qDebug()
 
 
 void initDecoder();
@@ -15,6 +36,27 @@ void initDecoder();
  */
 std::pair<unsigned char*, int> decodeFrame(void*buff, int len);
 void closeDecoder();
+
+
+
+
+
+class Decoder{
+public:
+    Decoder();
+    ~Decoder();
+    std::pair<unsigned char*, int> decodeFrame(void*buff, int len);
+private:
+    void closeDecoder();
+    void initDecoder();
+    AVPacket 		*packet = NULL;
+    AVCodecContext  *cod_ctx = NULL;
+    AVCodec         *cod = NULL;
+    SwrContext 		*convert_ctx = NULL;
+    AVFrame 		*frame = NULL;
+    uint8_t 		*buffer = NULL;
+    int 			buffer_size = 0;
+};
 
 
 #endif // DECODER_H

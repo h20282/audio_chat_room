@@ -11,6 +11,7 @@
 #include <QMap>
 #include <unordered_set>
 
+#include "structs/Msg.h"
 #include "net_api/pack_def.h"
 #include "../audio_codec/Decoder.h"
 #include "../audio_codec/Encoder.h"

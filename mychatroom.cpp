@@ -20,7 +20,7 @@
 MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
                                           ui(new Ui::MyChatRoom),
                                           m_user_id(0), m_room_num(0), m_server_ip(kServerIp), m_server_port(kServerPort), is_first_connect(true),
-                                          m_audioRead(nullptr), m_device_info(QAudioDeviceInfo::defaultInputDevice())
+                                          m_chat(nullptr), m_device_info(QAudioDeviceInfo::defaultInputDevice())
 {
     ui->setupUi(this);
     ui->pb_title->setFocusPolicy(Qt::NoFocus);
@@ -64,8 +64,7 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
     connect(m_user_list_widget, SIGNAL(SIG_adjustVolumnUser(int)), this, SLOT(SLOT_AdjustUserVolume(int)));
 
     //创建音频采集,TODO，this对不对，还是m_roomDialog。
-    m_audioRead = new AudioCollector();
-    m_audio_device = new AudioTest();
+//    m_audio_device = new AudioTest();
 
 
     //客户端处理加入房间和创建房间请求
@@ -74,7 +73,7 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
     connect(this, SIGNAL(SIG_createRoomSubmit(int)), this, SLOT(SLOT_createRoomSubmit(int)));
     connect(this, SIGNAL(SIG_RefreshRoomList()), this, SLOT(SLOT_RefreshRoomList()));
 
-    connect(m_audio_device, SIGNAL(SIG_devicedChanged(QList<QAudioDeviceInfo>)), this, SLOT(SLOT_devicedChanged(QList<QAudioDeviceInfo>)));
+//    connect(m_audio_device, SIGNAL(SIG_devicedChanged(QList<QAudioDeviceInfo>)), this, SLOT(SLOT_devicedChanged(QList<QAudioDeviceInfo>)));
 
 
 }
@@ -121,9 +120,9 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
     //用户列表清空
     this->m_user_list_widget->clear();
     //退出房间后音频也关闭
-    if (m_audioRead )
+    if (m_chat )
     {
-        m_audioRead->PauseAudio();
+        delete m_chat;
 //        delete m_audioRead;
 //        m_audioRead = nullptr;
     }
@@ -145,13 +144,13 @@ void MyChatRoom::clearQuitRoomInfo(QString name)
 
 void MyChatRoom::releaseSource()
 {
-    if (m_audio_device) {
-        delete m_audio_device;
-        m_audio_device = nullptr;
-    }
-    if (m_audioRead) {
-        delete m_audioRead;
-        m_audioRead = nullptr;
+//    if (m_audio_device) {
+//        delete m_audio_device;
+//        m_audio_device = nullptr;
+//    }
+    if (m_chat) {
+        delete m_chat;
+        m_chat = nullptr;
     }
     if (timer) {
         delete timer;
@@ -295,9 +294,10 @@ void MyChatRoom::SLOT_quitRoomSubmit()
     m_tcp_client->SendData(reinterpret_cast<char *>(&rq), sizeof(rq));
 
     //退出房间，暂停声音
-    if (m_audioRead)
+    if (m_chat)
     {
-        m_audioRead->PauseAudio();
+        delete m_chat;
+        m_chat = nullptr;
     }
 
     //销毁声音播放
@@ -323,18 +323,19 @@ void MyChatRoom::SLOT_RefreshRoomList()
 //打开音频
 void MyChatRoom::SLOT_openAudio()
 {
-    if (m_audioRead)
+    if (m_chat)
     {
-        m_audioRead->ResumeAudio(m_device_info);
+//        m_audioRead->ResumeAudio(m_device_info);
+        m_chat->setIsMuted(false);
     }
 }
 
 //关闭音频
 void MyChatRoom::SLOT_closeAudio()
 {
-    if (m_audioRead)
+    if (m_chat)
     {
-        m_audioRead->PauseAudio();
+        m_chat->setIsMuted(true);
     }
 }
 
@@ -457,22 +458,22 @@ void MyChatRoom::SLOT_unBlock(QString name)
 void MyChatRoom::SLOT_AudioSetting()
 {
     //TODO:弹出设置界面
-    m_audio_device->show();
+//    m_audio_device->show();
 }
 
-void MyChatRoom::SLOT_devicedChanged(QList<QAudioDeviceInfo> audio_list)
-{
-    QString device_name = m_audio_device->GetCurrentDevice();
-    qDebug() << "当前设备名称：" << device_name << endl;
-    QAudioDeviceInfo info;
-    for (auto it = audio_list.begin(); it != audio_list.end(); ++it) {
-        if ((*it).deviceName() == device_name)
-            info = (*it);
-    }
-    m_device_info = info;
-    if (m_audioRead)
-        m_audioRead->ResumeAudio(info);
-}
+//void MyChatRoom::SLOT_devicedChanged(QList<QAudioDeviceInfo> audio_list)
+//{
+//    QString device_name = m_audio_device->GetCurrentDevice();
+//    qDebug() << "当前设备名称：" << device_name << endl;
+//    QAudioDeviceInfo info;
+//    for (auto it = audio_list.begin(); it != audio_list.end(); ++it) {
+//        if ((*it).deviceName() == device_name)
+//            info = (*it);
+//    }
+//    m_device_info = info;
+//    if (m_audioRead)
+//        m_audioRead->ResumeAudio(info);
+//}
 
 void MyChatRoom::SLOT_refreshUserList()
 {
@@ -583,6 +584,41 @@ void MyChatRoom::DealRegisterResponse(char *buf, int len)
     }
 }
 
+// 加入房间：m_chat = new ; 设置用户名、房间号
+void MyChatRoom::JoinRoom() {
+
+    m_chat = new AudioChat();
+    m_chat->joinRoom(this->m_user_name, this->m_room_num);
+
+
+    QObject::connect(m_chat, &AudioChat::sig_userListReady, [this](QList<QString> list){
+          userListModel.clear();
+          for (auto &userName : list){
+              userListModel.appendRow(new QStandardItem(userName));
+              if ( m_userWidegets.find(userName) == m_userWidegets.end() ) {
+                  UserWidget *newOne = new UserWidget(userName, m_chat, this);
+                  connect(newOne, &UserWidget::sig_sliderMoved, [this, userName](int val){
+                      this->m_chat->setUserVolume(userName, val);
+                  });
+
+                  m_userWidegets[userName] = newOne;
+                  m_roomdialog->addUserWidget(newOne);
+              }
+          }
+      });
+
+      QObject::connect(m_chat, &AudioChat::sig_collectorVolumeReady, [this](double volume){
+          m_level.setLevel(volume);
+      });
+
+      QObject::connect(m_chat, &AudioChat::sig_userVolumeReady, [this](QString name, double volume){
+          if (m_userWidegets.find(name)!=m_userWidegets.end())
+              this->m_userWidegets[name]->setVol(volume);
+      });
+
+
+}
+
 void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
 {
     //解析
@@ -601,27 +637,7 @@ void MyChatRoom::DealCreateRoomResponse(char *buf, int len)
 
         m_user_list.insert(this->m_user_name.toStdString());
 
-
-
-        QObject::connect(m_audioRead, &AudioCollector::sig_collectorVolumeReady, [this](double volume)
-                         { m_level.setLevel(volume); });
-
-        QObject::connect(m_audioRead, &AudioCollector::sig_userVolumeReady, [this](QString name, double volume)
-                         {
-                             if (m_userWidegets.find(name) != m_userWidegets.end())
-                                 this->m_userWidegets[name]->setVol(volume);
-                         });
-        if (is_first_connect) {
-            m_audioRead->Init();
-            m_audioRead->setUdpRoomId(m_room_num);
-            is_first_connect = false;
-            Sleep(300);
-            m_audioRead->ResumeAudio(m_device_info);
-            return;
-        }
-        m_audioRead->setUdpRoomId(m_room_num);
-        m_audioRead->ResumeAudio(m_device_info);
-
+        this->JoinRoom();
     }
 }
 
@@ -646,25 +662,7 @@ void MyChatRoom::DealJoinRoomResponse(char *buf, int len)
 //            //创建音频采集
 //            m_audioRead = new AudioCollector();
 
-            QObject::connect(m_audioRead, &AudioCollector::sig_collectorVolumeReady, [this](double volume)
-                             { m_level.setLevel(volume); });
-
-            QObject::connect(m_audioRead, &AudioCollector::sig_userVolumeReady, [this](QString name, double volume)
-                             {
-                                 if (m_userWidegets.find(name) != m_userWidegets.end())
-                                     this->m_userWidegets[name]->setVol(volume);
-                             });
-
-            if (is_first_connect) {
-                m_audioRead->Init();
-                m_audioRead->setUdpRoomId(m_room_num);
-                is_first_connect = false;
-                Sleep(200);
-                m_audioRead->ResumeAudio(m_device_info);
-                return;
-            }
-            m_audioRead->setUdpRoomId(m_room_num);
-            m_audioRead->ResumeAudio(m_device_info);
+            this->JoinRoom();
         }
     }
     else {
@@ -688,7 +686,7 @@ void MyChatRoom::DealRefreshRoomList(char *buf, int len)
     //显示房间列表到客户端，要求显示房间号，房主。房主就是用户列表的头部。
     int num = rs->m_room_num;
     QString name = rs->m_owner_name;
-    QString text = QString("    '%1'                            '%2'").arg(num).arg(name);
+    QString text = QString("    '%1'     '%2'").arg(num).arg(name);
     RoomListWidgetItem *item = new RoomListWidgetItem(m_room_widget);
     item->setSizeHint(QSize(50, 50));
     item->setText(text);
@@ -708,6 +706,7 @@ void MyChatRoom::DealRefreshUserListHeader(char *buf, int len)
     qDebug() << "清空了！"  << endl;
 }
 
+// 服务器每次发送用户列表中的一个
 void MyChatRoom::DealRefreshUserList(char *buf, int len)
 {
     qDebug() << "更新用户列表！" << endl;
@@ -722,27 +721,27 @@ void MyChatRoom::DealRefreshUserList(char *buf, int len)
     item->setSizeHint(QSize(50, 50));
     item->setText(text);
 
-    //声音图像显示
-    //逻辑：udp接收到服务器数据SIG_oneMsgReady，AudioSynthesizer::onOneFrameIn处理，进行合成，并当i=10也就是收到10个数据后会发送sig_userListReady信号。
-    //TODO:他设置了心跳检测，将用户说话声音大于3s的才加入队列。我一开始是静音的，那么需要点两次才能让队列里有内容。
+//    //声音图像显示
+//    //逻辑：udp接收到服务器数据SIG_oneMsgReady，AudioSynthesizer::onOneFrameIn处理，进行合成，并当i=10也就是收到10个数据后会发送sig_userListReady信号。
+//    //TODO:他设置了心跳检测，将用户说话声音大于3s的才加入队列。我一开始是静音的，那么需要点两次才能让队列里有内容。
 
-    QObject::connect(m_audioRead, &AudioCollector::sig_userListReady, [this](QList<QString> list)
-                     {
-                         //it代表用户名
-                         for (auto &item : list)
-                         {
-                             //QString item = QString::fromStdString(it);
-                             if (m_userWidegets.find(item) == m_userWidegets.end())
-                             {
-                                 UserWidget *newOne = new UserWidget(item, m_audioRead, m_room_widget);
-                                 connect(newOne, &UserWidget::sig_sliderMoved, [this, item](int val)
-                                         { this->m_audioRead->setUserVolume(item, val); });
+//    QObject::connect(m_audioRead, &AudioCollector::sig_userListReady, [this](QList<QString> list)
+//                     {
+//                         //it代表用户名
+//                         for (auto &item : list)
+//                         {
+//                             //QString item = QString::fromStdString(it);
+//                             if (m_userWidegets.find(item) == m_userWidegets.end())
+//                             {
+//                                 UserWidget *newOne = new UserWidget(item, m_audioRead, m_room_widget);
+//                                 connect(newOne, &UserWidget::sig_sliderMoved, [this, item](int val)
+//                                         { this->m_audioRead->setUserVolume(item, val); });
 
-                                 m_userWidegets[item] = newOne;
-                                 m_roomdialog->addUserWidget(newOne);
-                             }
-                         }
-                     });
+//                                 m_userWidegets[item] = newOne;
+//                                 m_roomdialog->addUserWidget(newOne);
+//                             }
+//                         }
+//                     });
 }
 
 //这里有个逻辑问题，其实服务器应该返回给数据才关闭。但是客户端自己关闭就够了。
@@ -771,7 +770,8 @@ void MyChatRoom::DealMuteOneUserResponse(char *buf, int len)
     {
         is_muted = true;
         QMessageBox::information(this, "提示", "您已经被静音！");
-        m_audioRead->MuteUser();
+//        m_audioRead->MuteUser();
+        m_chat->setIsMuted(true);
     }
     else
     {
@@ -843,7 +843,7 @@ void MyChatRoom::DealUnmuteQequest(char *buf, int len)
     {
         QMessageBox::information(this, "提示", "您已解除静音！");
         this->is_muted = false;
-        m_audioRead->UnMuteUser();
+        m_chat->setIsMuted(false);
     }
     else
     {
@@ -851,9 +851,9 @@ void MyChatRoom::DealUnmuteQequest(char *buf, int len)
     }
 }
 
-void MyChatRoom::DealForceQuitRoom(char *buf, int len)
-{
-}
+//void MyChatRoom::DealForceQuitRoom(char *buf, int len)
+//{
+//}
 
 void MyChatRoom::DealClientQuitResponse(char *buf, int len)
 {
@@ -885,7 +885,7 @@ void MyChatRoom::on_ButtonCreateRoom_clicked()
 void MyChatRoom::on_ButtonSetting_clicked()
 {
     //TODO:弹出设置界面
-    m_audio_device->show();
+//    m_audio_device->show();
 }
 
 void MyChatRoom::on_pb_min_clicked()

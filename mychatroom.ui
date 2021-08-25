@@ -369,12 +369,12 @@ image: url(:/tx/8.png);</string>
         <x>0</x>
         <y>20</y>
         <width>301</width>
-        <height>31</height>
+        <height>41</height>
        </rect>
       </property>
       <item>
        <property name="text">
-        <string>房间号               房主名</string>
+        <string>房间号     房主名</string>
        </property>
        <property name="font">
         <font>

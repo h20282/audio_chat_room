@@ -24,8 +24,8 @@ const int DEF_PACK_COUNT = 100;
 const unsigned short kServerPort = 9527;        //tcp和udp公用一个端口并不影响，这里只代表tcp
 const int kUdpServerPort = 9528;
 
-//const QString kServerIp = "119.91.116.26";
-const QString kServerIp = "192.168.201.129";
+const QString kServerIp = "119.91.116.26";
+//const QString kServerIp = "192.168.201.129";
 
 typedef enum NetPACKDef
 {  
@@ -97,15 +97,9 @@ const int kCreateSuccess   = 1;
 const int kRoomNotExist    = 0;
 const int kJoinSuccess     = 1;
 
-//音频
-
-const int AUDIO_SAM_RATE = 8000;
-const int AUDIO_SAM_SIZE = 16;
-const int AUDIO_SAM_COUNT = 2;
-#define AUDIO_FRAME_LEN AUDIO_SAM_RATE*AUDIO_SAM_SIZE*AUDIO_SAM_COUNT/8/25  // 1/25s(0.04s)的音频数据
 
 //定时器刷新心跳检测时间
-const int kHeartDetectTime = 10000;
+const int kHeartDetectTime = 2000;
 
 
 
@@ -545,32 +539,6 @@ typedef struct StructHeartDetectRequest
     std::chrono::steady_clock::time_point m_time;
     char szUserName[kMaxSize];
 } StructHeartDetectRequest;
-
-//音频
-struct AudioFrame{
-    int len; // 长度，按字节数
-    char buff[AUDIO_FRAME_LEN];
-
-    //获取最大量化值，用来显示当前最大音量的
-    double getMaxVolume(){
-        if (AUDIO_SAM_COUNT==2){
-            auto p = reinterpret_cast<short*>(buff);
-            auto maxVol = p[0];
-            for ( int i=0; i<len/2; i++ ) {
-                maxVol = qMax(maxVol, p[i]);
-            }
-            return double(maxVol)/32768;
-        } else {
-            qDebug() << "not implement!!! AUDIO_SAM_COUNT: " << AUDIO_SAM_COUNT;
-            return 0;
-        }
-    }
-};
-
-struct Msg{
-    char name[16];
-    AudioFrame frame;
-};
 
 typedef struct UserInfo
 {

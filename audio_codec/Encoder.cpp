@@ -29,16 +29,114 @@ extern "C"
 
 
 
-char aac_adts_header[7];
-ZipedFrame::ZipedFrame(int len, void* base){
+static char aac_adts_header[7];
+
+
+ZipedFrame::ZipedFrame(int len, void* base) {
     this->len = len+7;
     data = new unsigned char[this->len];
     memcpy(this->data, aac_adts_header, 7);
     memcpy(this->data+7, base, len);
 }
-ZipedFrame::~ZipedFrame(){
+ZipedFrame::~ZipedFrame() {
     delete data;
 }
+
+
+///////////////////////////////////////begin of class Encoder definition
+Encoder::Encoder(){
+    initEncoder();
+    this->m_currIdx = 0;
+    qDebug() << "Encoder::Encoder() finished";
+
+#ifdef SAVE_RESPLIT_IO_INTO_FILE
+    this->fp_before_resplit = fopen("fp_before_resplit.pcm", "wb");
+    this->fp_after_resplit = fopen("fp_after_resplit.pcm", "wb");
+#endif
+}
+void Encoder::pushAudioFrame(AudioFrame frame){
+    m_queue.enqueue(frame);
+}
+ZipedFrame* Encoder::getZipedFrame(){
+
+    int restBytes = 0;
+    for ( auto iter = m_queue.begin(); iter != m_queue.end(); iter++ ) {
+//        qDebug() << "iter.len" << (*iter).len;
+        restBytes += (*iter).len;
+    }
+    restBytes -= m_currIdx;
+
+//        int restBytes = AUDIO_FRAME_LEN-m_currIdx + (m_queue.size()-1)*AUDIO_FRAME_LEN;
+
+    if (restBytes > 4096) { // 队列里面有4096字节的数据
+        /*      front                                                       tail
+         * [--------------] <- [--------------] <- [--------------] <- [--------------]
+         *           ^
+         *           |
+         *       m_currIdx
+         */
+        static char buff[4096]; // warning: 多对象多进程下将竞争使用此static变量导致错误
+
+        int bytedNeed = sizeof(buff);
+        int buffIdx = 0;
+
+        while ( true ) {
+
+            int frontRestBytes = m_queue.front().len-m_currIdx;
+            if ( frontRestBytes < bytedNeed ) {
+                memcpy(buff+buffIdx, m_queue.front().buff+m_currIdx, frontRestBytes);
+                buffIdx += frontRestBytes;
+                bytedNeed -= frontRestBytes;
+                m_queue.dequeue();
+                m_currIdx = 0;
+            } else {
+                memcpy(buff+buffIdx, m_queue.front().buff+m_currIdx, bytedNeed);
+                m_currIdx += bytedNeed;
+                break;
+            }
+        }
+        return encodeFrame(buff);
+/*
+
+        int restBytesInCurrFrame = m_queue.front().len - m_currIdx;
+        if (restBytesInCurrFrame<0){
+            return nullptr;
+        }
+//        qDebug() << "m_queue.front().len =" << m_queue.front().len;
+//        qDebug() << "m_currIdx = " << m_currIdx;
+        if ( restBytesInCurrFrame > 4096 ){
+            memcpy(buff, m_queue.front().buff+m_currIdx , 4096);
+            m_currIdx += 4096;
+        } else {
+            memcpy(buff, m_queue.front().buff+m_currIdx, restBytesInCurrFrame);
+
+#ifdef SAVE_RESPLIT_IO_INTO_FILE
+            fwrite(m_queue.front().buff, 1, m_queue.front().len, this->fp_before_resplit); // todo: delete it
+#endif
+
+            m_queue.dequeue();
+            memcpy(buff + restBytesInCurrFrame, m_queue.front().buff, 4096-restBytesInCurrFrame);
+            m_currIdx = 4096-restBytesInCurrFrame;
+        }
+
+#ifdef SAVE_RESPLIT_IO_INTO_FILE
+        fwrite(buff, 1, sizeof(buff), this->fp_after_resplit); // todo: delete it
+#endif
+        return encodeFrame(buff);
+*/
+
+    } else {
+        return nullptr;
+    }
+
+}
+///////////////////////////////////////end of class Encoder definition
+
+
+
+
+
+
 
 
 static AVCodec* codec;
@@ -50,7 +148,18 @@ static int chanCfg = 2;            //MPEG-4 Audio Channel Configuration. 2 Chann
 static int init_aac_header() {
     memset(aac_adts_header, 0, sizeof(aac_adts_header));
     int profile = 2;   //AAC LC
-    int freqIdx = 0x04;   //44100HZ
+//    int freqIdx = 0x0b;
+    //AUDIO_SAM_RATE HZ
+    int freqIdx;
+    static int rates[] = {96000, 88000, 64000, 48000, 44100, 32000, 24000, 22000, 16000, 12000, 11025, 8000, 7350};
+    for ( int i=0; i<sizeof(rates)/sizeof(rates[0]); i++ ) {
+        if (rates[i] == AUDIO_SAM_RATE) {
+            cout << AUDIO_SAM_RATE << " " << rates[i] << endl;
+            freqIdx = i;
+        }
+    }
+    cout << "freqIdx = " << freqIdx << endl;
+
 
     aac_adts_header[0] = (char)0xFF;      // 11111111     = syncword
     aac_adts_header[1] = (char)0xF1;      // 1111 1 00 1  = syncword MPEG-2 Layer CRC
@@ -102,7 +211,7 @@ void initEncoder(){
         cout << "avcodec_alloc_context3 failed" << endl;
     }
 
-    codecContext->sample_rate = 44100;
+    codecContext->sample_rate = AUDIO_SAM_RATE;
     codecContext->channels = 2;
     codecContext->channel_layout = AV_CH_LAYOUT_STEREO; // 立体声
     codecContext->sample_fmt = AV_SAMPLE_FMT_FLTP;
@@ -117,10 +226,9 @@ void initEncoder(){
 
     cout << "codecContext->frame_size = " << codecContext->frame_size << endl;
 
-
     swrContext = swr_alloc_set_opts(
-        swrContext, codecContext->channel_layout, codecContext->sample_fmt, 44100,//输出的音频参数
-        AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, 44100,//输入的音频参数
+        swrContext, codecContext->channel_layout, codecContext->sample_fmt, AUDIO_SAM_RATE,//输出的音频参数
+        AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, AUDIO_SAM_RATE,//输入的音频参数
         0, 0
     );
 

@@ -1,7 +1,8 @@
 #ifndef AUDIOPLAYER_H
 #define AUDIOPLAYER_H
 
-#include "./net_api/pack_def.h"
+#include "Config.h"
+#include "../structs/AudioFrame.h"
 #include "AbstractAudioFrameProvider.h"
 
 #include <QThread>

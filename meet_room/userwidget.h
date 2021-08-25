@@ -2,7 +2,7 @@
 #define USERWIDGET_H
 
 #include "./audio/audiolevel.h"
-#include "./audio/audiocollector.h"
+#include "./audio/AudioChat.h"
 
 #include <QWidget>
 #include <QLabel>
@@ -13,7 +13,7 @@ class UserWidget : public QWidget
 {
     Q_OBJECT
 public:
-    UserWidget(QString userName, AudioCollector *auidioChat, QWidget* parent = nullptr)
+    UserWidget(QString userName, AudioChat *auidioChat, QWidget* parent = nullptr)
         : QWidget(parent)
         , m_userName(userName)
         , m_auidioChat(auidioChat)
@@ -30,8 +30,11 @@ public:
         //setStyleSheet(QString::fromUtf8("border:1px solid black"));
         //setStyleSheet(QString::fromUtf8("background-color:gray"));
 
+
+
+
         m_label = new QLabel(this);
-        m_label->setText(userName);
+        m_label->setText(QString("%1").arg(userName.toLatin1().data()));
         m_label->setMaximumHeight(80);
         m_layout->addWidget(m_label);
 
@@ -83,7 +86,7 @@ private:
 
     QVBoxLayout *m_layout;
 
-    AudioCollector *m_auidioChat;
+    AudioChat *m_auidioChat;
 
 };
 

@@ -1,7 +1,8 @@
 #ifndef AUDIOSYNTHESIZER_H
 #define AUDIOSYNTHESIZER_H
 
-#include "./net_api/pack_def.h"
+#include "../structs/AudioFrame.h"
+#include "../structs/Msg.h"
 #include "AbstractAudioFrameProvider.h"
 
 #include <QMutex>
@@ -27,7 +28,6 @@ private:
     AudioFrame synthese();
 
 signals:
-    void sig_oneFrameReady(AudioFrame frame);
     void sig_userVolumeReady(QString name, double volume);
     void sig_userListReady(QList<QString> list);
 
@@ -36,10 +36,10 @@ public slots:
     void onOneEmptyMsgIn(QString userName);
 
 private:
-    QMap<QString, QQueue<AudioFrame>> m_queues;     //用户：音频队列
-    QQueue<AudioFrame> m_output;                //输出的音频帧存在队列中
-    QMap<QString, time_t> m_lastOnlineTime;     //上次在线事件
-    QMap<QString, int> m_volume;            //每个用户的音量
+    QMap<QString, QQueue<AudioFrame>> m_queues;
+//    QQueue<AudioFrame> m_output;
+    QMap<QString, time_t> m_lastOnlineTime;
+    QMap<QString, int> m_volume;
 
     QMutex m_mutex;
 
