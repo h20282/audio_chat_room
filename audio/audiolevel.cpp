@@ -68,6 +68,7 @@ void AudioLevel::setLevel(qreal level)
 
 void AudioLevel::setIsMuted(bool isMuted){
     this->m_isMuted = isMuted;
+    this->update();
 }
 
 void AudioLevel::paintEvent(QPaintEvent *event)

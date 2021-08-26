@@ -1,7 +1,8 @@
 #include "AudioSynthesizer.h"
 
 AudioSynthesizer::AudioSynthesizer() {
-    connect(&m_timer, &QTimer::timeout, [this](){
+
+    QObject::connect(&m_timer, &QTimer::timeout, [this](){
         emit sig_userListReady(getUserList());
         emit sig_userIsMutedStatusReady(m_userIsMutedStatusReady);
     });
@@ -9,31 +10,7 @@ AudioSynthesizer::AudioSynthesizer() {
 }
 
 AudioSynthesizer::~AudioSynthesizer() {
-    this->requestInterruption();
-    QThread::msleep(100);
-}
 
-////每隔40ms合成一次，并发送信号
-void AudioSynthesizer::run() {
-
-//    while (!this->isInterruptionRequested()) {
-//        QThread::sleep(2);
-
-//    }
-
-
-//    qDebug() << "void AudioSynthesizer::run()";
-//    int cnt = 0;
-//    while (!this->isInterruptionRequested()) {
-//        QThread::msleep(20);
-//        qDebug() << "ehxsafa";
-////        QMutexLocker locker(&m_mutex);
-////        while(m_output.size()<5){
-////            qDebug() << "ehxsafdsafdsa";
-////            m_output.enqueue(this->synthese());
-////        }
-////        emit sig_userListReady(this->getUserList());
-//    }
 }
 
 AudioFrame AudioSynthesizer::getAudioFrame() {
@@ -41,7 +18,7 @@ AudioFrame AudioSynthesizer::getAudioFrame() {
     return this->synthese();
 }
 
-double f(int x){
+double f(int x) {
     return (pow(1.0223, x)-1) * (100/8.07478);
 }
 
@@ -81,7 +58,7 @@ AudioFrame AudioSynthesizer::synthese() {
 
         }
     }
-    if (n!=0){
+    if (n!=0) {
 
         auto base_a = reinterpret_cast<short*>(&frame.buff[0]);
         for (int i=0; i<maxFrameLen/2; i++) {
@@ -158,7 +135,7 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
             qDebug() << "befor call front(), s_queues[name]" << s_queues[name].size();
             int frontRestBytes = s_queues[name].front().len-s_currIdx;
             if ( frontRestBytes < bytedNeed ) {
-                memcpy(frame.buff+buffIdx, s_queues[name].front().buff+s_currIdx, frontRestBytes);
+                memcpy(frame.buff+buffIdx, s_queues[name].front().buff+s_currIdx, frontRestBytes); // 这里可能存在bug导致段错误
                 buffIdx += frontRestBytes;
                 bytedNeed -= frontRestBytes;
                 s_queues[name].dequeue();

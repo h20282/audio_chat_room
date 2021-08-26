@@ -15,7 +15,6 @@ void AudioChat::joinRoom(QString userName, int roomId){
     m_collector.start();
     m_player.setProvider(&m_synthesizer);
     m_player.start();
-    m_synthesizer.start();
 
                        /*      +---------+
                                |        3|

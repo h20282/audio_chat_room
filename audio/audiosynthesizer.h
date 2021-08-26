@@ -5,6 +5,7 @@
 #include "../structs/Msg.h"
 #include "AbstractAudioFrameProvider.h"
 
+#include <QObject>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QThread>
@@ -15,13 +16,12 @@
 #include <QList>
 #include <cmath>
 
-class AudioSynthesizer: public QThread, public AbstractAudioFrameProvider
+class AudioSynthesizer : public QObject, public AbstractAudioFrameProvider
 {
     Q_OBJECT
 public:
     AudioSynthesizer();
     ~AudioSynthesizer();
-    void run() override;
     AudioFrame getAudioFrame() override;
     QList<QString> getUserList();
     void setVolume(QString name, int volume);
@@ -40,7 +40,6 @@ public slots:
 
 private:
     QMap<QString, QQueue<AudioFrame>> m_queues;
-//    QQueue<AudioFrame> m_output;
     QMap<QString, bool> m_userIsMutedStatusReady;
     QMap<QString, time_t> m_lastOnlineTime;
     QMap<QString, int> m_volume;

@@ -643,8 +643,8 @@ void MyChatRoom::DealMuteOneUserResponse(char *buf, int len)
     if (rs->mute_user_id == this->m_user_id)
     {
         is_muted = true;
-        QMessageBox::information(this, "提示", "您已经被静音！");
         m_chat->setIsMuted(true);
+        QMessageBox::information(this, "提示", "您已经被静音！");
     }
     else
     {
@@ -660,15 +660,15 @@ void MyChatRoom::DealtransferOneUserResponse(char *buf, int len)
     //如果被转让为房主
     if (this->m_user_id == rs->transfer_user_id)
     {
-        QMessageBox::information(this, "提示", "您被转让成为房主！");
         this->m_room_owener_id = rs->transfer_user_id;
         m_roomdialog->setRoomOwner(rs->transferUserName);
+        QMessageBox::information(this, "提示", "您被转让成为房主！");
     }
     else if (this->m_user_id == rs->m_user_id)
     { //提示原房主转让成功
-        QMessageBox::information(this, "提示", "转让成功！");
         this->m_room_owener_id = rs->transfer_user_id;
         m_roomdialog->setRoomOwner(rs->transferUserName);
+        QMessageBox::information(this, "提示", "转让成功！");
     }
     else
     {
@@ -686,8 +686,8 @@ void MyChatRoom::Dealkick_out_ofOneUserResponse(char *buf, int len)
     //如果自己是被踢的
     if (this->m_user_id == rs->kick_user_id)
     {
-        QMessageBox::information(this, "提示", "您已被踢出房间！");
         clearQuitRoomInfo(rs->szUserName);
+        QMessageBox::information(this, "提示", "您已被踢出房间！");
     }
     else if (this->m_user_id == rs->m_user_id)
     { //提示房主踢人成功
