@@ -66,6 +66,10 @@ void AudioLevel::setLevel(qreal level)
     }
 }
 
+void AudioLevel::setIsMuted(bool isMuted){
+    this->m_isMuted = isMuted;
+}
+
 void AudioLevel::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
@@ -73,7 +77,7 @@ void AudioLevel::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     // draw level
     qreal widthLevel = m_level * width();
-    painter.fillRect(0, 0, widthLevel, height(), Qt::red);
+    painter.fillRect(0, 0, widthLevel, height(), m_isMuted ? Qt::darkYellow : Qt::red);
     // clear the rest of the control
-    painter.fillRect(widthLevel, 0, width(), height(), Qt::white);
+    painter.fillRect(widthLevel, 0, width(), height(), m_isMuted ? Qt::gray : Qt::white);
 }

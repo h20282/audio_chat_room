@@ -9,7 +9,6 @@
 #include "mainwindow.h"
 #include "./login_register/login.h"
 #include "./login_register/common.h"
-#include "./net_api/udp_net.h"
 #include "mychatroom.h"
 
 #include <QCoreApplication>
@@ -23,7 +22,6 @@
 
 
 
-QString g_userName;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);

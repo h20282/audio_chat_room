@@ -28,6 +28,7 @@ public:
     void changeMuteState();
     bool getIsMuted();
     void setIsMuted(bool isMuted);
+
 signals:
     void sig_oneMsgReady(Msg msg);
     void sig_oneEmptyFrameReady(QString name);
@@ -50,7 +51,6 @@ private:
     bool m_isMuted = false;
 
     Encoder *m_encoder;
-//    Decoder decoder;
     QMap<QString, Decoder*> m_decoders;
 
 #ifdef SAVE_ENCODE_IO_INTO_FILE

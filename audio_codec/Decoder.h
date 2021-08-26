@@ -26,16 +26,16 @@ extern "C"{
 #define cout qDebug()
 
 
-void initDecoder();
+//void initDecoder();
 
-/*
- * @buff：指向aac帧
- * @len：aac帧长度（包括帧头、数据）
- *
- * @return 解码后的数据（用完需delete）、数据长度
- */
-std::pair<unsigned char*, int> decodeFrame(void*buff, int len);
-void closeDecoder();
+///*
+// * @buff：指向aac帧
+// * @len：aac帧长度（包括帧头、数据）
+// *
+// * @return 解码后的数据（用完需delete）、数据长度
+// */
+//std::pair<unsigned char*, int> decodeFrame(void*buff, int len);
+//void closeDecoder();
 
 
 
@@ -45,6 +45,12 @@ class Decoder{
 public:
     Decoder();
     ~Decoder();
+    /*
+     * @buff：指向aac帧
+     * @len：aac帧长度（包括帧头、数据）
+     *
+     * @return 解码后的数据（用完需delete）、数据长度
+     */
     std::pair<unsigned char*, int> decodeFrame(void*buff, int len);
 private:
     void closeDecoder();

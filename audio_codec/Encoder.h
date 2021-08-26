@@ -19,12 +19,6 @@ struct ZipedFrame
     ~ZipedFrame();
 };
 
-
-void initEncoder();
-ZipedFrame* encodeFrame(void *buff); // 使用完记得delete
-void closeEncoder();
-
-
 /*
  * 编码器，线程不安全，不支持多实例
  * todo: 改为单例模式
@@ -32,12 +26,12 @@ void closeEncoder();
  */
 class Encoder{
 
-
 public:
     Encoder();
-
+    ~Encoder();
     void pushAudioFrame(AudioFrame frame);
 
+    // 用完delete
     ZipedFrame *getZipedFrame();
 private:
 
@@ -50,9 +44,5 @@ private:
     FILE *fp_after_resplit;
 #endif
 };
-
-
-
-
 
 #endif // ENCODER_H

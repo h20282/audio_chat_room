@@ -63,12 +63,14 @@ public:
 
     // Using [0; 1.0] range
     void setLevel(qreal level);
+    void setIsMuted(bool isMuted);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
     qreal m_level = 0.0;
+    bool m_isMuted = false;
 };
 
 #endif // QAUDIOLEVEL_H

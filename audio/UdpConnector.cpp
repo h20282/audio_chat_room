@@ -12,7 +12,6 @@ UdpConnector::UdpConnector(QString userName, int roomId)
 
 #ifdef CODEC
     m_encoder = new Encoder(); // 获取编码器实例（初始化）
-    initDecoder(); // 初始化解码器
 #endif
 
     m_udpSocket = new QUdpSocket();
@@ -27,8 +26,7 @@ UdpConnector::UdpConnector(QString userName, int roomId)
 UdpConnector::~UdpConnector() {
 #ifdef CODEC
     delete m_encoder; // 析构编码器（释放编码器资源）
-    closeDecoder(); // 释放解码器资源
-
+    // 释放解码器资源
     for ( auto decoder : m_decoders ) {
         delete decoder;
     }

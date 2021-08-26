@@ -24,7 +24,7 @@
 #include "./meet_room/useritem.h"
 #include "./meet_room/userlist.h"
 #include "./meet_room/userwidget.h"
-#include "./net_api/udp_net.h"
+
 #include "./net_api/qmytcp_client.h"
 #include "./net_api/pack_def.h"
 #include "./common/customwidget.h"
@@ -143,8 +143,6 @@ private:
     bool is_first_connect;
     const QString m_server_ip;
     const unsigned short m_server_port;
-
-    std::unordered_set<std::string> m_user_list;        //当前房间用户列表
 
     AudioChat *m_chat;
     AudioLevel m_level;

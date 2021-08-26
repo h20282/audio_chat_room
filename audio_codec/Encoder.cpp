@@ -1,8 +1,11 @@
 #include "Encoder.h"
 
 
-//g++ Untitled.cpp -o Untitled.exe -I D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include  -D__STDC_CONSTANT_MACROS -L D:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib -lavcodec -lswresample -lavutil -lavformat -std=c++11; ./Untitled.exe
-#include <iostream>
+void initEncoder();
+ZipedFrame* encodeFrame(void *buff); // 使用完记得delete
+void closeEncoder();
+
+//#include <iostream>
 
 #define ERROR(msg) cout << "error in file :" << __FILE__\
                             << ", func: " << __func__ \
@@ -54,9 +57,15 @@ Encoder::Encoder(){
     this->fp_after_resplit = fopen("fp_after_resplit.pcm", "wb");
 #endif
 }
+
+Encoder::~Encoder(){
+    closeEncoder();
+}
+
 void Encoder::pushAudioFrame(AudioFrame frame){
     m_queue.enqueue(frame);
 }
+
 ZipedFrame* Encoder::getZipedFrame(){
 
     int restBytes = 0;
@@ -96,35 +105,6 @@ ZipedFrame* Encoder::getZipedFrame(){
             }
         }
         return encodeFrame(buff);
-/*
-
-        int restBytesInCurrFrame = m_queue.front().len - m_currIdx;
-        if (restBytesInCurrFrame<0){
-            return nullptr;
-        }
-//        qDebug() << "m_queue.front().len =" << m_queue.front().len;
-//        qDebug() << "m_currIdx = " << m_currIdx;
-        if ( restBytesInCurrFrame > 4096 ){
-            memcpy(buff, m_queue.front().buff+m_currIdx , 4096);
-            m_currIdx += 4096;
-        } else {
-            memcpy(buff, m_queue.front().buff+m_currIdx, restBytesInCurrFrame);
-
-#ifdef SAVE_RESPLIT_IO_INTO_FILE
-            fwrite(m_queue.front().buff, 1, m_queue.front().len, this->fp_before_resplit); // todo: delete it
-#endif
-
-            m_queue.dequeue();
-            memcpy(buff + restBytesInCurrFrame, m_queue.front().buff, 4096-restBytesInCurrFrame);
-            m_currIdx = 4096-restBytesInCurrFrame;
-        }
-
-#ifdef SAVE_RESPLIT_IO_INTO_FILE
-        fwrite(buff, 1, sizeof(buff), this->fp_after_resplit); // todo: delete it
-#endif
-        return encodeFrame(buff);
-*/
-
     } else {
         return nullptr;
     }
@@ -201,14 +181,14 @@ void initEncoder(){
     avcodec_register_all();
     codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!codec){
-        cout << "avcodec_find_encoder failed" << endl;
+        ERROR("avcodec_find_encoder failed");
     }
 
     //配置编码器上下文
     codecContext = avcodec_alloc_context3(codec);
 
     if (!codecContext){
-        cout << "avcodec_alloc_context3 failed" << endl;
+        ERROR("avcodec_alloc_context3 failed");
     }
 
     codecContext->sample_rate = AUDIO_SAM_RATE;
@@ -221,7 +201,7 @@ void initEncoder(){
     //打开音频的编码器
     int ret = avcodec_open2(codecContext, codec, NULL);
     if (ret < 0){
-        cout << "avcodec_open2 failed" << endl;
+        ERROR("avcodec_open2 failed");
     }
 
     cout << "codecContext->frame_size = " << codecContext->frame_size << endl;
@@ -250,7 +230,7 @@ void initEncoder(){
 
     ret = av_frame_get_buffer(avFrame, 0);
     if (ret < 0) {
-        cout << "av_frame_get_buffer failed" << endl;
+        ERROR("av_frame_get_buffer failed");
     }
 
 }

@@ -21,12 +21,12 @@ public:
     void setUserVolume(QString name, int volume /*[0,200]*/);
     void setIsMuted(bool isMuted);
     bool getIsMuted();
-    void changeMuteState();
 
 signals:
     void sig_collectorVolumeReady(double volume);  // 输入设备音量，范围[0, 1)
     void sig_userVolumeReady(QString name, double volume);  // 各其他用户音量，范围[0, 1)
     void sig_userListReady(QList<QString> list); // 用户列表
+    void sig_userIsMutedStatusReady(QMap<QString, bool> userStatus); // 返回用户是否被静音了
 
 private:
     UdpConnector       *m_connector;

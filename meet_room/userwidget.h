@@ -30,9 +30,6 @@ public:
         //setStyleSheet(QString::fromUtf8("border:1px solid black"));
         //setStyleSheet(QString::fromUtf8("background-color:gray"));
 
-
-
-
         m_label = new QLabel(this);
         m_label->setText(QString("%1").arg(userName.toLatin1().data()));
         m_label->setMaximumHeight(80);
@@ -70,6 +67,9 @@ public:
         m_level->setLevel(vol);
     }
 
+    void setIsMuted(bool isMuted){
+        this->m_level->setIsMuted(isMuted);
+    }
 
 
 signals:

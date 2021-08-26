@@ -1,7 +1,11 @@
 #include "AudioSynthesizer.h"
 
 AudioSynthesizer::AudioSynthesizer() {
-
+    connect(&m_timer, &QTimer::timeout, [this](){
+        emit sig_userListReady(getUserList());
+        emit sig_userIsMutedStatusReady(m_userIsMutedStatusReady);
+    });
+    m_timer.start(300);
 }
 
 AudioSynthesizer::~AudioSynthesizer() {
@@ -11,6 +15,7 @@ AudioSynthesizer::~AudioSynthesizer() {
 
 ////每隔40ms合成一次，并发送信号
 void AudioSynthesizer::run() {
+
 //    while (!this->isInterruptionRequested()) {
 //        QThread::sleep(2);
 
@@ -37,8 +42,9 @@ AudioFrame AudioSynthesizer::getAudioFrame() {
 }
 
 double f(int x){
-    return (pow(1.0335617, x)-1) * ((double)100/26.1419);
+    return (pow(1.0223, x)-1) * (100/8.07478);
 }
+
 // 从各个队列中获取数据，合成为一个音频帧
 AudioFrame AudioSynthesizer::synthese() {
     AudioFrame frame;
@@ -95,10 +101,12 @@ AudioFrame AudioSynthesizer::synthese() {
 QList<QString> AudioSynthesizer::getUserList(){
     QList<QString> ret;
 //    QMutexLocker locker(&m_mutex);
+    qDebug() << "m_lastOnlineTime.size()" << m_lastOnlineTime.size();
     for ( auto iter=m_lastOnlineTime.begin(); iter!=m_lastOnlineTime.end(); iter++ ) {
         QString name = iter.key();
         auto lastTime = iter.value();
         if (time(nullptr)-lastTime < 2) {
+            qDebug() << name;
             ret.push_back(name);
         }
     }
@@ -116,8 +124,8 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
 //    qDebug() << "one msg from " << msg.name << " frame len = " << msg.frame.len;
     QMutexLocker locker(&m_mutex);
     QString name(msg.name);
-
-#define DUI_QI
+    m_userIsMutedStatusReady[name] = false;
+//#define DUI_QI
 #ifdef DUI_QI
     // 用于重组成完整的pcm音频帧（长度固定为AUDIO_FRAME_LEN）
     // todo:将此变量放到成员变量中，否则多个AudioSynthesizer对象将共用此变量
@@ -178,17 +186,13 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
     }
     if (m_volume.find(name)!=m_volume.end()){
         emit sig_userVolumeReady(name, msg.frame.getMaxVolume() * m_volume[name]/200);
-//        emit sig_userVolumeReady(name, msg.frame.getMaxVolume());
     }
 
-    static int i = 0;
-    if (++i %10==0 ) {
-        emit sig_userListReady(this->getUserList());
-    }
 }
 
 // 一个'f'开头的静音消息
 void AudioSynthesizer::onOneEmptyMsgIn(QString userName) {
     QMutexLocker locker(&m_mutex);
+    m_userIsMutedStatusReady[userName] = true;
     m_lastOnlineTime[userName] = time(0);
 }

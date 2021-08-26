@@ -287,6 +287,7 @@ void MyChatRoom::SLOT_openAudio()
 {
     if (m_chat)
     {
+        m_level.setIsMuted(false);
         m_chat->setIsMuted(false);
     }
 }
@@ -296,6 +297,7 @@ void MyChatRoom::SLOT_closeAudio()
 {
     if (m_chat)
     {
+        m_level.setIsMuted(true);
         m_chat->setIsMuted(true);
     }
 }
@@ -455,7 +457,6 @@ void MyChatRoom::DealLoginResponse(char *buf, int len)
         this->show();
         this->ui->lb_name->setText(m_user_name);
         this->m_user_id = rs->m_user_id;
-        g_userName = this->m_user_name;
         //开启定时器心跳检测
         timer = new QTimer();
         connect(timer, SIGNAL(timeout()), this, SLOT(HeartDetect()));
@@ -507,6 +508,15 @@ void MyChatRoom::JoinRoom()
                              }
                          }
                      });
+    QObject::connect(m_chat, &AudioChat::sig_userIsMutedStatusReady, [this](QMap<QString, bool> userStatus){
+
+        for (auto iter=userStatus.begin(); iter!=userStatus.end(); iter++){
+            if ( this->m_userWidegets.find( iter.key() )  !=  this->m_userWidegets.end() ) {
+                this->m_userWidegets[iter.key()]->setIsMuted(iter.value());
+            }
+        }
+    });
+
 
     QObject::connect(m_chat, &AudioChat::sig_collectorVolumeReady, [this](double volume)
                      { m_level.setLevel(volume); });

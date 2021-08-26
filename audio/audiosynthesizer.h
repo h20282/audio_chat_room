@@ -10,6 +10,7 @@
 #include <QThread>
 #include <QMap>
 #include <QQueue>
+#include <QTimer>
 #include <QString>
 #include <QList>
 #include <cmath>
@@ -31,6 +32,7 @@ private:
 signals:
     void sig_userVolumeReady(QString name, double volume);
     void sig_userListReady(QList<QString> list);
+    void sig_userIsMutedStatusReady(QMap<QString, bool> userStatus); // 返回用户是否被静音了
 
 public slots:
     void onOneFrameIn(Msg msg);
@@ -39,10 +41,12 @@ public slots:
 private:
     QMap<QString, QQueue<AudioFrame>> m_queues;
 //    QQueue<AudioFrame> m_output;
+    QMap<QString, bool> m_userIsMutedStatusReady;
     QMap<QString, time_t> m_lastOnlineTime;
     QMap<QString, int> m_volume;
 
     QMutex m_mutex;
+    QTimer m_timer;
 
 };
 

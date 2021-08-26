@@ -60,7 +60,10 @@ void AudioChat::joinRoom(QString userName, int roomId){
 //        qDebug() << list;
         emit sig_userListReady(list);
     });
-
+    // 用户静音状态变化
+    connect(&m_synthesizer, &AudioSynthesizer::sig_userIsMutedStatusReady, [this](QMap<QString, bool> userStatus){
+        emit sig_userIsMutedStatusReady(userStatus);
+    });
 }
 
 void AudioChat::setInputDevice(QAudioDeviceInfo info){
@@ -77,8 +80,4 @@ void AudioChat::setIsMuted(bool isMuted){
 
 bool AudioChat::getIsMuted(){
     return m_connector->getIsMuted();
-}
-
-void AudioChat::changeMuteState(){
-    m_connector->changeMuteState();
 }
