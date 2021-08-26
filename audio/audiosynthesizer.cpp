@@ -36,12 +36,15 @@ AudioFrame AudioSynthesizer::getAudioFrame() {
     return this->synthese();
 }
 
+double f(int x){
+    return (pow(1.0335617, x)-1) * ((double)100/26.1419);
+}
 // 从各个队列中获取数据，合成为一个音频帧
 AudioFrame AudioSynthesizer::synthese() {
     AudioFrame frame;
     memset(&frame, 0, sizeof(0));
     int maxFrameLen = 0;
-    int n = 0; // 权值累和
+    double n = 0; // 权值累和
     static int v[AUDIO_FRAME_LEN/2];
     memset(v, 0, sizeof(v));
     if (m_queues.size())
@@ -53,8 +56,8 @@ AudioFrame AudioSynthesizer::synthese() {
         }
 
         if (queue.size()) {
-            auto x = m_volume[name]; // 权值
-            n += x;
+            auto x = f(m_volume[name]); // 权值
+            n += 100;
             auto currFrame = queue.dequeue();
             if (currFrame.len != AUDIO_FRAME_LEN) {
 //                qDebug() << "not AUDIO_FRAME_LEN:" << currFrame.len;
@@ -84,7 +87,7 @@ AudioFrame AudioSynthesizer::synthese() {
         }
         frame.len = maxFrameLen;
     }
-//    qDebug() << "-->n = " << n << "maxFrameLen =" << maxFrameLen;
+    qDebug() << "-->n = " << n << "maxFrameLen =" << maxFrameLen;
     return frame;
 }
 
@@ -114,7 +117,7 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
     QMutexLocker locker(&m_mutex);
     QString name(msg.name);
 
-//#define DUI_QI
+#define DUI_QI
 #ifdef DUI_QI
     // 用于重组成完整的pcm音频帧（长度固定为AUDIO_FRAME_LEN）
     // todo:将此变量放到成员变量中，否则多个AudioSynthesizer对象将共用此变量
@@ -164,6 +167,7 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
 #endif
 
 #ifndef DUI_QI
+//    qDebug() << "msg.frame.len" << msg.frame.len;
     m_queues[name].enqueue(msg.frame);
 #endif
 
@@ -172,8 +176,11 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
         qDebug() << "droped a audio frame";
         m_queues[name].dequeue();
     }
-    if (m_volume.find(name)!=m_volume.end())
+    if (m_volume.find(name)!=m_volume.end()){
         emit sig_userVolumeReady(name, msg.frame.getMaxVolume() * m_volume[name]/200);
+//        emit sig_userVolumeReady(name, msg.frame.getMaxVolume());
+    }
+
     static int i = 0;
     if (++i %10==0 ) {
         emit sig_userListReady(this->getUserList());

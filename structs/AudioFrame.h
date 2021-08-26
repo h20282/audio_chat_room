@@ -9,10 +9,25 @@ struct AudioFrame{
         if (AUDIO_SAM_SIZE==16){
             auto p = reinterpret_cast<short*>(buff);
             auto maxVol = p[0];
-            for ( int i=0; i<len/2; i++ ) {
+            int nSamples = len/2;
+            for ( int i=0; i<nSamples; i++ ) {
                 maxVol = qMax(maxVol, p[i]);
             }
             return double(maxVol)/32768;
+        } else {
+            qDebug() << "not implement!!! AUDIO_SAM_SIZE: " << AUDIO_SAM_SIZE;
+            return 0;
+        }
+    }
+    double getVolumeSum(){
+        if (AUDIO_SAM_SIZE==16){
+            auto p = reinterpret_cast<short*>(buff);
+            double sum = 0;
+            int nSamples = len/2;
+            for ( int i=0; i<nSamples; i++ ) {
+                sum += qAbs(p[i]);
+            }
+            return sum/32768/(nSamples);
         } else {
             qDebug() << "not implement!!! AUDIO_SAM_SIZE: " << AUDIO_SAM_SIZE;
             return 0;

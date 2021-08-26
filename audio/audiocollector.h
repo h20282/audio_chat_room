@@ -38,7 +38,7 @@ signals:
     void sig_audioFrameReady(AudioFrame frame);
     void sig_audioVolumeReady(double volume);
 
-public slots:
+private slots:
     void onReadyRead();
 
 private:

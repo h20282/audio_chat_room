@@ -12,6 +12,7 @@
 #include <QQueue>
 #include <QString>
 #include <QList>
+#include <cmath>
 
 class AudioSynthesizer: public QThread, public AbstractAudioFrameProvider
 {

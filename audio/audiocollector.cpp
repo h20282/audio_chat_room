@@ -51,7 +51,11 @@ void AudioCollector::onReadyRead(){
 #ifdef SAVE_COLLECTED_PCM_INTO_FILE
     fwrite(frame.buff, 1, frame.len, m_fp);
 #endif
-
+//    qDebug() << "curr volume:" << frame.getVolumeSum();
+//    if (frame.getVolumeSum() < 0.002){
+//        memset(frame.buff, 0, sizeof(frame.buff));
+//        frame.len = 0;
+//    }
     emit sig_audioFrameReady(frame);
     emit sig_audioVolumeReady(frame.getMaxVolume());
 }

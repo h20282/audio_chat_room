@@ -111,7 +111,7 @@ void UdpConnector::onUdpReadyRead() {
                     memset(msg.frame.buff, 0, sizeof(msg.frame.buff)); // 全帧初始化为0
                     memcpy(msg.name, buff+1, 16); // 用户名
                     msg.frame.len = qMin(pcm_len-i, AUDIO_FRAME_LEN); // pcm帧长度
-//                    qDebug() << "msg.frame.len" << msg.frame.len;
+                    qDebug() << "in udp connector: msg.frame.len" << msg.frame.len;
                     memcpy(msg.frame.buff, pcm_buff+i, msg.frame.len); // pcm数据
                     emit sig_oneMsgReady(msg);
                 }
