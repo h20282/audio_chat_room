@@ -31,5 +31,6 @@
         <file>bq/0.png</file>
         <file>bq/001.png</file>
         <file>bq/1.png</file>
+        <file>images/creatRoom.png</file>
     </qresource>
 </RCC>

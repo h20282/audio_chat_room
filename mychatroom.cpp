@@ -23,8 +23,8 @@ MyChatRoom::MyChatRoom(QWidget *parent) : CustomMoveWidget(parent),
                                           m_chat(nullptr), m_device_info(QAudioDeviceInfo::defaultInputDevice())
 {
     ui->setupUi(this);
-    ui->pb_title->setFocusPolicy(Qt::NoFocus);
-    ui->le_search->setPlaceholderText("请输入6位房间号id！");
+//    ui->pb_title->setFocusPolicy(Qt::NoFocus);
+    ui->le_search->setPlaceholderText("请输入6位房间号id（按回车加入）");
     ui->lb_name->setText(this->m_user_name);
 
     //tcp连接
