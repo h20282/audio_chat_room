@@ -499,7 +499,7 @@ void MyChatRoom::JoinRoom()
                              userListModel.appendRow(new QStandardItem(userName));
                              if (m_userWidegets.find(userName) == m_userWidegets.end())
                              {
-                                 UserWidget *newOne = new UserWidget(userName, m_chat, this);
+                                 UserWidget *newOne = new UserWidget(userName, this);
                                  connect(newOne, &UserWidget::sig_sliderMoved, [this, userName](int val)
                                          { this->m_chat->setUserVolume(userName, val); });
 

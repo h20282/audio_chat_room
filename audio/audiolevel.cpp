@@ -58,6 +58,10 @@ AudioLevel::AudioLevel(QWidget *parent)
     setMaximumHeight(50);
 }
 
+AudioLevel::~AudioLevel() {
+    qDebug() << "AudioLevel" << endl;
+}
+
 void AudioLevel::setLevel(qreal level)
 {
     if (m_level != level) {

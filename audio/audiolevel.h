@@ -59,9 +59,9 @@
     Q_OBJECT
 public:
     explicit AudioLevel(QWidget *parent = nullptr);
-     ~AudioLevel() {qDebug() << "AudioLevel" << endl;}
+     ~AudioLevel();
 
-    // Using [0; 1.0] range
+    // Using [0, 1.0] range
     void setLevel(qreal level);
     void setIsMuted(bool isMuted);
 
