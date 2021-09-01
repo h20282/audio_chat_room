@@ -36,7 +36,7 @@ AudioPlayer::~AudioPlayer() {
 void AudioPlayer::run() {
     qDebug() << "void AudioPlayer::run()";
     auto maxFree = m_output->bytesFree();
-    while (!this->isInterruptionRequested() and m_playing) {
+    while (!this->isInterruptionRequested() && m_playing) {
         QMutexLocker locker(&m_mutex);
         auto currBytesFree = m_output->bytesFree();
         if ( currBytesFree > maxFree ) {

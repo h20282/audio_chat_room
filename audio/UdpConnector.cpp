@@ -1,4 +1,4 @@
-#include "UdpConnector.h"
+﻿#include "UdpConnector.h"
 
 UdpConnector::UdpConnector(QString userName, int roomId)
     : m_roomId(roomId)
@@ -16,7 +16,7 @@ UdpConnector::UdpConnector(QString userName, int roomId)
 
     m_udpSocket = new QUdpSocket();
     unsigned short port = 0;
-    while (not m_udpSocket->bind(QHostAddress::Any, port)){ //客户端接收消息的端口
+    while (!m_udpSocket->bind(QHostAddress::Any, port)){ //客户端接收消息的端口
         port++;
     }
     m_destaddr.setAddress(SERVER_IP);
@@ -164,7 +164,7 @@ void UdpConnector::onAudioFrameReady(AudioFrame frame) {
             //     1     +    4   +   16  +     4     + AAC_FRAME_LEN
             // 静音标识符 + 房间号 + 用户名 + aac帧长度 + aac帧数据
             //                          （用于验证aac帧正确性）
-            char buff[1+4+16+4+zipedFrame->len];
+            char *buff = new char[1+4+16+4+zipedFrame->len];
             memset(buff, 0, sizeof(buff));
 
             buff[0] = 'F'; //未静音标志
@@ -174,6 +174,7 @@ void UdpConnector::onAudioFrameReady(AudioFrame frame) {
             memcpy(buff + 1 + 4 + 16 + 4, zipedFrame->data, zipedFrame->len);
 
             m_udpSocket->writeDatagram(buff, m_isMuted ? (1 + 4 + 16) : sizeof(buff), m_destaddr, m_port);
+            delete buff;
         }
     }
 #endif

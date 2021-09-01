@@ -1,4 +1,4 @@
-#include "AudioSynthesizer.h"
+﻿#include "AudioSynthesizer.h"
 
 AudioSynthesizer::AudioSynthesizer() {
 
@@ -91,7 +91,7 @@ QList<QString> AudioSynthesizer::getUserList(){
 }
 
 void AudioSynthesizer::setVolume(QString name, int volume) {
-    if (volume>=0 and volume<=200) {
+    if (volume>=0 && volume<=200) {
         m_volume[name] = volume;
     }
 }

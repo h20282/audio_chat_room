@@ -1,0 +1,6 @@
+[requires]
+fmt/8.0.1
+spdlog/1.9.2
+
+[generators]
+cmake
