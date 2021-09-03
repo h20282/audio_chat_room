@@ -1,4 +1,4 @@
-#include "tcp_net.h"
+﻿#include "tcp_net.h"
 
 TcpNet::TcpNet(ITcpMediator *pMediator)
 {
@@ -22,7 +22,7 @@ bool TcpNet::InitNetWork(char *szBufIP, unsigned short port)
 
     m_port = port;
 
-    qDebug() << "m_port=!" << m_port << endl;
+//    qDebug() << "m_port=!" << m_port << endl;
 
     /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
     wVersionRequested = MAKEWORD(2, 2);

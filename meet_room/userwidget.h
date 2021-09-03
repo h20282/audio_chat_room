@@ -1,19 +1,17 @@
-﻿#ifndef USERWIDGET_H
-#define USERWIDGET_H
+﻿#pragma once
 
-#include "./audio/audiolevel.h"
-#include "./audio/AudioChat.h"
-
-#include <QWidget>
 #include <QLabel>
 #include <QLayout>
 #include <QSlider>
+#include <QWidget>
 
-class UserWidget : public QWidget
-{
+#include "./audio/AudioChat.h"
+#include "./audio/audiolevel.h"
+
+class UserWidget : public QWidget {
     Q_OBJECT
 public:
-    UserWidget(QString userName, QWidget* parent = nullptr);
+    UserWidget(QString userName, QWidget *parent = nullptr);
     ~UserWidget();
     void setVol(double vol);
     void setIsMuted(bool isMuted);
@@ -27,5 +25,3 @@ private:
     AudioLevel *m_level;
     QVBoxLayout *m_layout;
 };
-
-#endif // USERWIDGET_H

@@ -20,15 +20,7 @@ endif()
 set(ffmpeg_libs_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/)
 set(ffmpeg_headers_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include)
 
-add_library(avcodec SHARED IMPORTED)
-add_library(swresample SHARED IMPORTED)
-add_library(avutil SHARED IMPORTED)
-add_library(avformat SHARED IMPORTED)
 
-set_target_properties( avcodec PROPERTIES IMPORTED_LOCATION ${ffmpeg_libs_DIR}/avcodec.lib )
-set_target_properties( swresample PROPERTIES IMPORTED_LOCATION ${ffmpeg_libs_DIR}/swresample.lib )
-set_target_properties( avutil PROPERTIES IMPORTED_LOCATION ${ffmpeg_libs_DIR}/avutil.lib )
-set_target_properties( avformat PROPERTIES IMPORTED_LOCATION ${ffmpeg_libs_DIR}/avformat.lib )
 
 include_directories( ${ffmpeg_headers_DIR} )
 link_directories(${ffmpeg_libs_DIR} )
@@ -44,6 +36,10 @@ include(${CMAKE_SOURCE_DIR}/build/conanbuildinfo.cmake)
 conan_basic_setup()
 
 add_executable(cmakePro
+
+    audio/AbstractAudioFrameProvider.h
+    log/log.h
+
     audio/AudioChat.cpp
     audio/audiocollector.cpp
     audio/audiolevel.cpp
@@ -72,9 +68,27 @@ add_executable(cmakePro
     mainwindow.cpp
     mychatroom.cpp
     myqq.cpp
-    chatdialog.cpp
-    useritem.cpp
     videoitem.cpp
-)
 
-target_link_libraries(cmakePro PRIVATE Qt5::Widgets Qt5::Core Qt5::Gui Qt5::Network Qt5::Multimedia ${CONAN_LIBS} ws2_32)
+    login_register/login.ui
+    login_register/registerwin.ui
+    mainwindow.ui
+    meet_room/roomdialog.ui
+    mychatroom.ui
+    myqq.ui
+    videoitem.ui
+)#add_executable
+
+target_link_libraries(cmakePro PRIVATE
+    Qt5::Widgets
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Network
+    Qt5::Multimedia
+    ${CONAN_LIBS}
+    ws2_32
+    avcodec
+    swresample
+    avutil
+    avformat
+)#target_link_libraries

@@ -1,52 +1,48 @@
-#ifndef AUDIOSYNTHESIZER_H
-#define AUDIOSYNTHESIZER_H
+﻿#pragma once
+
+#include <cmath>
+
+#include <QList>
+#include <QMap>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QObject>
+#include <QQueue>
+#include <QString>
+#include <QThread>
+#include <QTimer>
 
 #include "../structs/AudioFrame.h"
 #include "../structs/Msg.h"
 #include "AbstractAudioFrameProvider.h"
 
-#include <QObject>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QThread>
-#include <QMap>
-#include <QQueue>
-#include <QTimer>
-#include <QString>
-#include <QList>
-#include <cmath>
-
-class AudioSynthesizer : public QObject, public AbstractAudioFrameProvider
-{
+class AudioSynthesizer : public QObject, public AbstractAudioFrameProvider {
     Q_OBJECT
 public:
     AudioSynthesizer();
-    ~AudioSynthesizer();
-    AudioFrame getAudioFrame() override;
-    QList<QString> getUserList();
-    void setVolume(QString name, int volume);
+    ~AudioSynthesizer() override;
+    AudioFrame GetAudioFrame() override;
+    QList<QString> GetUserList();
+    void SetVolume(QString name, int volume);
 
 private:
-    AudioFrame synthese();
+    AudioFrame Synthese();
 
 signals:
     void sig_userVolumeReady(QString name, double volume);
     void sig_userListReady(QList<QString> list);
-    void sig_userIsMutedStatusReady(QMap<QString, bool> userStatus); // 返回用户是否被静音了
+    void sig_userIsMutedStatusReady(QMap<QString, bool> userStatus);
 
 public slots:
     void onOneFrameIn(Msg msg);
     void onOneEmptyMsgIn(QString userName);
 
 private:
-    QMap<QString, QQueue<AudioFrame>> m_queues;
-    QMap<QString, bool> m_userIsMutedStatusReady;
-    QMap<QString, time_t> m_lastOnlineTime;
-    QMap<QString, int> m_volume;
+    QMap<QString, QQueue<AudioFrame>> queues_;
+    QMap<QString, bool> is_muted_;
+    QMap<QString, time_t> last_online_t_;
+    QMap<QString, int> volume_;
 
-    QMutex m_mutex;
-    QTimer m_timer;
-
+    QMutex mutex_;
+    QTimer timer_;
 };
-
-#endif // AUDIOSYNTHESIZER_H

@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
 **
 ** Copyright (C) 2017 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
@@ -51,9 +51,7 @@
 #include "audiolevel.h"
 #include <QPainter>
 
-AudioLevel::AudioLevel(QWidget *parent)
-  : QWidget(parent)
-{
+AudioLevel::AudioLevel(QWidget *parent) : QWidget(parent) {
     setMinimumHeight(15);
     setMaximumHeight(50);
 }
@@ -62,27 +60,27 @@ AudioLevel::~AudioLevel() {
     qDebug() << "AudioLevel" << endl;
 }
 
-void AudioLevel::setLevel(qreal level)
-{
-    if (m_level != level) {
-        m_level = level;
+void AudioLevel::SetLevel(qreal level) {
+//    if (level_ != level) {
+        level_ = level;
         update();
-    }
+//    }
 }
 
-void AudioLevel::setIsMuted(bool isMuted){
-    this->m_isMuted = isMuted;
+void AudioLevel::SetIsMuted(bool isMuted) {
+    this->isMuted_ = isMuted;
     this->update();
 }
 
-void AudioLevel::paintEvent(QPaintEvent *event)
-{
-    Q_UNUSED(event);
+void AudioLevel::paintEvent(QPaintEvent *event) {
+    Q_UNUSED(event)
 
     QPainter painter(this);
-    // draw level
-    qreal widthLevel = m_level * width();
-    painter.fillRect(0, 0, widthLevel, height(), m_isMuted ? Qt::darkYellow : Qt::red);
-    // clear the rest of the control
-    painter.fillRect(widthLevel, 0, width(), height(), m_isMuted ? Qt::gray : Qt::white);
+    qreal widthLevel = level_ * width();
+
+    auto fore_color = isMuted_ ? Qt::darkYellow : Qt::red;
+    painter.fillRect(0, 0, static_cast<int>(widthLevel), height(), fore_color);
+
+    auto back_color = isMuted_ ? Qt::gray : Qt::white;
+    painter.fillRect(static_cast<int>(widthLevel), 0, width(), height(), back_color);
 }

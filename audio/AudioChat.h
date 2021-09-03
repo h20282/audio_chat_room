@@ -1,38 +1,38 @@
-#ifndef AUDIOCHAT_H
-#define AUDIOCHAT_H
+﻿#pragma once
 
-#include<QObject>
+#include <QObject>
+
+#include "audiocollector.h"
+#include "audioplayer.h"
+#include "audiosynthesizer.h"
 #include "UdpConnector.h"
-#include "AudioCollector.h"
-#include "AudioPlayer.h"
-#include "AudioSynthesizer.h"
 
-class AudioChat: public QObject
-{
+class AudioChat : public QObject {
     Q_OBJECT
 
 public:
     AudioChat();
     ~AudioChat();
-
     // 加入房间，同一个房间内的人互相能听到声音（开启声音采集、传输、合成、播放）
-    void joinRoom(QString userName, int roomId);
-    void setInputDevice(QAudioDeviceInfo info);
-    void setUserVolume(QString name, int volume /*[0,200]*/);
-    void setIsMuted(bool isMuted);
-    bool getIsMuted();
+    void JoinRoom(QString user_name, int room_id);
+    void SetInputDevice(QAudioDeviceInfo info);
+    void SetUserVolume(QString name, int volume /*[0,200]*/);
+    void SetIsMuted(bool is_muted);
+    bool GetIsMuted();
 
 signals:
-    void sig_collectorVolumeReady(double volume);  // 输入设备音量，范围[0, 1)
-    void sig_userVolumeReady(QString name, double volume);  // 各其他用户音量，范围[0, 1)
-    void sig_userListReady(QList<QString> list); // 用户列表
-    void sig_userIsMutedStatusReady(QMap<QString, bool> userStatus); // 返回用户是否被静音了
+    // 输入设备音量，范围[0, 1)
+    void sig_collectorVolumeReady(double volume);
+    // 各其他用户音量，范围[0, 1)
+    void sig_userVolumeReady(QString name, double volume);
+    // 用户列表
+    void sig_userListReady(QList<QString> list);
+    // 返回用户是否被静音了
+    void sig_userIsMutedStatusReady(QMap<QString, bool> user_status);
 
 private:
-    UdpConnector       *m_connector;
-    AudioCollector      m_collector;
-    AudioPlayer         m_player;
-    AudioSynthesizer    m_synthesizer;
+    AudioCollector collector_;
+    AudioPlayer player_;
+    AudioSynthesizer synthesizer_;
+    UdpConnector *connector_;
 };
-
-#endif // AUDIOCHAT_H

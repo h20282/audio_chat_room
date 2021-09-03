@@ -1,51 +1,34 @@
-#ifndef AUDIOPLAYER_H
-#define AUDIOPLAYER_H
+﻿#pragma once
 
-#include "Config.h"
-#include "../structs/AudioFrame.h"
-#include "AbstractAudioFrameProvider.h"
-
-#include <QThread>
-#include <QQueue>
-#include <QObject>
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QMutex>
 #include <QMutexLocker>
-#include <QByteArray>
+#include <QObject>
+#include <QThread>
 
-#include <QtNetwork/QUdpSocket>
-#include <QHostAddress>
-#include <QNetworkInterface>
-#include <QDebug>
+#include "spdlog/spdlog.h"
+
+#include "../structs/AudioFrame.h"
+#include "AbstractAudioFrameProvider.h"
+#include "Config.h"
 
 // 负责获取数据并播放音频，依赖于抽象类AbstractAudioFrameProvider，而不依赖于具体细节，耦合较低
-class AudioPlayer : public QThread
-{
+// 使用：先 setProvider() 然后 start()
+class AudioPlayer : public QThread {
     Q_OBJECT
+
 public:
     AudioPlayer();
     ~AudioPlayer() override;
     void run() override;
-    void setProvider(AbstractAudioFrameProvider *provider);
+    void SetProvider(AbstractAudioFrameProvider *provider);
 
-//public slots:
-//    void onAudioFrameReady(AudioFrame frame);
 private:
+    QAudioOutput *output_;
+    QIODevice *audio_io_;
 
-    QAudioOutput *m_output;
-    QIODevice *m_audioIo;
-
-    AbstractAudioFrameProvider *m_provider=nullptr;
-
-//    QQueue<AudioFrame> m_queue;
-
-    QMutex m_mutex;
-
-    bool m_playing;
+    AbstractAudioFrameProvider *m_provider = nullptr;
+    QMutex mutex_;
+    bool playing_;
 };
-
-
-
-
-#endif // AUDIOPLAYER_H

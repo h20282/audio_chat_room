@@ -1,10 +1,9 @@
-#ifndef ABSTRACTAUDIOFRAMEPROVIDER_H
-#define ABSTRACTAUDIOFRAMEPROVIDER_H
+﻿#pragma once
+
 #include "../structs/AudioFrame.h"
-#include <QAudioEncoderSettings>
-class AbstractAudioFrameProvider
-{
+
+class AbstractAudioFrameProvider {
 public:
-    virtual AudioFrame getAudioFrame()=0;
+    virtual AudioFrame GetAudioFrame() = 0;
+    virtual ~AbstractAudioFrameProvider() = default;
 };
-#endif // ABSTRACTAUDIOFRAMEPROVIDER_H

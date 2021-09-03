@@ -1,4 +1,4 @@
-#ifndef UDPCONNECTOR_H
+﻿#ifndef UDPCONNECTOR_H
 #define UDPCONNECTOR_H
 
 // 收发时是否加入编解码模块
@@ -6,28 +6,25 @@
 // 是否输出编码器编码前后数据到文件 "udp_net.pcm" 和 "udp_net.aac" 中
 //#define SAVE_ENCODE_IO_INTO_FILE
 
-#include "../structs/Msg.h"
-#include "../audio_codec/Encoder.h"
-#include "../audio_codec/Decoder.h"
+#include <vector>
 
-#include <QUdpSocket>
 #include <QHostAddress>
-#include <QThread>
 #include <QMutex>
-#include <QMutexLocker>
-#include <QMap>
+#include <QUdpSocket>
 
+#include "../audio_codec/Decoder.h"
+#include "../audio_codec/Encoder.h"
+#include "../structs/Msg.h"
 
-class UdpConnector: public QObject
-{
+class UdpConnector : public QObject {
     Q_OBJECT
 
 public:
-    UdpConnector(QString userName, int roomId);
+    UdpConnector(QString user_name, int room_id);
     ~UdpConnector();
-    void changeMuteState();
-    bool getIsMuted();
-    void setIsMuted(bool isMuted);
+    void ChangeMuteState();
+    bool GetIsMuted();
+    void SetIsMuted(bool isMuted);
 
 signals:
     void sig_oneMsgReady(Msg msg);
@@ -36,29 +33,29 @@ signals:
 public slots:
     void onAudioFrameReady(AudioFrame frame);
 
-private  slots:
+private slots:
     void onUdpReadyRead();
 
 private:
-    QUdpSocket *m_udpSocket;
-    QHostAddress m_destaddr;
-    quint16 m_port;
+    QUdpSocket *udp_socket_;
+    QHostAddress destaddr_;
+    quint16 port_;
 
-    QMutex m_mutex;
+    QMutex mutex_;
 
-    QString m_userName;
-    int m_roomId;
-    bool m_isMuted = false;
+    QString user_name_;
+    int room_id_;
+    bool is_muted_ = false;
 
-    Encoder *m_encoder;
-    QMap<QString, Decoder*> m_decoders;
+    Encoder *encoder_;
+    QMap<QString, Decoder *> decoders_;
 
 #ifdef SAVE_ENCODE_IO_INTO_FILE
-    FILE *fp_aac; // todo: delete it!
-    FILE *fp_pcm; // todo: delete it!
-    QMap<QString, FILE*> m_files;
-    QMap<QString, FILE*> m_filesPCM;
+    FILE *fp_aac;  // todo: delete it!
+    FILE *fp_pcm;  // todo: delete it!
+    QMap<QString, FILE *> m_files;
+    QMap<QString, FILE *> m_filesPCM;
 #endif
 };
 
-#endif // UDPCONNECTOR_H
+#endif  // UDPCONNECTOR_H

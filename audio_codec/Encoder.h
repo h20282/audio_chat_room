@@ -1,21 +1,19 @@
-#ifndef ENCODER_H
-#define ENCODER_H
+﻿#pragma once
 
 //是否将重分割前后的pcm输出到 "fp_before_resplit.pcm" 和 "fp_after_resplit.pcm"
 //#define SAVE_RESPLIT_IO_INTO_FILE
 
-#include "../structs/AudioFrame.h"
-#include "Config.h"
-
 #include <qdebug.h>
 #include <QQueue>
 
-struct ZipedFrame
-{
-    int len; // data所指内存字节数
-    unsigned char* data;
+#include "../structs/AudioFrame.h"
+#include "Config.h"
 
-    ZipedFrame(int len, void* base);
+struct ZipedFrame {
+    int len;  // data所指内存字节数
+    unsigned char *data;
+
+    ZipedFrame(int len, void *base);
     ~ZipedFrame();
 };
 
@@ -24,25 +22,23 @@ struct ZipedFrame
  * todo: 改为单例模式
  * 使用方法，getInstance获取实例（初始化编码器），关闭时delete获取到的实例
  */
-class Encoder{
+class Encoder {
 
 public:
     Encoder();
     ~Encoder();
-    void pushAudioFrame(AudioFrame frame);
+    void PushAudioFrame(AudioFrame frame);
 
     // 用完delete
-    ZipedFrame *getZipedFrame();
-private:
+    ZipedFrame *GetZipedFrame();
 
-    QQueue<AudioFrame> m_queue;
-    AudioFrame currFrame;
-    int m_currIdx;
+private:
+    QQueue<AudioFrame> queue_;
+    AudioFrame curr_frame_;
+    int curr_idx_;
 
 #ifdef SAVE_RESPLIT_IO_INTO_FILE
     FILE *fp_before_resplit;
     FILE *fp_after_resplit;
 #endif
 };
-
-#endif // ENCODER_H

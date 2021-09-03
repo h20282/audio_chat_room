@@ -1,4 +1,6 @@
-#include "AudioPlayer.h"
+﻿#include "audioplayer.h"
+
+#include "log/log.h"
 
 AudioPlayer::AudioPlayer() {
     QAudioFormat format;
@@ -9,71 +11,54 @@ AudioPlayer::AudioPlayer() {
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::SignedInt);
 
-//    auto l = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
-//    auto list = l[0].supportedCodecs();
-//    for (auto item : list) {
-//        qDebug() << item;
-//    }
-//    if (m_output != nullptr ) delete m_output;
+    //    auto l = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    //    auto list = l[0].supportedCodecs();
+    //    for (auto item : list) {
+    //        qDebug() << item;
+    //    }
+    //    if (m_output != nullptr ) delete m_output;
 
-    m_output = new QAudioOutput(format);
-    m_audioIo = m_output->start();
-    m_playing = true;
-
+    output_ = new QAudioOutput(format);
+    audio_io_ = output_->start();
+    playing_ = true;
 }
 
 AudioPlayer::~AudioPlayer() {
 
-    m_playing = false;
+    playing_ = false;
     this->requestInterruption();
     QThread::msleep(100);
-    m_audioIo->close();                         //qDebug() << __LINE__;
-    m_output->stop();                           //qDebug() << __LINE__;
-    this->quit();                               //qDebug() << __LINE__;
-    delete m_output;                            //qDebug() << __LINE__;
+    audio_io_->close();
+    output_->stop();
+    this->quit();
+    delete output_;
 }
 
 void AudioPlayer::run() {
-    qDebug() << "void AudioPlayer::run()";
-    auto maxFree = m_output->bytesFree();
-    while (!this->isInterruptionRequested() && m_playing) {
-        QMutexLocker locker(&m_mutex);
-        auto currBytesFree = m_output->bytesFree();
-        if ( currBytesFree > maxFree ) {
-            maxFree = currBytesFree;
-        }
-//        qDebug() << "currBytesFree =" << currBytesFree << ", maxFree = " << maxFree;
-        if (m_output->bytesFree()>=sizeof(AudioFrame)){
-            AudioFrame frame = m_provider->getAudioFrame();
+    LOG_INFO("AudioPlayer start");
+    auto maxFree = output_->bytesFree();
+    while (!this->isInterruptionRequested() && playing_) {
+        QMutexLocker locker(&mutex_);
+        auto currBytesFree = output_->bytesFree();
+        if (currBytesFree > maxFree) { maxFree = currBytesFree; }
+        if (output_->bytesFree() >= AUDIO_FRAME_LEN) {
+            AudioFrame frame = m_provider->GetAudioFrame();
             if (frame.len < 0) {
-                qWarning() << "a wrong frame!(len < 0)";
+                LOG_WARN("a wrong frame!(len({}) < 0)", frame.len);
                 continue;
-            } else if (frame.len==0){
+            } else if (frame.len == 0) {
                 static int idx = 0;
-                qWarning() << "a empty frame!(len == 0)" << ++idx;
+                LOG_WARN("a empty frame!(len == 0)");
                 QThread::msleep(50);
             } else {
-                auto writeCnt = m_audioIo->write(frame.buff, frame.len);
-//                qDebug() << writeCnt << "bytes audio writen(audio player)";
+                auto write_cnt = audio_io_->write(frame.buff, frame.len);
+                LOG_INFO("audio player write {} bytes", write_cnt);
             }
-
         }
     }
-    qDebug() << "void AudioPlayer::run() end";
+    LOG_INFO("AudioPlayer end");
 }
 
-void AudioPlayer::setProvider(AbstractAudioFrameProvider *provider){
+void AudioPlayer::SetProvider(AbstractAudioFrameProvider *provider) {
     m_provider = provider;
 }
-
-
-// 已弃用
-//// 当接收到一个音频帧时，将其放入队列，队列内音频帧过多则舍弃1个旧的
-//void AudioPlayer::onAudioFrameReady(AudioFrame frame){
-//    QMutexLocker locker(&m_mutex);
-//    m_queue.enqueue(frame);
-//    if (m_queue.size()>100){
-//        m_queue.dequeue();
-//        qWarning() << "too much audio frame!";
-//    }
-//}
