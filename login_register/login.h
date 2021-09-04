@@ -6,8 +6,7 @@
  * @Description: file content
  * @FilePath: \sql\login_register\login.h
  */
-#ifndef LOGIN_H
-#define LOGIN_H
+#pragma once
 
 #include <QWidget>
 #include "mainwindow.h"
@@ -51,5 +50,3 @@ private:
     MainWindow *Win;
     registerWin *register_win;
 };
-
-#endif // LOGIN_H

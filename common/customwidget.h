@@ -1,5 +1,4 @@
-#ifndef CUSTOMWIDGET_H
-#define CUSTOMWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include<QMouseEvent>
@@ -43,5 +42,3 @@ public slots:
     void slot_close();
 
 };
-
-#endif // CUSTOMWIDGET_H

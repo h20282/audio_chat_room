@@ -6,8 +6,7 @@
  * @Description: file content
  * @FilePath: \sql\myqq.h
  */
-#ifndef MYQQ_H
-#define MYQQ_H
+#pragma once
 
 #include "./meet_room/roomdialog.h"
 
@@ -42,5 +41,3 @@ private:
     Ui::MyQQ *ui;
     RoomDialog *roomdialog;
 };
-
-#endif // MYQQ_H

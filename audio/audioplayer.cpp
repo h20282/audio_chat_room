@@ -4,9 +4,9 @@
 
 AudioPlayer::AudioPlayer() {
     QAudioFormat format;
-    format.setSampleRate(AUDIO_SAM_RATE);
-    format.setSampleSize(AUDIO_SAM_SIZE);
-    format.setChannelCount(AUDIO_SAM_COUNT);
+    format.setSampleRate(kAudioSamRate);
+    format.setSampleSize(kAudioSamSize);
+    format.setChannelCount(kAudioSamCount);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::SignedInt);
@@ -41,7 +41,7 @@ void AudioPlayer::run() {
         QMutexLocker locker(&mutex_);
         auto currBytesFree = output_->bytesFree();
         if (currBytesFree > maxFree) { maxFree = currBytesFree; }
-        if (output_->bytesFree() >= AUDIO_FRAME_LEN) {
+        if (output_->bytesFree() >= kAudioFrameLen) {
             AudioFrame frame = m_provider->GetAudioFrame();
             if (frame.len < 0) {
                 LOG_WARN("a wrong frame!(len({}) < 0)", frame.len);

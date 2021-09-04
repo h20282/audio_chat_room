@@ -1,5 +1,4 @@
-#ifndef REGISTERWIN_H
-#define REGISTERWIN_H
+#pragma once
 
 #include <QWidget>
 #include"mainwindow.h"
@@ -36,5 +35,3 @@ private:
     MainWindow *MainWin;
     LOGIN* login;
 };
-
-#endif // REGISTERWIN_H

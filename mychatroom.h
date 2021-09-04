@@ -14,8 +14,7 @@
  * @Description: file content
  * @FilePath: \sql\MyChatRoom.h
  */
-#ifndef MYCHATROOM_H
-#define MYCHATROOM_H
+#pragma once
 
 #include "./common/IMToolBox.h"
 #include "./login_register/login.h"
@@ -152,5 +151,3 @@ private:
     QMap<QString, UserWidget*> m_userWidegets;
 
 };
-
-#endif // MYCHATROOM_H

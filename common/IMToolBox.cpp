@@ -184,7 +184,7 @@ Description: 右键点击按键
 void IMToolItem::onClickRightButton()
 {
     return;
-    if (m_menu == NULL)
+    if (m_menu == nullptr)
     {
         //创建右键菜单
         creatMenu();
@@ -298,7 +298,7 @@ void IMToolBox::removeItem(QWidget *item)
 void IMToolBox::onClickRightButton()
 {
     return;
-    if (m_menu == NULL)
+    if (m_menu == nullptr)
     {
         //创建右键菜单
         creatMenu();

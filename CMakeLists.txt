@@ -11,6 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 #utf-8
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /utf-8")
@@ -37,9 +38,11 @@ conan_basic_setup()
 
 add_executable(cmakePro
 
+    #.h
     audio/AbstractAudioFrameProvider.h
     log/log.h
 
+    #.cpp
     audio/AudioChat.cpp
     audio/audiocollector.cpp
     audio/audiolevel.cpp
@@ -70,6 +73,7 @@ add_executable(cmakePro
     myqq.cpp
     videoitem.cpp
 
+    #.ui
     login_register/login.ui
     login_register/registerwin.ui
     mainwindow.ui

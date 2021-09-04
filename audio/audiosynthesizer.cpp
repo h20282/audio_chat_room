@@ -11,8 +11,8 @@ double f(int x) {
 AudioSynthesizer::AudioSynthesizer() {
 
     QObject::connect(&timer_, &QTimer::timeout, [this]() {
-        emit sig_userListReady(GetUserList());
-        emit sig_userIsMutedStatusReady(is_muted_);
+        emit SigUserListReady(GetUserList());
+        emit SigUserIsMutedStatusReady(is_muted_);
     });
     timer_.start(300);
 }
@@ -30,7 +30,7 @@ AudioFrame AudioSynthesizer::Synthese() {
     memset(&frame, 0, sizeof(0));
     int maxFrameLen = 0;
     double n = 0;  // 权值累和
-    static int v[AUDIO_FRAME_LEN / 2];
+    static int v[kAudioFrameLen / 2];
     memset(v, 0, sizeof(v));
     if (queues_.size())
         for (auto iter = queues_.begin(); iter != queues_.end(); iter++) {
@@ -44,10 +44,10 @@ AudioFrame AudioSynthesizer::Synthese() {
                 auto x = f(volume_[name]);  // 权值
                 n += 100;
                 auto curr_frame = queue.dequeue();
-                if (curr_frame.len != AUDIO_FRAME_LEN) {
+                if (curr_frame.len != kAudioFrameLen) {
 //                    spdlog::error("curr_frame.len({}) != AUDIO_FRAME_LEN({})", curr_frame.len, AUDIO_FRAME_LEN);
                 }
-                if (curr_frame.len > AUDIO_FRAME_LEN) { continue; }
+                if (curr_frame.len > kAudioFrameLen) { continue; }
 
                 maxFrameLen = qMax(maxFrameLen, curr_frame.len);
 
@@ -105,7 +105,7 @@ void AudioSynthesizer::onOneFrameIn(Msg msg) {
         queues_[name].dequeue();
     }
     if (volume_.find(name) != volume_.end()) {
-        emit sig_userVolumeReady(
+        emit SigUserVolumeReady(
                 name, msg.frame.getMaxVolume() * volume_[name] / 200);
     }
 }

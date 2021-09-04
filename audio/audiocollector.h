@@ -30,8 +30,8 @@ public:
     void SetInputDevice(QAudioDeviceInfo info);
 
 signals:
-    void sig_audioFrameReady(AudioFrame frame);
-    void sig_audioVolumeReady(double volume);
+    void SigAudioFrameReady(AudioFrame frame);
+    void SigAudioVolumeReady(double volume);
 
 private slots:
     void onReadyRead();

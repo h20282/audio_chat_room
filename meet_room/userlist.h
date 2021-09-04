@@ -1,5 +1,4 @@
-#ifndef USERLIST_H
-#define USERLIST_H
+#pragma once
 
 #include <QListWidget>
 #include <QMouseEvent>
@@ -91,5 +90,3 @@ private slots:
 
     void joinItem();
 };
-
-#endif // USERLIST_H

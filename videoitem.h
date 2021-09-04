@@ -1,5 +1,4 @@
-#ifndef VIDEOITEM_H
-#define VIDEOITEM_H
+#pragma once
 
 #include <QWidget>
 
@@ -18,5 +17,3 @@ public:
 private:
     Ui::VideoItem *ui;
 };
-
-#endif // VIDEOITEM_H

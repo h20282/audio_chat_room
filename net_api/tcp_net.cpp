@@ -3,7 +3,7 @@
 TcpNet::TcpNet(ITcpMediator *pMediator)
 {
     m_sockClient = NULL;
-    m_hThread = NULL;
+    m_hThread = nullptr;
     m_bFlagQuit = true;
     m_pMediator = pMediator;
 }
@@ -62,7 +62,7 @@ bool TcpNet::InitNetWork(char *szBufIP, unsigned short port)
     }
 
     //创建线程--recv
-    m_hThread = (HANDLE)_beginthreadex(NULL, 0, &ThreadProc, this, 0, 0);
+    m_hThread = (HANDLE)_beginthreadex(nullptr, 0, &ThreadProc, this, 0, 0);
     qDebug() << "connect to tcp secess!" << endl;
 
     return true;
@@ -88,7 +88,7 @@ unsigned __stdcall TcpNet::ThreadProc(void *lpvoid)
     TcpNet *pthis = (TcpNet *)lpvoid;
     int nPackSize = 0;
     int nRelReadNum;
-    char *pSzBuf = NULL;
+    char *pSzBuf = nullptr;
     int noffset = 0;
     while (pthis->m_bFlagQuit)
     {
@@ -115,7 +115,7 @@ unsigned __stdcall TcpNet::ThreadProc(void *lpvoid)
         pthis->m_pMediator->DealData(pSzBuf, noffset); //子类qmytcpclient继承了TcpNet父类的deardata方法，并重写，这里调用的子类的方法。
 
         //		delete []pSzBuf;
-        //		pSzBuf = NULL;
+        //		pSzBuf = nullptr;
     }
     return 0;
 }
@@ -130,7 +130,7 @@ void TcpNet::UnInitNetWork()
             TerminateThread(m_hThread, -1);
 
         CloseHandle(m_hThread);
-        m_hThread = NULL;
+        m_hThread = nullptr;
     }
 
     if (m_sockClient)

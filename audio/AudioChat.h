@@ -17,18 +17,18 @@ public:
     void JoinRoom(QString user_name, int room_id);
     void SetInputDevice(QAudioDeviceInfo info);
     void SetUserVolume(QString name, int volume /*[0,200]*/);
-    void SetIsMuted(bool is_muted);
-    bool GetIsMuted();
+    void SetMuted(bool is_muted);
+    bool IsMuted();
 
 signals:
     // 输入设备音量，范围[0, 1)
-    void sig_collectorVolumeReady(double volume);
+    void SigCollectorVolumeReady(double volume);
     // 各其他用户音量，范围[0, 1)
-    void sig_userVolumeReady(QString name, double volume);
+    void SigUserVolumeReady(QString name, double volume);
     // 用户列表
-    void sig_userListReady(QList<QString> list);
+    void SigUserListReady(QList<QString> list);
     // 返回用户是否被静音了
-    void sig_userIsMutedStatusReady(QMap<QString, bool> user_status);
+    void SigUserIsMutedStatusReady(QMap<QString, bool> user_status);
 
 private:
     AudioCollector collector_;

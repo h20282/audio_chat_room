@@ -1,5 +1,4 @@
-#ifndef TCP_NET_H
-#define TCP_NET_H
+#pragma once
 
 #include <QObject>
 #include <QQueue>
@@ -39,5 +38,3 @@ public:
     unsigned short m_port;
     ITcpMediator *m_pMediator;
 };
-
-#endif // TCP_NET_H

@@ -1,9 +1,11 @@
-#if _MSC_VER >= 1600
+﻿#if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
 #endif
 #include "roomdialog.h"
 #include "ui_roomdialog.h"
 #include <QMessageBox>
+
+#include "log/log.h"
 
 RoomDialog::RoomDialog(QWidget *parent) : CustomMoveDialog(parent),
                                           ui(new Ui::RoomDialog), m_roomid(123456)
@@ -18,11 +20,12 @@ RoomDialog::~RoomDialog()
 }
 
 void RoomDialog::reCheckInputDevice(){
+    LOG_INFO("call reCheckInputDevice");
     ui->audioInputComboBox->clear();
 
     QAudioDeviceInfo info;
     for (auto curr_info : QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
-        qDebug() << curr_info.deviceName();
+        LOG_INFO("{} added", curr_info.deviceName().toStdString());
         ui->audioInputComboBox->addItem(curr_info.deviceName());
     }
 }

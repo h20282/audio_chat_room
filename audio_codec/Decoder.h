@@ -1,14 +1,12 @@
 ﻿#pragma once
 
-#include <qdebug.h>
-#include <utility>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
 #include <bitset>
 #include <iostream>
+#include <utility>
 
 extern "C" {
 #include <libavcodec\avcodec.h>
@@ -18,9 +16,6 @@ extern "C" {
 }
 
 #include "Config.h"
-
-
-#define cout qDebug()
 
 class Decoder {
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * @Author: FengYanBin
  * @Date: 2021-08-05 15:00:11
  * @LastEditors: FengYanBin
@@ -288,7 +288,7 @@ void MyChatRoom::SLOT_openAudio()
     if (m_chat)
     {
         m_level.SetIsMuted(false);
-        m_chat->SetIsMuted(false);
+        m_chat->SetMuted(false);
     }
 }
 
@@ -298,7 +298,7 @@ void MyChatRoom::SLOT_closeAudio()
     if (m_chat)
     {
         m_level.SetIsMuted(true);
-        m_chat->SetIsMuted(true);
+        m_chat->SetMuted(true);
     }
 }
 
@@ -491,7 +491,7 @@ void MyChatRoom::JoinRoom()
     QObject::connect(m_roomdialog, &RoomDialog::SIG_setInputDevice, [this](QAudioDeviceInfo deviceInfo)
                      { m_chat->SetInputDevice(deviceInfo); });
 
-    QObject::connect(m_chat, &AudioChat::sig_userListReady, [this](QList<QString> list)
+    QObject::connect(m_chat, &AudioChat::SigUserListReady, [this](QList<QString> list)
                      {
                          userListModel.clear();
                          for (auto &userName : list)
@@ -508,7 +508,7 @@ void MyChatRoom::JoinRoom()
                              }
                          }
                      });
-    QObject::connect(m_chat, &AudioChat::sig_userIsMutedStatusReady, [this](QMap<QString, bool> userStatus){
+    QObject::connect(m_chat, &AudioChat::SigUserIsMutedStatusReady, [this](QMap<QString, bool> userStatus){
 
         for (auto iter=userStatus.begin(); iter!=userStatus.end(); iter++){
             if ( this->m_userWidegets.find( iter.key() )  !=  this->m_userWidegets.end() ) {
@@ -518,10 +518,10 @@ void MyChatRoom::JoinRoom()
     });
 
 
-    QObject::connect(m_chat, &AudioChat::sig_collectorVolumeReady, [this](double volume)
+    QObject::connect(m_chat, &AudioChat::SigCollectorVolumeReady, [this](double volume)
                      { m_level.SetLevel(volume); });
 
-    QObject::connect(m_chat, &AudioChat::sig_userVolumeReady, [this](QString name, double volume)
+    QObject::connect(m_chat, &AudioChat::SigUserVolumeReady, [this](QString name, double volume)
                      {
                          if (m_userWidegets.find(name) != m_userWidegets.end())
                              this->m_userWidegets[name]->setVol(volume);
@@ -643,7 +643,7 @@ void MyChatRoom::DealMuteOneUserResponse(char *buf, int len)
     if (rs->mute_user_id == this->m_user_id)
     {
         is_muted = true;
-        m_chat->SetIsMuted(true);
+        m_chat->SetMuted(true);
         QMessageBox::information(this, "提示", "您已经被静音！");
     }
     else
@@ -709,7 +709,7 @@ void MyChatRoom::DealUnmuteQequest(char *buf, int len)
     {
         QMessageBox::information(this, "提示", "您已解除静音！");
         this->is_muted = false;
-        m_chat->SetIsMuted(false);
+        m_chat->SetMuted(false);
     }
     else
     {

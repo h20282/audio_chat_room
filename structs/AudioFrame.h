@@ -1,37 +1,33 @@
-#ifndef AUDIOFRAME_H
-#define AUDIOFRAME_H
+#pragma once
 #include "Config.h"
-#include <qdebug.h>
-struct AudioFrame{
-    int len; // 长度，按字节数
-    char buff[AUDIO_FRAME_LEN];
-    double getMaxVolume(){
-        if (AUDIO_SAM_SIZE==16){
-            auto p = reinterpret_cast<short*>(buff);
+#include "log/log.h"
+struct AudioFrame {
+    int len;  // 长度，按字节数
+    char buff[kAudioFrameLen];
+    double getMaxVolume() {
+        if (kAudioSamSize == 16) {
+            auto p = reinterpret_cast<short *>(buff);
             auto maxVol = p[0];
-            int nSamples = len/2;
-            for ( int i=0; i<nSamples; i++ ) {
-                maxVol = qMax(maxVol, p[i]);
+            int n_samples = len / 2;
+            for (int i = 0; i < n_samples; i++) {
+                maxVol = std::max(maxVol, p[i]);
             }
-            return double(maxVol)/32768;
+            return double(maxVol) / 32768;
         } else {
-            qDebug() << "not implement!!! AUDIO_SAM_SIZE: " << AUDIO_SAM_SIZE;
+            LOG_ERROR("not implement!!! AUDIO_SAM_SIZE: {}", kAudioSamSize);
             return 0;
         }
     }
-    double getVolumeSum(){
-        if (AUDIO_SAM_SIZE==16){
-            auto p = reinterpret_cast<short*>(buff);
+    double getVolumeSum() {
+        if (kAudioSamSize == 16) {
+            auto p = reinterpret_cast<short *>(buff);
             double sum = 0;
-            int nSamples = len/2;
-            for ( int i=0; i<nSamples; i++ ) {
-                sum += qAbs(p[i]);
-            }
-            return sum/32768/(nSamples);
+            int n_samples = len / 2;
+            for (int i = 0; i < n_samples; i++) { sum += std::abs(p[i]); }
+            return sum / 32768 / (n_samples);
         } else {
-            qDebug() << "not implement!!! AUDIO_SAM_SIZE: " << AUDIO_SAM_SIZE;
+            LOG_ERROR("not implement!!! AUDIO_SAM_SIZE: {}", kAudioSamSize);
             return 0;
         }
     }
 };
-#endif // AUDIOFRAME_H

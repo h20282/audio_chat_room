@@ -12,8 +12,8 @@
 #include <QThread>
 #include <QTimer>
 
-#include "../structs/AudioFrame.h"
-#include "../structs/Msg.h"
+#include "structs/AudioFrame.h"
+#include "structs/Msg.h"
 #include "AbstractAudioFrameProvider.h"
 
 class AudioSynthesizer : public QObject, public AbstractAudioFrameProvider {
@@ -29,9 +29,9 @@ private:
     AudioFrame Synthese();
 
 signals:
-    void sig_userVolumeReady(QString name, double volume);
-    void sig_userListReady(QList<QString> list);
-    void sig_userIsMutedStatusReady(QMap<QString, bool> userStatus);
+    void SigUserVolumeReady(QString name, double volume);
+    void SigUserListReady(QList<QString> list);
+    void SigUserIsMutedStatusReady(QMap<QString, bool> userStatus);
 
 public slots:
     void onOneFrameIn(Msg msg);

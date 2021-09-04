@@ -4,9 +4,9 @@ namespace {
 static QAudioInput *createAudioInput(
         QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice()) {
     QAudioFormat format;
-    format.setSampleRate(AUDIO_SAM_RATE);
-    format.setSampleSize(AUDIO_SAM_SIZE);
-    format.setChannelCount(AUDIO_SAM_COUNT);
+    format.setSampleRate(kAudioSamRate);
+    format.setSampleSize(kAudioSamSize);
+    format.setChannelCount(kAudioSamCount);
     format.setCodec("audio/pcm");
     format.setSampleType(QAudioFormat::SignedInt);
     format.setByteOrder(QAudioFormat::LittleEndian);
@@ -53,6 +53,6 @@ void AudioCollector::onReadyRead() {
 #ifdef SAVE_COLLECTED_PCM_INTO_FILE
     fwrite(frame.buff, 1, frame.len, m_fp);
 #endif
-    emit sig_audioFrameReady(frame);
-    emit sig_audioVolumeReady(frame.getMaxVolume());
+    emit SigAudioFrameReady(frame);
+    emit SigAudioVolumeReady(frame.getMaxVolume());
 }

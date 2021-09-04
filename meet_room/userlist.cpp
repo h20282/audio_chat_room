@@ -36,7 +36,7 @@ void UserListWidget::contextMenuEvent(QContextMenuEvent *event)
 {
         QMenu* popMenu = new QMenu(this);
 
-        if(this->itemAt(mapFromGlobal(QCursor::pos())) != NULL) //如果有item则添加"修改"菜单 [1]*
+        if(this->itemAt(mapFromGlobal(QCursor::pos())) != nullptr) //如果有item则添加"修改"菜单 [1]*
         {
             QString str = this->itemAt(mapFromGlobal(QCursor::pos()))->text();
             this->user_id = GetNum(str);
@@ -141,7 +141,7 @@ void RoomListWidget::contextMenuEvent(QContextMenuEvent *event)
 {
         QMenu* popMenu = new QMenu(this);
 
-        if(this->itemAt(mapFromGlobal(QCursor::pos())) != NULL) //如果有item则添加"修改"菜单 [1]*
+        if(this->itemAt(mapFromGlobal(QCursor::pos())) != nullptr) //如果有item则添加"修改"菜单 [1]*
         {
             QString str = this->itemAt(mapFromGlobal(QCursor::pos()))->text();
             this->room_num = GetNum(str);

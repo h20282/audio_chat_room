@@ -1,5 +1,4 @@
-#ifndef QMYTCP_CLIENT_H
-#define QMYTCP_CLIENT_H
+#pragma once
 
 #include <QObject>
 #include"tcp_net.h"
@@ -21,5 +20,3 @@ public slots:
 public:
     TcpNet *m_pTcp;
 };
-
-#endif // QMYTCP_CLIENT_H

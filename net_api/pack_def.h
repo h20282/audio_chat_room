@@ -6,8 +6,7 @@
  * @Description: file content
  * @FilePath: \sql\net_api\pack_def.h
  */
-#ifndef __PACKDEF__
-#define __PACKDEF__
+#pragma once
 
 #include <QHostAddress>
 #include <QByteArray>
@@ -523,4 +522,3 @@ typedef struct UserInfo
     bool is_muted;              //是否被静音
     char m_user_name[kMaxSize];
 } UserInfo;
-#endif

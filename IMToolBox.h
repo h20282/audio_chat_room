@@ -1,5 +1,4 @@
-#ifndef IMTOOLBOX_H
-#define IMTOOLBOX_H
+#pragma once
 
 #include <QWidget>
 class QVBoxLayout;
@@ -93,4 +92,3 @@ private:
 };
 
 
-#endif // IMTOOLBOX_H

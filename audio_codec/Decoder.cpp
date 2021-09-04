@@ -1,33 +1,6 @@
 ﻿#include "Decoder.h"
 
-// 用于从aac文件中一帧一帧读取音频
-struct aacFrameReader {
-    FILE *fp;
-    unsigned char l = 0x01;
-    unsigned char r = 0x01;
-    aacFrameReader(const char *fileName) {
-        fp = fopen(fileName, "rb");
-        if (!fp) { cout << "line: " << __LINE__ << " [] = " << endl; }
-    }
-    ~aacFrameReader() {
-        fclose(fp);
-    }
-    std::pair<unsigned char *, int> getAacFrame() {
-        static unsigned char buff[1024];
-        memset(buff, 0, sizeof(buff));
-        fread(buff, 1, 7, fp);
-
-        cout << endl;
-        //        cout << std::bitset<8>(buff[3]) << " " << bitset<8>(buff[4])
-        //        << " " << bitset<8>(buff[5]) << endl;
-        int len =
-                ((buff[3] & 0x03) << (8 + 3)) + (buff[4] << 3) + (buff[5] >> 5);
-        cout << "line: " << __LINE__ << " [len] = " << len << endl;
-        fread(buff + 7, 1, len - 7, fp);
-
-        return std::make_pair(buff, len);
-    }
-};
+#include "log/log.h"
 
 Decoder::Decoder() {
     this->InitDecoder();
@@ -37,25 +10,22 @@ Decoder::~Decoder() {
 }
 
 void Decoder::InitDecoder() {
-    qDebug() << "decoder" << this << "init";
-    av_register_all();
-
-    // AVFormatContext *fmt_ctx = NULL;
+    LOG_INFO("Decoder::InitDecoder()");
 
     cod_ = avcodec_find_decoder(AV_CODEC_ID_AAC);
-    if (cod_ == NULL) printf("find codec fail");
+    if (cod_ == nullptr) printf("find codec fail");
     AVCodecParserContext *parser = av_parser_init(cod_->id);
     if (!parser) { printf("Parser not found\n"); }
 
     cod_ctx_ = avcodec_alloc_context3(cod_);
-    if (cod_ctx_ == NULL) {
+    if (cod_ctx_ == nullptr) {
         printf("alloc context fail");
     } else {
         cod_ctx_->channels = 2;
-        cod_ctx_->sample_rate = AUDIO_SAM_RATE;
+        cod_ctx_->sample_rate = kAudioSamRate;
     }
 
-    if (avcodec_open2(cod_ctx_, cod_, NULL) < 0) printf("can't open codec");
+    if (avcodec_open2(cod_ctx_, cod_, nullptr) < 0) printf("can't open codec");
 
     //创建packet,用于存储解码前的数据
     packet_ = (AVPacket *) malloc(sizeof(AVPacket));
@@ -68,14 +38,14 @@ void Decoder::InitDecoder() {
     //采样格式
     enum AVSampleFormat out_sample_fmt = AV_SAMPLE_FMT_S16;
     //采样率
-    int out_sample_rate = AUDIO_SAM_RATE;
+    int out_sample_rate = kAudioSamRate;
     //通道数
     int out_channels = av_get_channel_layout_nb_channels(out_channel_layout);
     printf("%d\n", out_channels);
 
     //创建buffer
     buffer_size_ = av_samples_get_buffer_size(
-            NULL, out_channels, out_nb_samples, AV_SAMPLE_FMT_S16, 1);
+            nullptr, out_channels, out_nb_samples, AV_SAMPLE_FMT_S16, 1);
 
     //注意要用av_malloc
     buffer_ = (uint8_t *) av_malloc(buffer_size_);
@@ -90,7 +60,7 @@ void Decoder::InitDecoder() {
     convert_ctx_ = swr_alloc();  //设置转码参数
     swr_alloc_set_opts(convert_ctx_, out_channel_layout, out_sample_fmt,
                        out_sample_rate, in_channel_layout, AV_SAMPLE_FMT_FLTP,
-                       AUDIO_SAM_RATE, 0, NULL);
+                       kAudioSamRate, 0, nullptr);
     //初始化转码器
     swr_init(convert_ctx_);
 }
@@ -130,10 +100,9 @@ std::pair<unsigned char *, int> Decoder::DecodeFrame(void *buff, int len) {
 }
 
 void Decoder::CloseDecoder() {
-    qDebug() << "decoder" << this << "close";
+    LOG_INFO("Decoder::CloseDecoder()");
     avcodec_close(cod_ctx_);
     av_frame_free(&frame_);
-
-    av_free_packet(packet_);
+//    av_free_packet(packet_);
     swr_free(&convert_ctx_);
 }

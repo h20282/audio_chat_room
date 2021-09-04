@@ -1,5 +1,4 @@
-#ifndef USERITEM_H
-#define USERITEM_H
+#pragma once
 
 #include <QListWidgetItem>
 #include <QListWidget>
@@ -30,8 +29,3 @@ public:
     QIcon Img_hover;
 };
 
-
-
-
-
-#endif

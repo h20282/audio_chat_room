@@ -1,5 +1,4 @@
-#ifndef IMTOOLBOX_H
-#define IMTOOLBOX_H
+#pragma once
 
 #include <QWidget>
 class QVBoxLayout;
@@ -91,5 +90,3 @@ private:
     QMenu *m_menu;
 };
 
-
-#endif // IMTOOLBOX_H

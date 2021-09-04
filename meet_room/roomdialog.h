@@ -6,8 +6,7 @@
  * @Description: file content
  * @FilePath: \sql\meet_room\roomdialog.h
  */
-#ifndef ROOMDIALOG_H
-#define ROOMDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QPoint>
@@ -68,5 +67,3 @@ private:
     int m_roomid;
     QString m_user_name;
 };
-
-#endif // ROOMDIALOG_H

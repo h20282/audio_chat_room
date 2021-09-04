@@ -3,12 +3,8 @@
 #include "log/log.h"
 
 void initEncoder();
-ZipedFrame *encodeFrame(void *buff);  // 使用完记得delete
+std::vector<char> encodeFrame(void *buff);
 void closeEncoder();
-
-//#include <iostream>
-
-using namespace std;
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -21,21 +17,21 @@ namespace {
 char aac_adts_header[7];
 }
 
-ZipedFrame::ZipedFrame(int len, void *base) {
-    this->len = len + 7;
-    data = new unsigned char[static_cast<size_t>(this->len)];
-    memcpy(this->data, aac_adts_header, 7);
-    memcpy(this->data + 7, base, static_cast<size_t>(len));
-}
-ZipedFrame::~ZipedFrame() {
-    delete data;
-}
+// ZipedFrame::ZipedFrame(int len, void *base) {
+//    this->len = len + 7;
+//    data = new unsigned char[static_cast<size_t>(this->len)];
+//    memcpy(this->data, aac_adts_header, 7);
+//    memcpy(this->data + 7, base, static_cast<size_t>(len));
+//}
+// ZipedFrame::~ZipedFrame() {
+//    delete data;
+//}
 
 ///////////////////////////////////////begin of class Encoder definition
 Encoder::Encoder() {
     initEncoder();
     this->curr_idx_ = 0;
-    qDebug() << "Encoder::Encoder() finished";
+    LOG_INFO("Encoder::Encoder() finished");
 
 #ifdef SAVE_RESPLIT_IO_INTO_FILE
     this->fp_before_resplit = fopen("fp_before_resplit.pcm", "wb");
@@ -45,17 +41,17 @@ Encoder::Encoder() {
 
 Encoder::~Encoder() {
     closeEncoder();
+    LOG_INFO("Encoder::~Encoder() finished");
 }
 
 void Encoder::PushAudioFrame(AudioFrame frame) {
     queue_.enqueue(frame);
 }
 
-ZipedFrame *Encoder::GetZipedFrame() {
-
+std::vector<char> Encoder::GetZipedFrame() {
+    LOG_INFO("call Encoder::GetZipedFrame()");
     int rest_bytes = 0;
     for (auto iter = queue_.begin(); iter != queue_.end(); iter++) {
-        //        qDebug() << "iter.len" << (*iter).len;
         rest_bytes += (*iter).len;
     }
     rest_bytes -= curr_idx_;
@@ -63,7 +59,8 @@ ZipedFrame *Encoder::GetZipedFrame() {
     //        int rest_bytes = AUDIO_FRAME_LEN-m_currIdx +
     //        (m_queue.size()-1)*AUDIO_FRAME_LEN;
 
-    if (rest_bytes > 4096) {  // 队列里面有4096字节的数据
+    if (rest_bytes >= 4096) {  // 队列里面有4096字节的数据
+        LOG_INFO("rest_bytes({}) >= 4096 ", rest_bytes);
         /*      front                                    tail
          * [--------------] <- [--------------] <- [--------------]
          *           ^
@@ -93,9 +90,12 @@ ZipedFrame *Encoder::GetZipedFrame() {
                 break;
             }
         }
+        // return std::move(...)? moving a local object in a return statement
+        // prevents copy elision
         return encodeFrame(buff);
     } else {
-        return nullptr;
+        LOG_INFO("rest_bytes({}) < 4096 return {", rest_bytes);
+        return {};
     }
 }
 ///////////////////////////////////////end of class Encoder definition
@@ -115,8 +115,8 @@ int init_aac_header() {
     static int rates[] = {96000, 88000, 64000, 48000, 44100, 32000, 24000,
                           22000, 16000, 12000, 11025, 8000,  7350};
     for (int i = 0; i < sizeof(rates) / sizeof(rates[0]); i++) {
-        if (rates[i] == AUDIO_SAM_RATE) {
-            LOG_INFO("{}->{}", AUDIO_SAM_RATE, rates[i]);
+        if (rates[i] == kAudioSamRate) {
+            LOG_INFO("{}->{}", kAudioSamRate, rates[i]);
             freqIdx = i;
         }
     }
@@ -149,8 +149,8 @@ void write_aac_header(const AVPacket *pkt) {
 
 void initEncoder() {
     init_aac_header();
-    //    av_register_all();
-    //    avcodec_register_all();
+    // av_register_all();
+    // avcodec_register_all();
     codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (!codec) { LOG_ERROR("avcodec_find_encoder failed"); }
 
@@ -159,7 +159,7 @@ void initEncoder() {
 
     if (!codecContext) { LOG_ERROR("avcodec_alloc_context3 failed"); }
 
-    codecContext->sample_rate = AUDIO_SAM_RATE;
+    codecContext->sample_rate = kAudioSamRate;
     codecContext->channels = 2;
     codecContext->channel_layout = AV_CH_LAYOUT_STEREO;  // 立体声
     codecContext->sample_fmt = AV_SAMPLE_FMT_FLTP;
@@ -168,14 +168,14 @@ void initEncoder() {
 
     //打开音频的编码器
     int ret = avcodec_open2(codecContext, codec, nullptr);
-    if (ret < 0) { LOG_ERROR("avcodec_open2 failed"); }
+    if (ret < 0) { LOG_ERROR("avcodec_open2 failed ret={}", ret); }
 
-    swrContext = swr_alloc_set_opts(swrContext, codecContext->channel_layout,
+    swrContext = swr_alloc_set_opts(swrContext, AV_CH_LAYOUT_STEREO,
                                     codecContext->sample_fmt,
-                                    AUDIO_SAM_RATE,  //输出的音频参数
+                                    kAudioSamRate,  //输出的音频参数
                                     AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16,
-                                    AUDIO_SAM_RATE,  //输入的音频参数
-                                    0, 0);
+                                    kAudioSamRate,  //输入的音频参数
+                                    0, nullptr);
 
     if (!swrContext) { LOG_ERROR("swr_alloc_set_opts failed"); }
 
@@ -192,30 +192,40 @@ void initEncoder() {
     if (ret < 0) { LOG_ERROR("av_frame_get_buffer failed"); }
 }
 
-/**
- * @brief 从buff所指向的内存取4096个字节进行编码
- *
- * @param buff 指向4096长度的pcm数据
- * @return ZipedFrame* 编码失败返回nullptr
- */
-ZipedFrame *encodeFrame(void *buff) {
+std::vector<char> encodeFrame(void *buff) {
     int len = swr_convert(
             swrContext, avFrame->data, avFrame->nb_samples,  //重采样之后的数据
             (const uint8_t **) &buff, avFrame->nb_samples  //重采样之前的数据
     );
-    if (len <= 0) { return nullptr; }
+    if (len <= 0) {
+        LOG_ERROR("swr_convert faild, code:{}", len);
+        return {};
+    }
     AVPacket pkt;
     av_init_packet(&pkt);
 
     //将重采样的数据发送到编码线程
     int ret = avcodec_send_frame(codecContext, avFrame);
-    if (ret != 0) { return nullptr; }
+    if (ret != 0) {
+        LOG_ERROR("avcodec_send_frame faild, code:{}", ret);
+        return {};
+    }
 
     ret = avcodec_receive_packet(codecContext, &pkt);
-    if (ret != 0) { return nullptr; }
+    if (ret != 0) {
+        LOG_INFO("avcodec_receive_packet faild, code{}", ret);
+        return {};
+    }
 
     write_aac_header(&pkt);
-    return (new ZipedFrame(pkt.size, pkt.data));
+    std::vector<char> aac_data(7 + static_cast<size_t>(pkt.size), 0);
+    memcpy(reinterpret_cast<void *>(&aac_data[0]), aac_adts_header, 7);
+    memcpy(reinterpret_cast<void *>(&aac_data[7]), pkt.data,
+           static_cast<size_t>(pkt.size));
+
+    // return std::move(...)? moving a local object in a return statement
+    // prevents copy elision
+    return aac_data;
 }
 
 void closeEncoder() {
