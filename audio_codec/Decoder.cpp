@@ -13,20 +13,21 @@ void Decoder::InitDecoder() {
     LOG_INFO("Decoder::InitDecoder()");
 
     cod_ = avcodec_find_decoder(AV_CODEC_ID_AAC);
-    if (cod_ == nullptr) printf("find codec fail");
+    if (cod_ == nullptr) { LOG_ERROR("find codec fail"); }
     AVCodecParserContext *parser = av_parser_init(cod_->id);
-    if (!parser) { printf("Parser not found\n"); }
+    if (!parser) { LOG_ERROR("Parser not found"); }
 
     cod_ctx_ = avcodec_alloc_context3(cod_);
     if (cod_ctx_ == nullptr) {
-        printf("alloc context fail");
+        LOG_ERROR("Parser not found");
     } else {
         cod_ctx_->channels = 2;
         cod_ctx_->sample_rate = kAudioSamRate;
     }
 
-    if (avcodec_open2(cod_ctx_, cod_, nullptr) < 0) printf("can't open codec");
-
+    if (avcodec_open2(cod_ctx_, cod_, nullptr) < 0) {
+        LOG_ERROR("Parser not found");
+    }
     //创建packet,用于存储解码前的数据
     packet_ = (AVPacket *) malloc(sizeof(AVPacket));
     av_init_packet(packet_);
@@ -41,7 +42,6 @@ void Decoder::InitDecoder() {
     int out_sample_rate = kAudioSamRate;
     //通道数
     int out_channels = av_get_channel_layout_nb_channels(out_channel_layout);
-    printf("%d\n", out_channels);
 
     //创建buffer
     buffer_size_ = av_samples_get_buffer_size(
@@ -73,10 +73,8 @@ std::pair<unsigned char *, int> Decoder::DecodeFrame(void *buff, int len) {
     int ret = avcodec_send_packet(cod_ctx_, packet_);
     if (ret < 0) {
         char err_buff[128];
-        //        int av_strerror(int errnum, char *errbuf, size_t errbuf_size);
         av_strerror(ret, err_buff, sizeof(err_buff));
-        printf("Error submitting the packet to the decoder, err code:%d '%s'\n",
-               ret, err_buff);
+        LOG_ERROR("send_packet error code:{} '{%s}'", ret, err_buff);
         return std::make_pair(nullptr, 0);
     }
 
@@ -91,7 +89,6 @@ std::pair<unsigned char *, int> Decoder::DecodeFrame(void *buff, int len) {
     //    frame->pkt_size
     swr_convert(convert_ctx_, &buffer_, buffer_size_,
                 (const uint8_t **) frame_->data, frame_->nb_samples);
-    //    printf("pts:%10lld\t packet size:%d\n", packet->pts, packet->size);
 
     auto pcm = new unsigned char[buffer_size_];
     memcpy(pcm, buffer_, buffer_size_);
@@ -103,6 +100,6 @@ void Decoder::CloseDecoder() {
     LOG_INFO("Decoder::CloseDecoder()");
     avcodec_close(cod_ctx_);
     av_frame_free(&frame_);
-//    av_free_packet(packet_);
+    //    av_free_packet(packet_);
     swr_free(&convert_ctx_);
 }

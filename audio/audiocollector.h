@@ -16,7 +16,7 @@
 
 #include "spdlog/spdlog.h"
 
-#include "../structs/AudioFrame.h"
+#include "structs/AudioFrame.h"
 #include "Config.h"
 
 // 负责从麦克风中采集数据，压入队列中

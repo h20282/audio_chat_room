@@ -9,7 +9,7 @@
 
 #include "spdlog/spdlog.h"
 
-#include "../structs/AudioFrame.h"
+#include "structs/AudioFrame.h"
 #include "AbstractAudioFrameProvider.h"
 #include "Config.h"
 

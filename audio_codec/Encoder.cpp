@@ -17,16 +17,6 @@ namespace {
 char aac_adts_header[7];
 }
 
-// ZipedFrame::ZipedFrame(int len, void *base) {
-//    this->len = len + 7;
-//    data = new unsigned char[static_cast<size_t>(this->len)];
-//    memcpy(this->data, aac_adts_header, 7);
-//    memcpy(this->data + 7, base, static_cast<size_t>(len));
-//}
-// ZipedFrame::~ZipedFrame() {
-//    delete data;
-//}
-
 ///////////////////////////////////////begin of class Encoder definition
 Encoder::Encoder() {
     initEncoder();
@@ -130,15 +120,15 @@ int init_aac_header() {
 
     return 0;
 }
-}  // namespace
+}
+// namespace
+namespace {
 /**
  * @brief 向文件fp写入一个该pkt的ADTS HEADER， 如果fp==nullptr则输出到控制台
  *
- * @param fp 文件指针
  * @param pkt 该packet
  * @return int
  */
-namespace {
 void write_aac_header(const AVPacket *pkt) {
     aac_adts_header[3] =
             static_cast<char>(((chanCfg & 3) << 6) + ((7 + pkt->size) >> 11));

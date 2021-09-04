@@ -59,8 +59,6 @@ UdpConnector::~UdpConnector() {
 // 收到一个来自服务器的音频帧，交给AudioSynthesizer
 void UdpConnector::onUdpReadyRead() {
     QMutexLocker locker(&mutex_);
-    //    qDebug() << "onUdpReadyRead() start";
-    //    qDebug() << "UdpConnector::onUdpReadyRead()";
     static char buff[sizeof(Msg) + 128];
     while (udp_socket_->hasPendingDatagrams()) {
         auto recv_len = udp_socket_->readDatagram(buff, sizeof(buff));
@@ -75,48 +73,25 @@ void UdpConnector::onUdpReadyRead() {
             // 从aac帧头获取aac帧长度
             unsigned char *header_base =
                     reinterpret_cast<unsigned char *>(buff + 1 + 16 + 4);
-            int aacFrameLen = ((header_base[3] & 0x03) << (8 + 3)) +
+            int aac_len = ((header_base[3] & 0x03) << (8 + 3)) +
                               (header_base[4] << 3) + (header_base[5] >> 5);
 
-            if (header_base[0] != 0xff) { qDebug() << "not 0xff"; }
-            if (aacFrameLen != ziped_frame_len) {
-                qDebug() << "aacFrameLen != ziped_frame_len" << aacFrameLen
-                         << ziped_frame_len << "end";
+            if (header_base[0] != 0xff) {
+                LOG_ERROR("not 0xff");
                 continue;
-            } else {
-                //                qDebug() << "aacFrameLen == ziped_frame_len"
-                //                << aacFrameLen << ziped_frame_len << "end";
             }
-
-            //            auto pair = decodeFrame(buff+1+16+4, aacFrameLen);
+            if (aac_len != ziped_frame_len) {
+                LOG_ERROR("aac_len:{} != ziped_frame_len:{}", aac_len,
+                          ziped_frame_len);
+                continue;
+            }
             if (decoders_.find(name) == decoders_.end()) {
                 decoders_[name] = new Decoder();
             }
             auto pair = decoders_[name]->DecodeFrame(buff + 1 + 16 + 4,
-                                                     aacFrameLen);
+                                                     aac_len);
             auto pcm_buff = pair.first;
             auto pcm_len = pair.second;
-
-#ifdef SAVE_ENCODE_IO_INTO_FILE
-            if (m_files.find(name) == m_files.end()) {
-                qDebug() << "inner " << __LINE__;
-                m_files.insert(name,
-                               fopen((name + ".aac").toLatin1().data(), "wb"));
-            }
-            int flagHeaderLen = 1 + 16 + 4;
-            qDebug() << "aac write to " << name
-                     << fwrite(buff + flagHeaderLen, 1,
-                               recv_len - flagHeaderLen, m_files[name]);
-#endif
-#ifdef SAVE_ENCODE_IO_INTO_FILE
-            if (m_filesPCM.find(name) == m_filesPCM.end()) {
-                qDebug() << "inner " << __LINE__;
-                m_filesPCM.insert(
-                        name, fopen((name + ".pcm").toLatin1().data(), "wb"));
-            }
-            qDebug() << "pcm write to " << name
-                     << fwrite(pcm_buff, 1, pcm_len, m_filesPCM[name]);
-#endif
 
             // 如果aac解压后的pcm长度小于一帧pcm的长度，直接发送
             if (pcm_len <= kAudioFrameLen) {
@@ -181,23 +156,23 @@ void UdpConnector::onAudioFrameReady(AudioFrame frame) {
             std::vector<char> send_buff(send_len, 0);
             LOG_INFO("send_buff.size = {}", send_buff.size());
 
-            //1. 禁言标识符号
+            // 1.禁言标识符号
             send_buff[0] = kUnMutedFlag;
 
-            //2. 房间号
+            // 2.房间号
             *reinterpret_cast<int *>(&send_buff[kClientToSererRoomIdPos]) =
                     room_id_;
 
-            //3. 用户名（warning: 中文问题、长度问题）
+            // 3.用户名（warning: 中文问题、长度问题）
             memcpy(&send_buff[kClientToSererUserNamePos],
                    user_name_.toLatin1().data(),
                    static_cast<size_t>(user_name_.size()));
 
-            //4. aac帧长度
+            // 4.aac帧长度
             *reinterpret_cast<int *>(&send_buff[kClientToSererAacLenPos]) =
                     static_cast<int>(aac_data.size());
 
-            //5. aac帧数据
+            // 5.aac帧数据
             memcpy(&send_buff[kClientToSererAacDataPos], &aac_data[0],
                    aac_data.size());
 
@@ -205,10 +180,6 @@ void UdpConnector::onAudioFrameReady(AudioFrame frame) {
                     &send_buff[0], static_cast<qint64>(send_buff.size()),
                     destaddr_, port_);
             LOG_INFO("udp_socket_->writeDatagram = {}", len);
-
-            //            spdlog::info("file[{}] func[{}]
-            //            line[{}]:udp_socket_->writeDatagram = {}", __FILE__,
-            //            __func__, __LINE__ , len);
         }
     }
 }

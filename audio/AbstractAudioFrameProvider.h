@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "../structs/AudioFrame.h"
+#include "structs/AudioFrame.h"
 
 class AbstractAudioFrameProvider {
 public:
