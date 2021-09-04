@@ -33,7 +33,7 @@ AudioFrame AudioSynthesizer::Synthese() {
     static int v[kAudioFrameLen / 2];
     memset(v, 0, sizeof(v));
     if (queues_.size())
-        for (auto iter = queues_.begin(); iter != queues_.end(); iter++) {
+        for (auto iter = queues_.begin(); iter != queues_.end(); ++iter) {
             const auto &name = iter.key();
             auto &queue = iter.value();
             if (volume_.find(name) == volume_.end()) {
@@ -52,14 +52,14 @@ AudioFrame AudioSynthesizer::Synthese() {
                 maxFrameLen = qMax(maxFrameLen, curr_frame.len);
 
                 auto base_b = reinterpret_cast<short *>(&curr_frame.buff[0]);
-                for (int i = 0; i < maxFrameLen / 2; i++) {
+                for (int i = 0; i < maxFrameLen / 2; ++i) {
                     v[i] += static_cast<int>(base_b[i] * x);
                 }
             }
         }
     if (n != 0) {
         auto base_a = reinterpret_cast<short *>(&frame.buff[0]);
-        for (int i = 0; i < maxFrameLen / 2; i++) {
+        for (int i = 0; i < maxFrameLen / 2; ++i) {
             if (abs(v[i] / n) > 32767) {
                 base_a[i] = v[i]>=0 ? 32767 : -32768;
             } else {
@@ -75,7 +75,7 @@ AudioFrame AudioSynthesizer::Synthese() {
 QList<QString> AudioSynthesizer::GetUserList() {
     QList<QString> ret;
     for (auto iter = last_online_t_.begin(); iter != last_online_t_.end();
-         iter++) {
+         ++iter) {
         QString name = iter.key();
         auto lastTime = iter.value();
         if (time(nullptr) - lastTime < 2) {

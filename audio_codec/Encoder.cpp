@@ -41,7 +41,7 @@ void Encoder::PushAudioFrame(AudioFrame frame) {
 std::vector<char> Encoder::GetZipedFrame() {
     LOG_INFO("call Encoder::GetZipedFrame()");
     int rest_bytes = 0;
-    for (auto iter = queue_.begin(); iter != queue_.end(); iter++) {
+    for (auto iter = queue_.begin(); iter != queue_.end(); ++iter) {
         rest_bytes += (*iter).len;
     }
     rest_bytes -= curr_idx_;
@@ -59,7 +59,7 @@ std::vector<char> Encoder::GetZipedFrame() {
          */
         static char buff[4096];  // warning:
                                  // 多对象多进程下将竞争使用此static变量导致错误
-
+        std::vector<char> buff_4096(4096, 0);
         int bytedNeed = sizeof(buff);
         int buffIdx = 0;
 
@@ -104,7 +104,7 @@ int init_aac_header() {
     int freqIdx;
     static int rates[] = {96000, 88000, 64000, 48000, 44100, 32000, 24000,
                           22000, 16000, 12000, 11025, 8000,  7350};
-    for (int i = 0; i < sizeof(rates) / sizeof(rates[0]); i++) {
+    for (int i = 0; i < sizeof(rates) / sizeof(rates[0]); ++i) {
         if (rates[i] == kAudioSamRate) {
             LOG_INFO("{}->{}", kAudioSamRate, rates[i]);
             freqIdx = i;

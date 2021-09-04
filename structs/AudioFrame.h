@@ -9,7 +9,7 @@ struct AudioFrame {
             auto p = reinterpret_cast<short *>(buff);
             auto maxVol = p[0];
             int n_samples = len / 2;
-            for (int i = 0; i < n_samples; i++) {
+            for (int i = 0; i < n_samples; ++i) {
                 maxVol = std::max(maxVol, p[i]);
             }
             return double(maxVol) / 32768;
@@ -23,7 +23,7 @@ struct AudioFrame {
             auto p = reinterpret_cast<short *>(buff);
             double sum = 0;
             int n_samples = len / 2;
-            for (int i = 0; i < n_samples; i++) { sum += std::abs(p[i]); }
+            for (int i = 0; i < n_samples; ++i) { sum += std::abs(p[i]); }
             return sum / 32768 / (n_samples);
         } else {
             LOG_ERROR("not implement!!! AUDIO_SAM_SIZE: {}", kAudioSamSize);

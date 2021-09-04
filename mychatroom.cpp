@@ -510,7 +510,7 @@ void MyChatRoom::JoinRoom()
                      });
     QObject::connect(m_chat, &AudioChat::SigUserIsMutedStatusReady, [this](QMap<QString, bool> userStatus){
 
-        for (auto iter=userStatus.begin(); iter!=userStatus.end(); iter++){
+        for (auto iter=userStatus.begin(); iter!=userStatus.end(); ++iter){
             if ( this->m_userWidegets.find( iter.key() )  !=  this->m_userWidegets.end() ) {
                 this->m_userWidegets[iter.key()]->setIsMuted(iter.value());
             }
