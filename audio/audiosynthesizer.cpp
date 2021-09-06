@@ -19,68 +19,67 @@ AudioSynthesizer::AudioSynthesizer() {
 
 AudioSynthesizer::~AudioSynthesizer() {}
 
-AudioFrame AudioSynthesizer::GetAudioFrame() {
+std::vector<char> AudioSynthesizer::GetAudioFrame() {
     QMutexLocker locker(&mutex_);
     return this->Synthese();
 }
 
 // 从各个队列中获取数据，合成为一个音频帧
-AudioFrame AudioSynthesizer::Synthese() {
-    AudioFrame frame;
-    memset(&frame, 0, sizeof(0));
-    int maxFrameLen = 0;
-    double n = 0;  // 权值累和
-    static int v[kAudioFrameLen / 2];
-    memset(v, 0, sizeof(v));
-    if (queues_.size())
-        for (auto iter = queues_.begin(); iter != queues_.end(); ++iter) {
-            const auto &name = iter.key();
-            auto &queue = iter.value();
-            if (volume_.find(name) == volume_.end()) {
-                n = volume_[name] = 100;
-            }
-
-            if (queue.size()) {
-                auto x = f(volume_[name]);  // 权值
-                n += 100;
-                auto curr_frame = queue.dequeue();
-                if (curr_frame.len != kAudioFrameLen) {
-//                    spdlog::error("curr_frame.len({}) != AUDIO_FRAME_LEN({})", curr_frame.len, AUDIO_FRAME_LEN);
-                }
-                if (curr_frame.len > kAudioFrameLen) { continue; }
-
-                maxFrameLen = qMax(maxFrameLen, curr_frame.len);
-
-                auto base_b = reinterpret_cast<short *>(&curr_frame.buff[0]);
-                for (int i = 0; i < maxFrameLen / 2; ++i) {
-                    v[i] += static_cast<int>(base_b[i] * x);
-                }
-            }
+std::vector<char> AudioSynthesizer::Synthese() {
+    bool has_data = false;
+    for (const auto &queue : queues_) {
+        if (queue.size()) {
+            has_data = true;
+            break;
         }
-    if (n != 0) {
-        auto base_a = reinterpret_cast<short *>(&frame.buff[0]);
-        for (int i = 0; i < maxFrameLen / 2; ++i) {
-            if (abs(v[i] / n) > 32767) {
-                base_a[i] = v[i]>=0 ? 32767 : -32768;
-            } else {
-                base_a[i] = static_cast<short>(v[i] / n);
-            }
-        }
-        frame.len = maxFrameLen;
     }
-    return frame;
+    if (!has_data) { return {}; }
+
+    std::vector<char> synthesed_data(4096, 0);
+    double n = 0;
+    std::vector<double> au_data(synthesed_data.size() / 2, 0);
+
+    for (auto iter = queues_.begin(); iter != queues_.end(); ++iter) {
+        const auto &name = iter.key();
+        auto &queue = iter.value();
+        if (volume_.find(name) == volume_.end()) { n = volume_[name] = 100; }
+
+        if (queue.size()) {
+            double x = f(volume_[name]);  // 权值
+            n += 100;
+            auto curr_frame = queue.dequeue();
+
+            if (curr_frame.size() != 4096) {
+                LOG_ERROR("synthese len not 4096");
+                return {};
+            }
+
+            auto base_b = reinterpret_cast<short *>(&curr_frame[0]);
+            for (std::size_t i = 0; i < au_data.size(); ++i) {
+                au_data[i] += base_b[i] * x;
+            }
+        }
+    }
+
+    auto base = reinterpret_cast<short *>(&synthesed_data[0]);
+    for (std::size_t i = 0; i < au_data.size(); ++i) {
+        double amp = au_data[i] / n;
+        base[i] = static_cast<short>(amp);
+        if (amp > 32767) { base[i] = 32767; }
+        if (amp < -32768) { base[i] = -32768; }
+    }
+
+    return synthesed_data;
 }
 
-// 获取在线用户列表，超过3s没信号的则会被忽略
+// 获取在线用户列表，超过2s没信号的则会被忽略
 QList<QString> AudioSynthesizer::GetUserList() {
     QList<QString> ret;
     for (auto iter = last_online_t_.begin(); iter != last_online_t_.end();
          ++iter) {
         QString name = iter.key();
         auto lastTime = iter.value();
-        if (time(nullptr) - lastTime < 2) {
-            ret.push_back(name);
-        }
+        if (time(nullptr) - lastTime < 2) { ret.push_back(name); }
     }
     return ret;
 }
@@ -90,27 +89,30 @@ void AudioSynthesizer::SetVolume(QString name, int volume) {
 }
 
 // 每当有一个消息来临时，记录“该用户此时有信号”、入队
-void AudioSynthesizer::onOneFrameIn(Msg msg) {
-    LOG_INFO("one msg from {}, len = {}", msg.name, msg.frame.len);
-
+void AudioSynthesizer::onOneFrameIn(QString name, std::vector<char> pcm_data) {
+    LOG_INFO("one msg from {}, len = {}", name.toUtf8().data(), pcm_data.size());
     QMutexLocker locker(&mutex_);
-    QString name(msg.name);
+
     is_muted_[name] = false;
-
-    queues_[name].enqueue(msg.frame);
-
+    queues_[name].enqueue(pcm_data);
     last_online_t_[name] = time(nullptr);
-    if (queues_[name].size() > 10) {
+    if (queues_[name].size() > 9) {
         LOG_WARN("droped one frame");
         queues_[name].dequeue();
     }
+
+    // get max volume:
+    short *p = reinterpret_cast<short*>(&pcm_data[0]);
+    auto max_volume = *std::max_element(p, p+pcm_data.size()/2);
+    if (volume_.find(name) == volume_.end()) {
+        volume_[name] = 100;
+    }
+    auto vol = static_cast<double>(max_volume) / 32768 * volume_[name] / 200;
     if (volume_.find(name) != volume_.end()) {
-        emit SigUserVolumeReady(
-                name, msg.frame.getMaxVolume() * volume_[name] / 200);
+        emit SigUserVolumeReady(name, vol);
     }
 }
 
-// 一个'f'开头的静音消息
 void AudioSynthesizer::onOneEmptyMsgIn(QString userName) {
     QMutexLocker locker(&mutex_);
     is_muted_[userName] = true;

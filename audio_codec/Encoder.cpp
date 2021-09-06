@@ -14,19 +14,16 @@ extern "C" {
 }
 
 namespace {
+constexpr int kEncoderInputBufferLen = 4096;
+
 char aac_adts_header[7];
-}
+}  // namespace
 
 ///////////////////////////////////////begin of class Encoder definition
 Encoder::Encoder() {
     initEncoder();
     this->curr_idx_ = 0;
     LOG_INFO("Encoder::Encoder() finished");
-
-#ifdef SAVE_RESPLIT_IO_INTO_FILE
-    this->fp_before_resplit = fopen("fp_before_resplit.pcm", "wb");
-    this->fp_after_resplit = fopen("fp_after_resplit.pcm", "wb");
-#endif
 }
 
 Encoder::~Encoder() {
@@ -34,7 +31,7 @@ Encoder::~Encoder() {
     LOG_INFO("Encoder::~Encoder() finished");
 }
 
-void Encoder::PushAudioFrame(AudioFrame frame) {
+void Encoder::PushAudioFrame(std::vector<char> frame) {
     queue_.enqueue(frame);
 }
 
@@ -42,14 +39,11 @@ std::vector<char> Encoder::GetZipedFrame() {
     LOG_INFO("call Encoder::GetZipedFrame()");
     int rest_bytes = 0;
     for (auto iter = queue_.begin(); iter != queue_.end(); ++iter) {
-        rest_bytes += (*iter).len;
+        rest_bytes += (*iter).size();
     }
     rest_bytes -= curr_idx_;
 
-    //        int rest_bytes = AUDIO_FRAME_LEN-m_currIdx +
-    //        (m_queue.size()-1)*AUDIO_FRAME_LEN;
-
-    if (rest_bytes >= 4096) {  // 队列里面有4096字节的数据
+    if (rest_bytes >= kEncoderInputBufferLen) {
         LOG_INFO("rest_bytes({}) >= 4096 ", rest_bytes);
         /*      front                                    tail
          * [--------------] <- [--------------] <- [--------------]
@@ -57,24 +51,24 @@ std::vector<char> Encoder::GetZipedFrame() {
          *           |
          *       m_currIdx
          */
-        static char buff[4096];  // warning:
-                                 // 多对象多进程下将竞争使用此static变量导致错误
-        std::vector<char> buff_4096(4096, 0);
-        int bytedNeed = sizeof(buff);
+        std::vector<char> buff(kEncoderInputBufferLen, 0);
+        int bytedNeed = kEncoderInputBufferLen;
         int buffIdx = 0;
 
         while (true) {
 
-            int front_rest_bytes = queue_.front().len - curr_idx_;
+            int front_rest_bytes = static_cast<int>(queue_.front().size()) - curr_idx_;
             if (front_rest_bytes < bytedNeed) {
-                memcpy(buff + buffIdx, queue_.front().buff + curr_idx_,
+                memcpy(&buff[static_cast<size_t>(buffIdx)],
+                       &queue_.front()[0] + curr_idx_,
                        static_cast<size_t>(front_rest_bytes));
                 buffIdx += front_rest_bytes;
                 bytedNeed -= front_rest_bytes;
                 queue_.dequeue();
                 curr_idx_ = 0;
             } else {
-                memcpy(buff + buffIdx, queue_.front().buff + curr_idx_,
+                memcpy(&buff[static_cast<size_t>(buffIdx)],
+                       &queue_.front()[0] + curr_idx_,
                        static_cast<size_t>(bytedNeed));
                 curr_idx_ += bytedNeed;
                 break;
@@ -82,7 +76,7 @@ std::vector<char> Encoder::GetZipedFrame() {
         }
         // return std::move(...)? moving a local object in a return statement
         // prevents copy elision
-        return encodeFrame(buff);
+        return encodeFrame(&buff[0]);
     } else {
         LOG_INFO("rest_bytes({}) < 4096 return {", rest_bytes);
         return {};
@@ -104,7 +98,8 @@ int init_aac_header() {
     int freqIdx;
     static int rates[] = {96000, 88000, 64000, 48000, 44100, 32000, 24000,
                           22000, 16000, 12000, 11025, 8000,  7350};
-    for (int i = 0; i < sizeof(rates) / sizeof(rates[0]); ++i) {
+    for (int i = 0; static_cast<size_t>(i) < sizeof(rates) / sizeof(rates[0]);
+         ++i) {
         if (rates[i] == kAudioSamRate) {
             LOG_INFO("{}->{}", kAudioSamRate, rates[i]);
             freqIdx = i;
@@ -120,7 +115,7 @@ int init_aac_header() {
 
     return 0;
 }
-}
+}  // namespace
 // namespace
 namespace {
 /**

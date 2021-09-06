@@ -2,10 +2,8 @@
 
 #include <vector>
 
-#include <qdebug.h>
 #include <QQueue>
 
-#include "structs/AudioFrame.h"
 #include "Config.h"
 
 /*
@@ -16,11 +14,11 @@ class Encoder {
 public:
     Encoder();
     ~Encoder();
-    void PushAudioFrame(AudioFrame frame);
+    void PushAudioFrame(std::vector<char> frame);
     std::vector<char> GetZipedFrame();
 
 private:
-    QQueue<AudioFrame> queue_;
-    AudioFrame curr_frame_;
+    QQueue<std::vector<char>> queue_;
+    std::vector<char> curr_frame_;
     int curr_idx_;
 };

@@ -41,17 +41,14 @@ void AudioPlayer::run() {
         QMutexLocker locker(&mutex_);
         auto currBytesFree = output_->bytesFree();
         if (currBytesFree > maxFree) { maxFree = currBytesFree; }
-        if (output_->bytesFree() >= kAudioFrameLen) {
-            AudioFrame frame = m_provider->GetAudioFrame();
-            if (frame.len < 0) {
-                LOG_WARN("a wrong frame!(len({}) < 0)", frame.len);
-                continue;
-            } else if (frame.len == 0) {
-                static int idx = 0;
+        if (output_->bytesFree() >= 4096) {
+            auto frame = m_provider->GetAudioFrame();
+            if (frame.size() == 0) {
                 LOG_WARN("a empty frame!(len == 0)");
                 QThread::msleep(50);
             } else {
-                auto write_cnt = audio_io_->write(frame.buff, frame.len);
+                auto write_cnt = audio_io_->write(
+                        &frame[0], static_cast<qint64>(frame.size()));
                 LOG_INFO("audio player write {} bytes", write_cnt);
             }
         }

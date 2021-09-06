@@ -29,7 +29,7 @@ void Decoder::InitDecoder() {
         LOG_ERROR("Parser not found");
     }
     //创建packet,用于存储解码前的数据
-    packet_ = (AVPacket *) malloc(sizeof(AVPacket));
+    packet_ = reinterpret_cast<AVPacket *>(malloc(sizeof(AVPacket)));
     av_init_packet(packet_);
 
     //设置转码后输出相关参数
@@ -48,7 +48,8 @@ void Decoder::InitDecoder() {
             nullptr, out_channels, out_nb_samples, AV_SAMPLE_FMT_S16, 1);
 
     //注意要用av_malloc
-    buffer_ = (uint8_t *) av_malloc(buffer_size_);
+    buffer_ = reinterpret_cast<uint8_t *>(
+            av_malloc(static_cast<size_t>(buffer_size_)));
 
     //创建Frame，用于存储解码后的数据
     frame_ = av_frame_alloc();
@@ -58,42 +59,38 @@ void Decoder::InitDecoder() {
     //打开转码器
 
     convert_ctx_ = swr_alloc();  //设置转码参数
-    swr_alloc_set_opts(convert_ctx_, out_channel_layout, out_sample_fmt,
-                       out_sample_rate, in_channel_layout, AV_SAMPLE_FMT_FLTP,
-                       kAudioSamRate, 0, nullptr);
+    swr_alloc_set_opts(convert_ctx_, static_cast<int64_t>(out_channel_layout),
+                       out_sample_fmt, out_sample_rate, in_channel_layout,
+                       AV_SAMPLE_FMT_FLTP, kAudioSamRate, 0, nullptr);
     //初始化转码器
     swr_init(convert_ctx_);
 }
 
-std::pair<unsigned char *, int> Decoder::DecodeFrame(void *buff, int len) {
+std::vector<char> Decoder::DecodeFrame(void *buff, int len) {
     //    qDebug() << this << "is decoding...";
-    if (buff == 0 || len == 0) { return std::make_pair(nullptr, 0); }
-    packet_->data = (uint8_t *) buff;
+    if (buff == nullptr || len == 0) { return {}; }
+    packet_->data = static_cast<uint8_t *>(buff);
     packet_->size = len;
     int ret = avcodec_send_packet(cod_ctx_, packet_);
     if (ret < 0) {
         char err_buff[128];
         av_strerror(ret, err_buff, sizeof(err_buff));
         LOG_ERROR("send_packet error code:{} '{%s}'", ret, err_buff);
-        return std::make_pair(nullptr, 0);
+        return {};
     }
 
     ret = avcodec_receive_frame(cod_ctx_, frame_);
-    if (ret < 0) { return std::make_pair(nullptr, 0); }
+    if (ret < 0) { return {}; }
 
     //     * int swr_convert(struct SwrContext *s, uint8_t **out, int out_count,
     //                                const uint8_t **in , int in_count);
-
-    //    frame->buf
-    //    frame->data
-    //    frame->pkt_size
     swr_convert(convert_ctx_, &buffer_, buffer_size_,
-                (const uint8_t **) frame_->data, frame_->nb_samples);
+                const_cast<const uint8_t **>(frame_->data), frame_->nb_samples);
 
-    auto pcm = new unsigned char[buffer_size_];
-    memcpy(pcm, buffer_, buffer_size_);
+    std::vector<char> pcm_data(static_cast<std::size_t>(buffer_size_));
+    memcpy(&pcm_data[0], buffer_, static_cast<std::size_t>(buffer_size_));
 
-    return std::make_pair(pcm, buffer_size_);
+    return pcm_data;
 }
 
 void Decoder::CloseDecoder() {

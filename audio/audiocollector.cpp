@@ -1,5 +1,7 @@
 ﻿#include "audiocollector.h"
 
+#include "log/log.h"
+
 namespace {
 static QAudioInput *createAudioInput(
         QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice()) {
@@ -16,10 +18,6 @@ static QAudioInput *createAudioInput(
 
 AudioCollector::AudioCollector() {
     input_ = createAudioInput();
-
-#ifdef SAVE_COLLECTED_PCM_INTO_FILE
-    m_fp = fopen(COLLECTED_PCM_PATH, "wb");
-#endif
 }
 
 AudioCollector::~AudioCollector() {
@@ -36,23 +34,27 @@ void AudioCollector::SetInputDevice(QAudioDeviceInfo info) {
 
     input_ = createAudioInput(info);
     inputDevice_ = input_->start();
-    connect(inputDevice_, &QIODevice::readyRead, this, &AudioCollector::onReadyRead);
+    connect(inputDevice_, &QIODevice::readyRead, this,
+            &AudioCollector::onReadyRead);
 }
 
 void AudioCollector::run() {
     inputDevice_ = input_->start();
-    connect(inputDevice_, &QIODevice::readyRead, this, &AudioCollector::onReadyRead);
+    connect(inputDevice_, &QIODevice::readyRead, this,
+            &AudioCollector::onReadyRead);
 }
 
 void AudioCollector::onReadyRead() {
     QMutexLocker locker(&mutex_);
-    AudioFrame frame;
-    auto len = inputDevice_->read(frame.buff, sizeof(frame.buff));
-    frame.len = static_cast<int>(len);
 
-#ifdef SAVE_COLLECTED_PCM_INTO_FILE
-    fwrite(frame.buff, 1, frame.len, m_fp);
-#endif
-    emit SigAudioFrameReady(frame);
-    emit SigAudioVolumeReady(frame.getMaxVolume());
+    std::vector<char> pcm_data(static_cast<std::size_t>(input_->bytesReady()));
+
+    inputDevice_->read(reinterpret_cast<char *>(&pcm_data[0]),
+                                  static_cast<qint64>(pcm_data.size()));
+    emit SigAudioFrameReady(pcm_data);
+    // get max volume:
+    short *p = reinterpret_cast<short*>(&pcm_data[0]);
+    auto max_volume = *std::max_element(p, p+pcm_data.size()/2);
+    auto vol = static_cast<double>(max_volume) / 32768;
+    emit SigAudioVolumeReady(vol);
 }

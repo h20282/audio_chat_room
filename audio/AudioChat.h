@@ -2,10 +2,10 @@
 
 #include <QObject>
 
+#include "UdpConnector.h"
 #include "audiocollector.h"
 #include "audioplayer.h"
 #include "audiosynthesizer.h"
-#include "UdpConnector.h"
 
 class AudioChat : public QObject {
     Q_OBJECT

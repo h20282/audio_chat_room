@@ -7,6 +7,7 @@
 #include <bitset>
 #include <iostream>
 #include <utility>
+#include <vector>
 
 extern "C" {
 #include <libavcodec\avcodec.h>
@@ -26,9 +27,9 @@ public:
      * @buff：指向aac帧
      * @len：aac帧长度（包括帧头、数据）
      *
-     * @return 解码后的数据（用完需delete）、数据长度
+     * @return 解码后的数据 失败返回空数据 size()==0
      */
-    std::pair<unsigned char *, int> DecodeFrame(void *buff, int len);
+    std::vector<char> DecodeFrame(void *buff, int len);
 
 private:
     void CloseDecoder();

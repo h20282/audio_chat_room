@@ -1,0 +1,931 @@
+[1mdiff --git a/audio/AbstractAudioFrameProvider.h b/audio/AbstractAudioFrameProvider.h[m
+[1mindex c5e5244..a1ff281 100644[m
+[1m--- a/audio/AbstractAudioFrameProvider.h[m
+[1m+++ b/audio/AbstractAudioFrameProvider.h[m
+[36m@@ -1,9 +1,9 @@[m
+ ﻿#pragma once[m
+ [m
+[31m-#include "structs/AudioFrame.h"[m
+[32m+[m[32m#include <vector>[m
+ [m
+ class AbstractAudioFrameProvider {[m
+ public:[m
+[31m-    virtual AudioFrame GetAudioFrame() = 0;[m
+[32m+[m[32m    virtual std::vector<char> GetAudioFrame() = 0;[m
+     virtual ~AbstractAudioFrameProvider() = default;[m
+ };[m
+[1mdiff --git a/audio/AudioChat.h b/audio/AudioChat.h[m
+[1mindex a908d60..c61ad9c 100644[m
+[1m--- a/audio/AudioChat.h[m
+[1m+++ b/audio/AudioChat.h[m
+[36m@@ -2,10 +2,10 @@[m
+ [m
+ #include <QObject>[m
+ [m
+[32m+[m[32m#include "UdpConnector.h"[m
+ #include "audiocollector.h"[m
+ #include "audioplayer.h"[m
+ #include "audiosynthesizer.h"[m
+[31m-#include "UdpConnector.h"[m
+ [m
+ class AudioChat : public QObject {[m
+     Q_OBJECT[m
+[1mdiff --git a/audio/UdpConnector.cpp b/audio/UdpConnector.cpp[m
+[1mindex 027ed5d..b1e831a 100644[m
+[1m--- a/audio/UdpConnector.cpp[m
+[1m+++ b/audio/UdpConnector.cpp[m
+[36m@@ -2,43 +2,22 @@[m
+ [m
+ #include "log/log.h"[m
+ [m
+[31m-// clang-format off[m
+ namespace {[m
+[31m-// client --> server[m
+[31m-//     1     +    4   +   16  +     4     + AAC_FRAME_LEN[m
+[31m-// 静音标识符 + 房间号 + 用户名 + aac帧长度 + aac帧数据[m
+[31m-constexpr char kUnMutedFlag = 'F';[m
+[31m-constexpr char kMutedFlag = 'f';[m
+ [m
+[31m-constexpr int kMuteLen = 1;[m
+[31m-constexpr int kRoomIdLen = 4;[m
+ constexpr int kUserNameLen = 16;[m
+[31m-constexpr int kAacLen = 4;[m
+[31m-[m
+[31m-[m
+[31m-constexpr int kClientToServerHeaderLen  = 0 + kMuteLen + kRoomIdLen + kUserNameLen + kAacLen;[m
+[31m-[m
+[31m-constexpr int kClientToSererMutePos     = 0;[m
+[31m-constexpr int kClientToSererRoomIdPos   = 0 + kMuteLen;[m
+[31m-constexpr int kClientToSererUserNamePos = 0 + kMuteLen + kRoomIdLen;[m
+[31m-constexpr int kClientToSererAacLenPos   = 0 + kMuteLen + kRoomIdLen + kUserNameLen;[m
+[31m-constexpr int kClientToSererAacDataPos  = 0 + kMuteLen + kRoomIdLen + kUserNameLen + kAacLen;[m
+[31m-[m
+[31m-// server --> client[m
+[31m-//     1     +   16  +     4     + AAC_FRAME_LEN[m
+[31m-// 静音标识符 + 用户名 + aac帧长度 + aac帧数据[m
+[31m-constexpr int kServerToClientHeaderLen   = 0 + kMuteLen + kUserNameLen + kAacLen;[m
+[32m+[m[32mconstexpr char kMutedFlag = 'f';[m
+[32m+[m[32mconstexpr char kUnMutedFlag = 'F';[m
+ [m
+[31m-constexpr int kServerToClientMutePos     = 0;[m
+[31m-constexpr int kServerToClientUserNamePos = 0 + kMuteLen;[m
+[31m-constexpr int kServerToClientAacLenPos   = 0 + kMuteLen + kUserNameLen;[m
+[31m-constexpr int kServerToClientAacDataPos  = 0 + kMuteLen + kUserNameLen + kAacLen;[m
+[32m+[m[32mstruct AuPackHeader {[m
+[32m+[m[32m    char mute_flag;[m
+[32m+[m[32m    int room_id;[m
+[32m+[m[32m    char user_name[kUserNameLen];[m
+[32m+[m[32m};[m
+ }  // namespace[m
+[31m-// clang-format on[m
+ [m
+ UdpConnector::UdpConnector(QString user_name, int room_id)[m
+         : port_(UDP_SERVER_PORT), user_name_(user_name), room_id_(room_id) {[m
+[31m-    encoder_ = new Encoder();  // 获取编码器实例（初始化）[m
+[32m+[m[32m    encoder_ = new Encoder();[m
+ [m
+     udp_socket_ = new QUdpSocket();[m
+     udp_socket_->bind(QHostAddress::Any);[m
+[36m@@ -48,8 +27,7 @@[m [mUdpConnector::UdpConnector(QString user_name, int room_id)[m
+ }[m
+ [m
+ UdpConnector::~UdpConnector() {[m
+[31m-    delete encoder_;  // 析构编码器（释放编码器资源）[m
+[31m-    // 释放解码器资源[m
+[32m+[m[32m    delete encoder_;[m
+     for (auto decoder : decoders_) { delete decoder; }[m
+ [m
+     udp_socket_->close();[m
+[36m@@ -58,128 +36,89 @@[m [mUdpConnector::~UdpConnector() {[m
+ [m
+ // 收到一个来自服务器的音频帧，交给AudioSynthesizer[m
+ void UdpConnector::onUdpReadyRead() {[m
+[31m-    QMutexLocker locker(&mutex_);[m
+[31m-    static char buff[sizeof(Msg) + 128];[m
+[32m+[m[32m    //    QMutexLocker locker(&mutex_);[m
+     while (udp_socket_->hasPendingDatagrams()) {[m
+[31m-        auto recv_len = udp_socket_->readDatagram(buff, sizeof(buff));[m
+[31m-        LOG_INFO("udp_socket_->readDatagram = {}", recv_len);[m
+[32m+[m[32m        auto recv_len = udp_socket_->pendingDatagramSize();[m
+[32m+[m[32m        if (recv_buff.size() < static_cast<size_t>(recv_len)) {[m
+[32m+[m[32m            recv_buff.resize(static_cast<size_t>(recv_len));[m
+[32m+[m[32m        }[m
+[32m+[m[32m        udp_socket_->readDatagram(&recv_buff[0], recv_len);[m
+[32m+[m[32m        LOG_INFO("udp recv {} bytes", recv_len);[m
+[32m+[m[32m        if (static_cast<size_t>(recv_len) < sizeof(AuPackHeader)) { continue; }[m
+ [m
+[31m-        if (buff[0] == 'F') {[m
+[32m+[m[32m        AuPackHeader *recv_pkt =[m
+[32m+[m[32m                reinterpret_cast<AuPackHeader *>(&recv_buff[0]);[m
+[32m+[m[32m        QString user_name = QString::fromUtf8([m
+[32m+[m[32m                reinterpret_cast<char *>(&recv_pkt->user_name), 16);[m
+[32m+[m[32m        if (recv_pkt->mute_flag == kMutedFlag) {[m
+ [m
+[31m-            QString name(buff + 1);[m
+[32m+[m[32m            emit SigOneEmptyFrameReady(user_name);[m
+ [m
+[31m-            int ziped_frame_len = *reinterpret_cast<int *>(buff + 1 + 16);[m
+[32m+[m[32m        } else if (recv_pkt->mute_flag == kUnMutedFlag) {[m
+ [m
+[31m-            // 从aac帧头获取aac帧长度[m
+[31m-            unsigned char *header_base =[m
+[31m-                    reinterpret_cast<unsigned char *>(buff + 1 + 16 + 4);[m
+[31m-            int aac_len = ((header_base[3] & 0x03) << (8 + 3)) +[m
+[31m-                              (header_base[4] << 3) + (header_base[5] >> 5);[m
+[32m+[m[32m            std::vector<char> aac_data([m
+[32m+[m[32m                    static_cast<size_t>(recv_len) - sizeof(AuPackHeader), 0);[m
+[32m+[m[32m            memcpy(&aac_data[0], &recv_buff[sizeof(AuPackHeader)],[m
+[32m+[m[32m                   aac_data.size());[m
+ [m
+[31m-            if (header_base[0] != 0xff) {[m
+[31m-                LOG_ERROR("not 0xff");[m
+[31m-                continue;[m
+[32m+[m[32m            unsigned char *aac_frame_base = reinterpret_cast<unsigned char *>([m
+[32m+[m[32m                    &recv_buff[sizeof(AuPackHeader)]);[m
+[32m+[m[32m            int aac_len = ((aac_frame_base[3] & 0x03) << (8 + 3)) +[m
+[32m+[m[32m                          (aac_frame_base[4] << 3) + (aac_frame_base[5] >> 5);[m
+[32m+[m[32m            if (aac_frame_base[0] != 0xff) {[m
+[32m+[m[32m                LOG_ERROR("aac_data error: not 0xff!");[m
+             }[m
+[31m-            if (aac_len != ziped_frame_len) {[m
+[31m-                LOG_ERROR("aac_len:{} != ziped_frame_len:{}", aac_len,[m
+[31m-                          ziped_frame_len);[m
+[32m+[m[32m            if (aac_data.size() != static_cast<size_t>(aac_len)) {[m
+[32m+[m[32m                LOG_ERROR("aac_data len error! ({}) != ({})", aac_data.size(),[m
+[32m+[m[32m                          aac_len);[m
+                 continue;[m
+             }[m
+[31m-            if (decoders_.find(name) == decoders_.end()) {[m
+[31m-                decoders_[name] = new Decoder();[m
+[31m-            }[m
+[31m-            auto pair = decoders_[name]->DecodeFrame(buff + 1 + 16 + 4,[m
+[31m-                                                     aac_len);[m
+[31m-            auto pcm_buff = pair.first;[m
+[31m-            auto pcm_len = pair.second;[m
+[31m-[m
+[31m-            // 如果aac解压后的pcm长度小于一帧pcm的长度，直接发送[m
+[31m-            if (pcm_len <= kAudioFrameLen) {[m
+[31m-                Msg msg;[m
+[31m-                memcpy(msg.name, buff + 1, 16);[m
+[31m-                msg.frame.len = pcm_len;[m
+[31m-                memcpy(msg.frame.buff, pcm_buff, static_cast<size_t>(pcm_len));[m
+[31m-                emit SigOneMsgReady(msg);[m
+[31m-            } else {  // 如果大于则拆分成多个[m
+[31m-                for (int i = 0; i < pcm_len; i += kAudioFrameLen) {[m
+[31m-                    Msg msg;[m
+[31m-                    // 全帧初始化为0[m
+[31m-                    memset(msg.frame.buff, 0, sizeof(msg.frame.buff));[m
+[31m-                    memcpy(msg.name, buff + 1, 16);  // 用户名[m
+[31m-                    // pcm帧长度[m
+[31m-                    msg.frame.len = qMin(pcm_len - i, kAudioFrameLen);[m
+[31m-                    LOG_INFO("in udp connector: msg.frame.len{}",[m
+[31m-                             msg.frame.len);[m
+[31m-                    // pcm数据[m
+[31m-                    memcpy(msg.frame.buff, pcm_buff + i,[m
+[31m-                           static_cast<size_t>(msg.frame.len));[m
+[31m-                    emit SigOneMsgReady(msg);[m
+[31m-                }[m
+[31m-            }[m
+[31m-            delete pcm_buff;[m
+ [m
+[31m-        } else if (buff[0] == 'f') {[m
+[31m-            QString name(buff + 1);[m
+[31m-            emit SigOneEmptyFrameReady(name);[m
+[32m+[m[32m            if (decoders_.find(user_name) == decoders_.end()) {[m
+[32m+[m[32m                decoders_[user_name] = new Decoder();[m
+[32m+[m[32m            }[m
+[32m+[m[32m            auto pcm_data =[m
+[32m+[m[32m                    decoders_[user_name]->DecodeFrame(aac_frame_base, aac_len);[m
+[32m+[m[32m            LOG_INFO("decoder : {} --> {} ", aac_len, pcm_data.size());[m
+[32m+[m[32m            emit SigOneMsgReady(user_name, pcm_data);[m
+         } else {[m
+[31m-            qDebug("unkown type :%d[%c]", buff[0], buff[0]);[m
+[32m+[m[32m            LOG_ERROR("unknown type({0:d})'{0:c}'", recv_pkt->mute_flag);[m
+         }[m
+     }[m
+[31m-    //    qDebug() << "onUdpReadyRead() end";[m
+ }[m
+ [m
+ // 收到一个来自Collector的音频帧[m
+[31m-//加上头部消息：【'F'/'f' + room_id + user_name】，发送给服务器[m
+[31m-void UdpConnector::onAudioFrameReady(AudioFrame frame) {[m
+[32m+[m[32m// 加上头部消息AuPackHeader，发送给服务器[m
+[32m+[m[32mvoid UdpConnector::onAudioFrameReady(std::vector<char> frame) {[m
+[32m+[m[32m    AuPackHeader header;[m
+[32m+[m[32m    memset(&header, 0, sizeof(header));[m
+[32m+[m[32m    header.room_id = room_id_;[m
+[32m+[m[32m    auto str_arr = user_name_.toUtf8();[m
+[32m+[m[32m    LOG_INFO("send user_name : '{}' (len={})", str_arr.data(), str_arr.size());[m
+[32m+[m[32m    memcpy(&header.user_name, str_arr.data(),[m
+[32m+[m[32m           static_cast<size_t>(str_arr.size()));[m
+     if (is_muted_) {[m
+[31m-        char buff[1 + 4 + 16];[m
+[31m-        memset(buff, 0, sizeof(buff));[m
+[31m-        buff[0] = 'f';[m
+[31m-        *reinterpret_cast<int *>(buff + 1) = room_id_;[m
+[31m-        memcpy(buff + 1 + 4, user_name_.toLatin1().data(),[m
+[31m-               static_cast<size_t>(user_name_.size()));[m
+[31m-        udp_socket_->writeDatagram(buff, 1 + 4 + 16, destaddr_, port_);[m
+[32m+[m[32m        header.mute_flag = kMutedFlag;[m
+[32m+[m
+[32m+[m[32m        udp_socket_->writeDatagram(reinterpret_cast<char *>(&header),[m
+[32m+[m[32m                                   sizeof(header), destaddr_, port_);[m
+     } else {[m
+         QMutexLocker locker(&mutex_);[m
+[32m+[m[32m        header.mute_flag = kUnMutedFlag;[m
+         encoder_->PushAudioFrame(frame);[m
+ [m
+         while (1) {[m
+             LOG_INFO("befor get ziped frame");[m
+             std::vector<char> aac_data = encoder_->GetZipedFrame();[m
+[31m-            LOG_INFO("ziped frame len = {}", aac_data.size());[m
+             if (aac_data.size() == 0) { break; }[m
+[31m-[m
+[31m-            //     1     +    4   +   16  +     4     + AAC_FRAME_LEN[m
+[31m-            // 静音标识符 + 房间号 + 用户名 + aac帧长度 + aac帧数据[m
+[31m-            //                          （用于验证aac帧正确性）[m
+[31m-            std::size_t send_len = kClientToServerHeaderLen + aac_data.size();[m
+[31m-            std::vector<char> send_buff(send_len, 0);[m
+[31m-            LOG_INFO("send_buff.size = {}", send_buff.size());[m
+[31m-[m
+[31m-            // 1.禁言标识符号[m
+[31m-            send_buff[0] = kUnMutedFlag;[m
+[31m-[m
+[31m-            // 2.房间号[m
+[31m-            *reinterpret_cast<int *>(&send_buff[kClientToSererRoomIdPos]) =[m
+[31m-                    room_id_;[m
+[31m-[m
+[31m-            // 3.用户名（warning: 中文问题、长度问题）[m
+[31m-            memcpy(&send_buff[kClientToSererUserNamePos],[m
+[31m-                   user_name_.toLatin1().data(),[m
+[31m-                   static_cast<size_t>(user_name_.size()));[m
+[31m-[m
+[31m-            // 4.aac帧长度[m
+[31m-            *reinterpret_cast<int *>(&send_buff[kClientToSererAacLenPos]) =[m
+[31m-                    static_cast<int>(aac_data.size());[m
+[31m-[m
+[31m-            // 5.aac帧数据[m
+[31m-            memcpy(&send_buff[kClientToSererAacDataPos], &aac_data[0],[m
+[31m-                   aac_data.size());[m
+[32m+[m[32m            std::vector<char> send_buff(sizeof(header) + aac_data.size());[m
+[32m+[m[32m            memcpy(&send_buff[0], &header, sizeof(header));[m
+[32m+[m[32m            memcpy(&send_buff[sizeof(header)], &aac_data[0], aac_data.size());[m
+ [m
+             auto len = udp_socket_->writeDatagram([m
+                     &send_buff[0], static_cast<qint64>(send_buff.size()),[m
+                     destaddr_, port_);[m
+[31m-            LOG_INFO("udp_socket_->writeDatagram = {}", len);[m
+[32m+[m[32m            LOG_INFO("udp send {} bytes", len);[m
+         }[m
+     }[m
+ }[m
+[1mdiff --git a/audio/UdpConnector.h b/audio/UdpConnector.h[m
+[1mindex 8f8e8a5..4e99854 100644[m
+[1m--- a/audio/UdpConnector.h[m
+[1m+++ b/audio/UdpConnector.h[m
+[36m@@ -8,7 +8,6 @@[m
+ [m
+ #include "audio_codec/Decoder.h"[m
+ #include "audio_codec/Encoder.h"[m
+[31m-#include "structs/Msg.h"[m
+ [m
+ class UdpConnector : public QObject {[m
+     Q_OBJECT[m
+[36m@@ -21,11 +20,11 @@[m [mpublic:[m
+     void SetMuted(bool isMuted);[m
+ [m
+ signals:[m
+[31m-    void SigOneMsgReady(Msg msg);[m
+[32m+[m[32m    void SigOneMsgReady(QString name, std::vector<char> data);[m
+     void SigOneEmptyFrameReady(QString name);[m
+ [m
+ public slots:[m
+[31m-    void onAudioFrameReady(AudioFrame frame);[m
+[32m+[m[32m    void onAudioFrameReady(std::vector<char> frame);[m
+ [m
+ private slots:[m
+     void onUdpReadyRead();[m
+[36m@@ -40,4 +39,6 @@[m [mprivate:[m
+     bool is_muted_ = false;[m
+     Encoder *encoder_;[m
+     QMap<QString, Decoder *> decoders_;[m
+[32m+[m
+[32m+[m[32m    std::vector<char> recv_buff;[m
+ };[m
+[1mdiff --git a/audio/audiocollector.cpp b/audio/audiocollector.cpp[m
+[1mindex 09220c2..40955c2 100644[m
+[1m--- a/audio/audiocollector.cpp[m
+[1m+++ b/audio/audiocollector.cpp[m
+[36m@@ -1,5 +1,7 @@[m
+ ﻿#include "audiocollector.h"[m
+ [m
+[32m+[m[32m#include "log/log.h"[m
+[32m+[m
+ namespace {[m
+ static QAudioInput *createAudioInput([m
+         QAudioDeviceInfo info = QAudioDeviceInfo::defaultInputDevice()) {[m
+[36m@@ -16,10 +18,6 @@[m [mstatic QAudioInput *createAudioInput([m
+ [m
+ AudioCollector::AudioCollector() {[m
+     input_ = createAudioInput();[m
+[31m-[m
+[31m-#ifdef SAVE_COLLECTED_PCM_INTO_FILE[m
+[31m-    m_fp = fopen(COLLECTED_PCM_PATH, "wb");[m
+[31m-#endif[m
+ }[m
+ [m
+ AudioCollector::~AudioCollector() {[m
+[36m@@ -36,23 +34,27 @@[m [mvoid AudioCollector::SetInputDevice(QAudioDeviceInfo info) {[m
+ [m
+     input_ = createAudioInput(info);[m
+     inputDevice_ = input_->start();[m
+[31m-    connect(inputDevice_, &QIODevice::readyRead, this, &AudioCollector::onReadyRead);[m
+[32m+[m[32m    connect(inputDevice_, &QIODevice::readyRead, this,[m
+[32m+[m[32m            &AudioCollector::onReadyRead);[m
+ }[m
+ [m
+ void AudioCollector::run() {[m
+     inputDevice_ = input_->start();[m
+[31m-    connect(inputDevice_, &QIODevice::readyRead, this, &AudioCollector::onReadyRead);[m
+[32m+[m[32m    connect(inputDevice_, &QIODevice::readyRead, this,[m
+[32m+[m[32m            &AudioCollector::onReadyRead);[m
+ }[m
+ [m
+ void AudioCollector::onReadyRead() {[m
+     QMutexLocker locker(&mutex_);[m
+[31m-    AudioFrame frame;[m
+[31m-    auto len = inputDevice_->read(frame.buff, sizeof(frame.buff));[m
+[31m-    frame.len = static_cast<int>(len);[m
+[31m-[m
+[31m-#ifdef SAVE_COLLECTED_PCM_INTO_FILE[m
+[31m-    fwrite(frame.buff, 1, frame.len, m_fp);[m
+[31m-#endif[m
+[31m-    emit SigAudioFrameReady(frame);[m
+[31m-    emit SigAudioVolumeReady(frame.getMaxVolume());[m
+[32m+[m
+[32m+[m[32m    std::vector<char> pcm_data(static_cast<std::size_t>(input_->bytesReady()));[m
+[32m+[m
+[32m+[m[32m    inputDevice_->read(reinterpret_cast<char *>(&pcm_data[0]),[m
+[32m+[m[32m                                  static_cast<qint64>(pcm_data.size()));[m
+[32m+[m[32m    emit SigAudioFrameReady(pcm_data);[m
+[32m+[m[32m    // get max volume:[m
+[32m+[m[32m    short *p = reinterpret_cast<short*>(&pcm_data[0]);[m
+[32m+[m[32m    auto max_volume = *std::max_element(p, p+pcm_data.size()/2);[m
+[32m+[m[32m    auto vol = static_cast<double>(max_volume) / 32768;[m
+[32m+[m[32m    emit SigAudioVolumeReady(vol);[m
+ }[m
+[1mdiff --git a/audio/audiocollector.h b/audio/audiocollector.h[m
+[1mindex f96ddf2..d265eb1 100644[m
+[1m--- a/audio/audiocollector.h[m
+[1m+++ b/audio/audiocollector.h[m
+[36m@@ -1,8 +1,6 @@[m
+ ﻿#pragma once[m
+ [m
+[31m-// 是否将从麦克风中采集到的声音存储到文件 "collected.pcm" 中[m
+[31m-//#define SAVE_COLLECTED_PCM_INTO_FILE[m
+[31m-#define COLLECTED_PCM_PA5TH "collected.pcm"[m
+[32m+[m[32m#include <vector>[m
+ [m
+ #include <QAudio>[m
+ #include <QAudioFormat>[m
+[36m@@ -16,7 +14,6 @@[m
+ [m
+ #include "spdlog/spdlog.h"[m
+ [m
+[31m-#include "structs/AudioFrame.h"[m
+ #include "Config.h"[m
+ [m
+ // 负责从麦克风中采集数据，压入队列中[m
+[36m@@ -26,12 +23,12 @@[m [mclass AudioCollector : public QThread {[m
+ public:[m
+     AudioCollector();[m
+     ~AudioCollector() override;[m
+[31m-    void run() override;[m
+[32m+[m[32m    void run()  override;[m
+     void SetInputDevice(QAudioDeviceInfo info);[m
+ [m
+ signals:[m
+[31m-    void SigAudioFrameReady(AudioFrame frame);[m
+[31m-    void SigAudioVolumeReady(double volume);[m
+[32m+[m[32m    void SigAudioFrameReady(std::vector<char> frame);[m
+[32m+[m[32m    void SigAudioVolumeReady(double volume/*[0, 1]*/);[m
+ [m
+ private slots:[m
+     void onReadyRead();[m
+[36m@@ -40,8 +37,4 @@[m [mprivate:[m
+     QAudioInput *input_;[m
+     QIODevice *inputDevice_;[m
+     QMutex mutex_;[m
+[31m-[m
+[31m-#ifdef SAVE_COLLECTED_PCM_INTO_FILE[m
+[31m-    FILE *m_fp;[m
+[31m-#endif[m
+ };[m
+[1mdiff --git a/audio/audioplayer.cpp b/audio/audioplayer.cpp[m
+[1mindex c4bff2f..0c7d164 100644[m
+[1m--- a/audio/audioplayer.cpp[m
+[1m+++ b/audio/audioplayer.cpp[m
+[36m@@ -41,17 +41,14 @@[m [mvoid AudioPlayer::run() {[m
+         QMutexLocker locker(&mutex_);[m
+         auto currBytesFree = output_->bytesFree();[m
+         if (currBytesFree > maxFree) { maxFree = currBytesFree; }[m
+[31m-        if (output_->bytesFree() >= kAudioFrameLen) {[m
+[31m-            AudioFrame frame = m_provider->GetAudioFrame();[m
+[31m-            if (frame.len < 0) {[m
+[31m-                LOG_WARN("a wrong frame!(len({}) < 0)", frame.len);[m
+[31m-                continue;[m
+[31m-            } else if (frame.len == 0) {[m
+[31m-                static int idx = 0;[m
+[32m+[m[32m        if (output_->bytesFree() >= 4096) {[m
+[32m+[m[32m            auto frame = m_provider->GetAudioFrame();[m
+[32m+[m[32m            if (frame.size() == 0) {[m
+                 LOG_WARN("a empty frame!(len == 0)");[m
+                 QThread::msleep(50);[m
+             } else {[m
+[31m-                auto write_cnt = audio_io_->write(frame.buff, frame.len);[m
+[32m+[m[32m                auto write_cnt = audio_io_->write([m
+[32m+[m[32m                        &frame[0], static_cast<qint64>(frame.size()));[m
+                 LOG_INFO("audio player write {} bytes", write_cnt);[m
+             }[m
+         }[m
+[1mdiff --git a/audio/audioplayer.h b/audio/audioplayer.h[m
+[1mindex 4f44140..7a33c83 100644[m
+[1m--- a/audio/audioplayer.h[m
+[1m+++ b/audio/audioplayer.h[m
+[36m@@ -9,7 +9,6 @@[m
+ [m
+ #include "spdlog/spdlog.h"[m
+ [m
+[31m-#include "structs/AudioFrame.h"[m
+ #include "AbstractAudioFrameProvider.h"[m
+ #include "Config.h"[m
+ [m
+[1mdiff --git a/audio/audiosynthesizer.cpp b/audio/audiosynthesizer.cpp[m
+[1mindex c3d9458..4349e50 100644[m
+[1m--- a/audio/audiosynthesizer.cpp[m
+[1m+++ b/audio/audiosynthesizer.cpp[m
+[36m@@ -19,68 +19,67 @@[m [mAudioSynthesizer::AudioSynthesizer() {[m
+ [m
+ AudioSynthesizer::~AudioSynthesizer() {}[m
+ [m
+[31m-AudioFrame AudioSynthesizer::GetAudioFrame() {[m
+[32m+[m[32mstd::vector<char> AudioSynthesizer::GetAudioFrame() {[m
+     QMutexLocker locker(&mutex_);[m
+     return this->Synthese();[m
+ }[m
+ [m
+ // 从各个队列中获取数据，合成为一个音频帧[m
+[31m-AudioFrame AudioSynthesizer::Synthese() {[m
+[31m-    AudioFrame frame;[m
+[31m-    memset(&frame, 0, sizeof(0));[m
+[31m-    int maxFrameLen = 0;[m
+[31m-    double n = 0;  // 权值累和[m
+[31m-    static int v[kAudioFrameLen / 2];[m
+[31m-    memset(v, 0, sizeof(v));[m
+[31m-    if (queues_.size())[m
+[31m-        for (auto iter = queues_.begin(); iter != queues_.end(); ++iter) {[m
+[31m-            const auto &name = iter.key();[m
+[31m-            auto &queue = iter.value();[m
+[31m-            if (volume_.find(name) == volume_.end()) {[m
+[31m-                n = volume_[name] = 100;[m
+[31m-            }[m
+[32m+[m[32mstd::vector<char> AudioSynthesizer::Synthese() {[m
+[32m+[m[32m    bool has_data = false;[m
+[32m+[m[32m    for (const auto &queue : queues_) {[m
+[32m+[m[32m        if (queue.size()) {[m
+[32m+[m[32m            has_data = true;[m
+[32m+[m[32m            break;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (!has_data) { return {}; }[m
+[32m+[m
+[32m+[m[32m    std::vector<char> synthesed_data(4096, 0);[m
+[32m+[m[32m    double n = 0;[m
+[32m+[m[32m    std::vector<double> au_data(synthesed_data.size() / 2, 0);[m
+[32m+[m
+[32m+[m[32m    for (auto iter = queues_.begin(); iter != queues_.end(); ++iter) {[m
+[32m+[m[32m        const auto &name = iter.key();[m
+[32m+[m[32m        auto &queue = iter.value();[m
+[32m+[m[32m        if (volume_.find(name) == volume_.end()) { n = volume_[name] = 100; }[m
+ [m
+[31m-            if (queue.size()) {[m
+[31m-                auto x = f(volume_[name]);  // 权值[m
+[31m-                n += 100;[m
+[31m-                auto curr_frame = queue.dequeue();[m
+[31m-                if (curr_frame.len != kAudioFrameLen) {[m
+[31m-//                    spdlog::error("curr_frame.len({}) != AUDIO_FRAME_LEN({})", curr_frame.len, AUDIO_FRAME_LEN);[m
+[31m-                }[m
+[31m-                if (curr_frame.len > kAudioFrameLen) { continue; }[m
+[31m-[m
+[31m-                maxFrameLen = qMax(maxFrameLen, curr_frame.len);[m
+[31m-[m
+[31m-                auto base_b = reinterpret_cast<short *>(&curr_frame.buff[0]);[m
+[31m-                for (int i = 0; i < maxFrameLen / 2; ++i) {[m
+[31m-                    v[i] += static_cast<int>(base_b[i] * x);[m
+[31m-                }[m
+[32m+[m[32m        if (queue.size()) {[m
+[32m+[m[32m            double x = f(volume_[name]);  // 权值[m
+[32m+[m[32m            n += 100;[m
+[32m+[m[32m            auto curr_frame = queue.dequeue();[m
+[32m+[m
+[32m+[m[32m            if (curr_frame.size() != 4096) {[m
+[32m+[m[32m                LOG_ERROR("synthese len not 4096");[m
+[32m+[m[32m                return {};[m
+             }[m
+[31m-        }[m
+[31m-    if (n != 0) {[m
+[31m-        auto base_a = reinterpret_cast<short *>(&frame.buff[0]);[m
+[31m-        for (int i = 0; i < maxFrameLen / 2; ++i) {[m
+[31m-            if (abs(v[i] / n) > 32767) {[m
+[31m-                base_a[i] = v[i]>=0 ? 32767 : -32768;[m
+[31m-            } else {[m
+[31m-                base_a[i] = static_cast<short>(v[i] / n);[m
+[32m+[m
+[32m+[m[32m            auto base_b = reinterpret_cast<short *>(&curr_frame[0]);[m
+[32m+[m[32m            for (std::size_t i = 0; i < au_data.size(); ++i) {[m
+[32m+[m[32m                au_data[i] += base_b[i] * x;[m
+             }[m
+         }[m
+[31m-        frame.len = maxFrameLen;[m
+     }[m
+[31m-    return frame;[m
+[32m+[m
+[32m+[m[32m    auto base = reinterpret_cast<short *>(&synthesed_data[0]);[m
+[32m+[m[32m    for (std::size_t i = 0; i < au_data.size(); ++i) {[m
+[32m+[m[32m        double amp = au_data[i] / n;[m
+[32m+[m[32m        base[i] = static_cast<short>(amp);[m
+[32m+[m[32m        if (amp > 32767) { base[i] = 32767; }[m
+[32m+[m[32m        if (amp < -32768) { base[i] = -32768; }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return synthesed_data;[m
+ }[m
+ [m
+[31m-// 获取在线用户列表，超过3s没信号的则会被忽略[m
+[32m+[m[32m// 获取在线用户列表，超过2s没信号的则会被忽略[m
+ QList<QString> AudioSynthesizer::GetUserList() {[m
+     QList<QString> ret;[m
+     for (auto iter = last_online_t_.begin(); iter != last_online_t_.end();[m
+          ++iter) {[m
+         QString name = iter.key();[m
+         auto lastTime = iter.value();[m
+[31m-        if (time(nullptr) - lastTime < 2) {[m
+[31m-            ret.push_back(name);[m
+[31m-        }[m
+[32m+[m[32m        if (time(nullptr) - lastTime < 2) { ret.push_back(name); }[m
+     }[m
+     return ret;[m
+ }[m
+[36m@@ -90,27 +89,30 @@[m [mvoid AudioSynthesizer::SetVolume(QString name, int volume) {[m
+ }[m
+ [m
+ // 每当有一个消息来临时，记录“该用户此时有信号”、入队[m
+[31m-void AudioSynthesizer::onOneFrameIn(Msg msg) {[m
+[31m-    LOG_INFO("one msg from {}, len = {}", msg.name, msg.frame.len);[m
+[31m-[m
+[32m+[m[32mvoid AudioSynthesizer::onOneFrameIn(QString name, std::vector<char> pcm_data) {[m
+[32m+[m[32m    LOG_INFO("one msg from {}, len = {}", name.toUtf8().data(), pcm_data.size());[m
+     QMutexLocker locker(&mutex_);[m
+[31m-    QString name(msg.name);[m
+[31m-    is_muted_[name] = false;[m
+[31m-[m
+[31m-    queues_[name].enqueue(msg.frame);[m
+ [m
+[32m+[m[32m    is_muted_[name] = false;[m
+[32m+[m[32m    queues_[name].enqueue(pcm_data);[m
+     last_online_t_[name] = time(nullptr);[m
+[31m-    if (queues_[name].size() > 10) {[m
+[32m+[m[32m    if (queues_[name].size() > 9) {[m
+         LOG_WARN("droped one frame");[m
+         queues_[name].dequeue();[m
+     }[m
+[32m+[m
+[32m+[m[32m    // get max volume:[m
+[32m+[m[32m    short *p = reinterpret_cast<short*>(&pcm_data[0]);[m
+[32m+[m[32m    auto max_volume = *std::max_element(p, p+pcm_data.size()/2);[m
+[32m+[m[32m    if (volume_.find(name) == volume_.end()) {[m
+[32m+[m[32m        volume_[name] = 100;[m
+[32m+[m[32m    }[m
+[32m+[m[32m    auto vol = static_cast<double>(max_volume) / 32768 * volume_[name] / 200;[m
+     if (volume_.find(name) != volume_.end()) {[m
+[31m-        emit SigUserVolumeReady([m
+[31m-                name, msg.frame.getMaxVolume() * volume_[name] / 200);[m
+[32m+[m[32m        emit SigUserVolumeReady(name, vol);[m
+     }[m
+ }[m
+ [m
+[31m-// 一个'f'开头的静音消息[m
+ void AudioSynthesizer::onOneEmptyMsgIn(QString userName) {[m
+     QMutexLocker locker(&mutex_);[m
+     is_muted_[userName] = true;[m
+[1mdiff --git a/audio/audiosynthesizer.h b/audio/audiosynthesizer.h[m
+[1mindex c4709df..af724ce 100644[m
+[1m--- a/audio/audiosynthesizer.h[m
+[1m+++ b/audio/audiosynthesizer.h[m
+[36m@@ -2,6 +2,8 @@[m
+ [m
+ #include <cmath>[m
+ [m
+[32m+[m[32m#include <vector>[m
+[32m+[m
+ #include <QList>[m
+ #include <QMap>[m
+ #include <QMutex>[m
+[36m@@ -12,8 +14,6 @@[m
+ #include <QThread>[m
+ #include <QTimer>[m
+ [m
+[31m-#include "structs/AudioFrame.h"[m
+[31m-#include "structs/Msg.h"[m
+ #include "AbstractAudioFrameProvider.h"[m
+ [m
+ class AudioSynthesizer : public QObject, public AbstractAudioFrameProvider {[m
+[36m@@ -21,24 +21,24 @@[m [mclass AudioSynthesizer : public QObject, public AbstractAudioFrameProvider {[m
+ public:[m
+     AudioSynthesizer();[m
+     ~AudioSynthesizer() override;[m
+[31m-    AudioFrame GetAudioFrame() override;[m
+[32m+[m[32m    std::vector<char> GetAudioFrame() override;[m
+     QList<QString> GetUserList();[m
+[31m-    void SetVolume(QString name, int volume);[m
+[32m+[m[32m    void SetVolume(QString name, int volume/*[0, 200]*/);[m
+ [m
+ private:[m
+[31m-    AudioFrame Synthese();[m
+[32m+[m[32m    std::vector<char> Synthese();[m
+ [m
+ signals:[m
+[31m-    void SigUserVolumeReady(QString name, double volume);[m
+[32m+[m[32m    void SigUserVolumeReady(QString name, double volume/*[0, 1]*/);[m
+     void SigUserListReady(QList<QString> list);[m
+     void SigUserIsMutedStatusReady(QMap<QString, bool> userStatus);[m
+ [m
+ public slots:[m
+[31m-    void onOneFrameIn(Msg msg);[m
+[32m+[m[32m    void onOneFrameIn(QString name, std::vector<char> pcm_data);[m
+     void onOneEmptyMsgIn(QString userName);[m
+ [m
+ private:[m
+[31m-    QMap<QString, QQueue<AudioFrame>> queues_;[m
+[32m+[m[32m    QMap<QString, QQueue<std::vector<char>>> queues_;[m
+     QMap<QString, bool> is_muted_;[m
+     QMap<QString, time_t> last_online_t_;[m
+     QMap<QString, int> volume_;[m
+[1mdiff --git a/audio_codec/Decoder.cpp b/audio_codec/Decoder.cpp[m
+[1mindex a799b97..3c971be 100644[m
+[1m--- a/audio_codec/Decoder.cpp[m
+[1m+++ b/audio_codec/Decoder.cpp[m
+[36m@@ -29,7 +29,7 @@[m [mvoid Decoder::InitDecoder() {[m
+         LOG_ERROR("Parser not found");[m
+     }[m
+     //创建packet,用于存储解码前的数据[m
+[31m-    packet_ = (AVPacket *) malloc(sizeof(AVPacket));[m
+[32m+[m[32m    packet_ = reinterpret_cast<AVPacket *>(malloc(sizeof(AVPacket)));[m
+     av_init_packet(packet_);[m
+ [m
+     //设置转码后输出相关参数[m
+[36m@@ -48,7 +48,8 @@[m [mvoid Decoder::InitDecoder() {[m
+             nullptr, out_channels, out_nb_samples, AV_SAMPLE_FMT_S16, 1);[m
+ [m
+     //注意要用av_malloc[m
+[31m-    buffer_ = (uint8_t *) av_malloc(buffer_size_);[m
+[32m+[m[32m    buffer_ = reinterpret_cast<uint8_t *>([m
+[32m+[m[32m            av_malloc(static_cast<size_t>(buffer_size_)));[m
+ [m
+     //创建Frame，用于存储解码后的数据[m
+     frame_ = av_frame_alloc();[m
+[36m@@ -58,42 +59,38 @@[m [mvoid Decoder::InitDecoder() {[m
+     //打开转码器[m
+ [m
+     convert_ctx_ = swr_alloc();  //设置转码参数[m
+[31m-    swr_alloc_set_opts(convert_ctx_, out_channel_layout, out_sample_fmt,[m
+[31m-                       out_sample_rate, in_channel_layout, AV_SAMPLE_FMT_FLTP,[m
+[31m-                       kAudioSamRate, 0, nullptr);[m
+[32m+[m[32m    swr_alloc_set_opts(convert_ctx_, static_cast<int64_t>(out_channel_layout),[m
+[32m+[m[32m                       out_sample_fmt, out_sample_rate, in_channel_layout,[m
+[32m+[m[32m                       AV_SAMPLE_FMT_FLTP, kAudioSamRate, 0, nullptr);[m
+     //初始化转码器[m
+     swr_init(convert_ctx_);[m
+ }[m
+ [m
+[31m-std::pair<unsigned char *, int> Decoder::DecodeFrame(void *buff, int len) {[m
+[32m+[m[32mstd::vector<char> Decoder::DecodeFrame(void *buff, int len) {[m
+     //    qDebug() << this << "is decoding...";[m
+[31m-    if (buff == 0 || len == 0) { return std::make_pair(nullptr, 0); }[m
+[31m-    packet_->data = (uint8_t *) buff;[m
+[32m+[m[32m    if (buff == nullptr || len == 0) { return {}; }[m
+[32m+[m[32m    packet_->data = static_cast<uint8_t *>(buff);[m
+     packet_->size = len;[m
+     int ret = avcodec_send_packet(cod_ctx_, packet_);[m
+     if (ret < 0) {[m
+         char err_buff[128];[m
+         av_strerror(ret, err_buff, sizeof(err_buff));[m
+         LOG_ERROR("send_packet error code:{} '{%s}'", ret, err_buff);[m
+[31m-        return std::make_pair(nullptr, 0);[m
+[32m+[m[32m        return {};[m
+     }[m
+ [m
+     ret = avcodec_receive_frame(cod_ctx_, frame_);[m
+[31m-    if (ret < 0) { return std::make_pair(nullptr, 0); }[m
+[32m+[m[32m    if (ret < 0) { return {}; }[m
+ [m
+     //     * int swr_convert(struct SwrContext *s, uint8_t **out, int out_count,[m
+     //                                const uint8_t **in , int in_count);[m
+[31m-[m
+[31m-    //    frame->buf[m
+[31m-    //    frame->data[m
+[31m-    //    frame->pkt_size[m
+     swr_convert(convert_ctx_, &buffer_, buffer_size_,[m
+[31m-                (const uint8_t **) frame_->data, frame_->nb_samples);[m
+[32m+[m[32m                const_cast<const uint8_t **>(frame_->data), frame_->nb_samples);[m
+ [m
+[31m-    auto pcm = new unsigned char[buffer_size_];[m
+[31m-    memcpy(pcm, buffer_, buffer_size_);[m
+[32m+[m[32m    std::vector<char> pcm_data(static_cast<std::size_t>(buffer_size_));[m
+[32m+[m[32m    memcpy(&pcm_data[0], buffer_, static_cast<std::size_t>(buffer_size_));[m
+ [m
+[31m-    return std::make_pair(pcm, buffer_size_);[m
+[32m+[m[32m    return pcm_data;[m
+ }[m
+ [m
+ void Decoder::CloseDecoder() {[m
+[1mdiff --git a/audio_codec/Decoder.h b/audio_codec/Decoder.h[m
+[1mindex d7a314c..838db5a 100644[m
+[1m--- a/audio_codec/Decoder.h[m
+[1m+++ b/audio_codec/Decoder.h[m
+[36m@@ -7,6 +7,7 @@[m
+ #include <bitset>[m
+ #include <iostream>[m
+ #include <utility>[m
+[32m+[m[32m#include <vector>[m
+ [m
+ extern "C" {[m
+ #include <libavcodec\avcodec.h>[m
+[36m@@ -26,9 +27,9 @@[m [mpublic:[m
+      * @buff：指向aac帧[m
+      * @len：aac帧长度（包括帧头、数据）[m
+      *[m
+[31m-     * @return 解码后的数据（用完需delete）、数据长度[m
+[32m+[m[32m     * @return 解码后的数据 失败返回空数据 size()==0[m
+      */[m
+[31m-    std::pair<unsigned char *, int> DecodeFrame(void *buff, int len);[m
+[32m+[m[32m    std::vector<char> DecodeFrame(void *buff, int len);[m
+ [m
+ private:[m
+     void CloseDecoder();[m
+[1mdiff --git a/audio_codec/Encoder.cpp b/audio_codec/Encoder.cpp[m
+[1mindex cb9dc9a..3269d85 100644[m
+[1m--- a/audio_codec/Encoder.cpp[m
+[1m+++ b/audio_codec/Encoder.cpp[m
+[36m@@ -14,19 +14,16 @@[m [mextern "C" {[m
+ }[m
+ [m
+ namespace {[m
+[32m+[m[32mconstexpr int kEncoderInputBufferLen = 4096;[m
+[32m+[m
+ char aac_adts_header[7];[m
+[31m-}[m
+[32m+[m[32m}  // namespace[m
+ [m
+ ///////////////////////////////////////begin of class Encoder definition[m
+ Encoder::Encoder() {[m
+     initEncoder();[m
+     this->curr_idx_ = 0;[m
+     LOG_INFO("Encoder::Encoder() finished");[m
+[31m-[m
+[31m-#ifdef SAVE_RESPLIT_IO_INTO_FILE[m
+[31m-    this->fp_before_resplit = fopen("fp_before_resplit.pcm", "wb");[m
+[31m-    this->fp_after_resplit = fopen("fp_after_resplit.pcm", "wb");[m
+[31m-#endif[m
+ }[m
+ [m
+ Encoder::~Encoder() {[m
+[36m@@ -34,7 +31,7 @@[m [mEncoder::~Encoder() {[m
+     LOG_INFO("Encoder::~Encoder() finished");[m
+ }[m
+ [m
+[31m-void Encoder::PushAudioFrame(AudioFrame frame) {[m
+[32m+[m[32mvoid Encoder::PushAudioFrame(std::vector<char> frame) {[m
+     queue_.enqueue(frame);[m
+ }[m
+ [m
+[36m@@ -42,14 +39,11 @@[m [mstd::vector<char> Encoder::GetZipedFrame() {[m
+     LOG_INFO("call Encoder::GetZipedFrame()");[m
+     int rest_bytes = 0;[m
+     for (auto iter = queue_.begin(); iter != queue_.end(); ++iter) {[m
+[31m-        rest_bytes += (*iter).len;[m
+[32m+[m[32m        rest_bytes += (*iter).size();[m
+     }[m
+     rest_bytes -= curr_idx_;[m
+ [m
+[31m-    //        int rest_bytes = AUDIO_FRAME_LEN-m_currIdx +[m
+[31m-    //        (m_queue.size()-1)*AUDIO_FRAME_LEN;[m
+[31m-[m
+[31m-    if (rest_bytes >= 4096) {  // 队列里面有4096字节的数据[m
+[32m+[m[32m    if (rest_bytes >= kEncoderInputBufferLen) {[m
+         LOG_INFO("rest_bytes({}) >= 4096 ", rest_bytes);[m
+         /*      front                                    tail[m
+          * [--------------] <- [--------------] <- [--------------][m
+[36m@@ -57,24 +51,24 @@[m [mstd::vector<char> Encoder::GetZipedFrame() {[m
+          *           |[m
+          *       m_currIdx[m
+          */[m
+[31m-        static char buff[4096];  // warning:[m
+[31m-                                 // 多对象多进程下将竞争使用此static变量导致错误[m
+[31m-        std::vector<char> buff_4096(4096, 0);[m
+[31m-        int bytedNeed = sizeof(buff);[m
+[32m+[m[32m        std::vector<char> buff(kEncoderInputBufferLen, 0);[m
+[32m+[m[32m        int bytedNeed = kEncoderInputBufferLen;[m
+         int buffIdx = 0;[m
+ [m
+         while (true) {[m
+ [m
+[31m-            int front_rest_bytes = queue_.front().len - curr_idx_;[m
+[32m+[m[32m            int front_rest_bytes = static_cast<int>(queue_.front().size()) - curr_idx_;[m
+             if (front_rest_bytes < bytedNeed) {[m
+[31m-                memcpy(buff + buffIdx, queue_.front().buff + curr_idx_,[m
+[32m+[m[32m                memcpy(&buff[static_cast<size_t>(buffIdx)],[m
+[32m+[m[32m                       &queue_.front()[0] + curr_idx_,[m
+                        static_cast<size_t>(front_rest_bytes));[m
+                 buffIdx += front_rest_bytes;[m
+                 bytedNeed -= front_rest_bytes;[m
+                 queue_.dequeue();[m
+                 curr_idx_ = 0;[m
+             } else {[m
+[31m-                memcpy(buff + buffIdx, queue_.front().buff + curr_idx_,[m
+[32m+[m[32m                memcpy(&buff[static_cast<size_t>(buffIdx)],[m
+[32m+[m[32m                       &queue_.front()[0] + curr_idx_,[m
+                        static_cast<size_t>(bytedNeed));[m
+                 curr_idx_ += bytedNeed;[m
+                 break;[m
+[36m@@ -82,7 +76,7 @@[m [mstd::vector<char> Encoder::GetZipedFrame() {[m
+         }[m
+         // return std::move(...)? moving a local object in a return statement[m
+         // prevents copy elision[m
+[31m-        return encodeFrame(buff);[m
+[32m+[m[32m        return encodeFrame(&buff[0]);[m
+     } else {[m
+         LOG_INFO("rest_bytes({}) < 4096 return {", rest_bytes);[m
+         return {};[m
+[36m@@ -104,7 +98,8 @@[m [mint init_aac_header() {[m
+     int freqIdx;[m
+     static int rates[] = {96000, 88000, 64000, 48000, 44100, 32000, 24000,[m
+                           22000, 16000, 12000, 11025, 8000,  7350};[m
+[31m-    for (int i = 0; i < sizeof(rates) / sizeof(rates[0]); ++i) {[m
+[32m+[m[32m    for (int i = 0; static_cast<size_t>(i) < sizeof(rates) / sizeof(rates[0]);[m
+[32m+[m[32m         ++i) {[m
+         if (rates[i] == kAudioSamRate) {[m
+             LOG_INFO("{}->{}", kAudioSamRate, rates[i]);[m
+             freqIdx = i;[m
+[36m@@ -120,7 +115,7 @@[m [mint init_aac_header() {[m
+ [m
+     return 0;[m
+ }[m
+[31m-}[m
+[32m+[m[32m}  // namespace[m
+ // namespace[m
+ namespace {[m
+ /**[m
+[1mdiff --git a/audio_codec/Encoder.h b/audio_codec/Encoder.h[m
+[1mindex d8d127a..b67efd9 100644[m
+[1m--- a/audio_codec/Encoder.h[m
+[1m+++ b/audio_codec/Encoder.h[m
+[36m@@ -2,10 +2,8 @@[m
+ [m
+ #include <vector>[m
+ [m
+[31m-#include <qdebug.h>[m
+ #include <QQueue>[m
+ [m
+[31m-#include "structs/AudioFrame.h"[m
+ #include "Config.h"[m
+ [m
+ /*[m
+[36m@@ -16,11 +14,11 @@[m [mclass Encoder {[m
+ public:[m
+     Encoder();[m
+     ~Encoder();[m
+[31m-    void PushAudioFrame(AudioFrame frame);[m
+[32m+[m[32m    void PushAudioFrame(std::vector<char> frame);[m
+     std::vector<char> GetZipedFrame();[m
+ [m
+ private:[m
+[31m-    QQueue<AudioFrame> queue_;[m
+[31m-    AudioFrame curr_frame_;[m
+[32m+[m[32m    QQueue<std::vector<char>> queue_;[m
+[32m+[m[32m    std::vector<char> curr_frame_;[m
+     int curr_idx_;[m
+ };[m
+[1mdiff --git a/log/log.h b/log/log.h[m
+[1mindex e5b7330..2331ad0 100644[m
+[1m--- a/log/log.h[m
+[1m+++ b/log/log.h[m
+[36m@@ -5,3 +5,8 @@[m
+ #define LOG_INFO(...)  SPDLOG_LOGGER_INFO(spdlog::default_logger(), __VA_ARGS__)[m
+ #define LOG_WARN(...)  SPDLOG_LOGGER_WARN(spdlog::default_logger(), __VA_ARGS__)[m
+ #define LOG_ERROR(...) SPDLOG_LOGGER_ERROR(spdlog::default_logger(), __VA_ARGS__)[m
+[32m+[m
+[32m+[m
+[32m+[m[32m//#define LOG_INFO(...)[m
+[32m+[m[32m//#define LOG_WARN(...)[m
+[32m+[m[32m//#define LOG_ERROR(...)[m

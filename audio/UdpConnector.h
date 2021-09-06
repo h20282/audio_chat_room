@@ -8,7 +8,6 @@
 
 #include "audio_codec/Decoder.h"
 #include "audio_codec/Encoder.h"
-#include "structs/Msg.h"
 
 class UdpConnector : public QObject {
     Q_OBJECT
@@ -21,11 +20,11 @@ public:
     void SetMuted(bool isMuted);
 
 signals:
-    void SigOneMsgReady(Msg msg);
+    void SigOneMsgReady(QString name, std::vector<char> data);
     void SigOneEmptyFrameReady(QString name);
 
 public slots:
-    void onAudioFrameReady(AudioFrame frame);
+    void onAudioFrameReady(std::vector<char> frame);
 
 private slots:
     void onUdpReadyRead();
@@ -40,4 +39,6 @@ private:
     bool is_muted_ = false;
     Encoder *encoder_;
     QMap<QString, Decoder *> decoders_;
+
+    std::vector<char> recv_buff;
 };

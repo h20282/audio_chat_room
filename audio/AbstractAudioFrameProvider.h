@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#include "structs/AudioFrame.h"
+#include <vector>
 
 class AbstractAudioFrameProvider {
 public:
-    virtual AudioFrame GetAudioFrame() = 0;
+    virtual std::vector<char> GetAudioFrame() = 0;
     virtual ~AbstractAudioFrameProvider() = default;
 };

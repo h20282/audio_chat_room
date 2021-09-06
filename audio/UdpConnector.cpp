@@ -2,43 +2,22 @@
 
 #include "log/log.h"
 
-// clang-format off
 namespace {
-// client --> server
-//     1     +    4   +   16  +     4     + AAC_FRAME_LEN
-// 静音标识符 + 房间号 + 用户名 + aac帧长度 + aac帧数据
-constexpr char kUnMutedFlag = 'F';
-constexpr char kMutedFlag = 'f';
 
-constexpr int kMuteLen = 1;
-constexpr int kRoomIdLen = 4;
 constexpr int kUserNameLen = 16;
-constexpr int kAacLen = 4;
+constexpr char kMutedFlag = 'f';
+constexpr char kUnMutedFlag = 'F';
 
-
-constexpr int kClientToServerHeaderLen  = 0 + kMuteLen + kRoomIdLen + kUserNameLen + kAacLen;
-
-constexpr int kClientToSererMutePos     = 0;
-constexpr int kClientToSererRoomIdPos   = 0 + kMuteLen;
-constexpr int kClientToSererUserNamePos = 0 + kMuteLen + kRoomIdLen;
-constexpr int kClientToSererAacLenPos   = 0 + kMuteLen + kRoomIdLen + kUserNameLen;
-constexpr int kClientToSererAacDataPos  = 0 + kMuteLen + kRoomIdLen + kUserNameLen + kAacLen;
-
-// server --> client
-//     1     +   16  +     4     + AAC_FRAME_LEN
-// 静音标识符 + 用户名 + aac帧长度 + aac帧数据
-constexpr int kServerToClientHeaderLen   = 0 + kMuteLen + kUserNameLen + kAacLen;
-
-constexpr int kServerToClientMutePos     = 0;
-constexpr int kServerToClientUserNamePos = 0 + kMuteLen;
-constexpr int kServerToClientAacLenPos   = 0 + kMuteLen + kUserNameLen;
-constexpr int kServerToClientAacDataPos  = 0 + kMuteLen + kUserNameLen + kAacLen;
+struct AuPackHeader {
+    char mute_flag;
+    int room_id;
+    char user_name[kUserNameLen];
+};
 }  // namespace
-// clang-format on
 
 UdpConnector::UdpConnector(QString user_name, int room_id)
         : port_(UDP_SERVER_PORT), user_name_(user_name), room_id_(room_id) {
-    encoder_ = new Encoder();  // 获取编码器实例（初始化）
+    encoder_ = new Encoder();
 
     udp_socket_ = new QUdpSocket();
     udp_socket_->bind(QHostAddress::Any);
@@ -48,8 +27,7 @@ UdpConnector::UdpConnector(QString user_name, int room_id)
 }
 
 UdpConnector::~UdpConnector() {
-    delete encoder_;  // 析构编码器（释放编码器资源）
-    // 释放解码器资源
+    delete encoder_;
     for (auto decoder : decoders_) { delete decoder; }
 
     udp_socket_->close();
@@ -58,128 +36,89 @@ UdpConnector::~UdpConnector() {
 
 // 收到一个来自服务器的音频帧，交给AudioSynthesizer
 void UdpConnector::onUdpReadyRead() {
-    QMutexLocker locker(&mutex_);
-    static char buff[sizeof(Msg) + 128];
+    //    QMutexLocker locker(&mutex_);
     while (udp_socket_->hasPendingDatagrams()) {
-        auto recv_len = udp_socket_->readDatagram(buff, sizeof(buff));
-        LOG_INFO("udp_socket_->readDatagram = {}", recv_len);
+        auto recv_len = udp_socket_->pendingDatagramSize();
+        if (recv_buff.size() < static_cast<size_t>(recv_len)) {
+            recv_buff.resize(static_cast<size_t>(recv_len));
+        }
+        udp_socket_->readDatagram(&recv_buff[0], recv_len);
+        LOG_INFO("udp recv {} bytes", recv_len);
+        if (static_cast<size_t>(recv_len) < sizeof(AuPackHeader)) { continue; }
 
-        if (buff[0] == 'F') {
+        AuPackHeader *recv_pkt =
+                reinterpret_cast<AuPackHeader *>(&recv_buff[0]);
+        QString user_name = QString::fromUtf8(
+                reinterpret_cast<char *>(&recv_pkt->user_name), 16);
+        if (recv_pkt->mute_flag == kMutedFlag) {
 
-            QString name(buff + 1);
+            emit SigOneEmptyFrameReady(user_name);
 
-            int ziped_frame_len = *reinterpret_cast<int *>(buff + 1 + 16);
+        } else if (recv_pkt->mute_flag == kUnMutedFlag) {
 
-            // 从aac帧头获取aac帧长度
-            unsigned char *header_base =
-                    reinterpret_cast<unsigned char *>(buff + 1 + 16 + 4);
-            int aac_len = ((header_base[3] & 0x03) << (8 + 3)) +
-                              (header_base[4] << 3) + (header_base[5] >> 5);
+            std::vector<char> aac_data(
+                    static_cast<size_t>(recv_len) - sizeof(AuPackHeader), 0);
+            memcpy(&aac_data[0], &recv_buff[sizeof(AuPackHeader)],
+                   aac_data.size());
 
-            if (header_base[0] != 0xff) {
-                LOG_ERROR("not 0xff");
+            unsigned char *aac_frame_base = reinterpret_cast<unsigned char *>(
+                    &recv_buff[sizeof(AuPackHeader)]);
+            int aac_len = ((aac_frame_base[3] & 0x03) << (8 + 3)) +
+                          (aac_frame_base[4] << 3) + (aac_frame_base[5] >> 5);
+            if (aac_frame_base[0] != 0xff) {
+                LOG_ERROR("aac_data error: not 0xff!");
+            }
+            if (aac_data.size() != static_cast<size_t>(aac_len)) {
+                LOG_ERROR("aac_data len error! ({}) != ({})", aac_data.size(),
+                          aac_len);
                 continue;
             }
-            if (aac_len != ziped_frame_len) {
-                LOG_ERROR("aac_len:{} != ziped_frame_len:{}", aac_len,
-                          ziped_frame_len);
-                continue;
-            }
-            if (decoders_.find(name) == decoders_.end()) {
-                decoders_[name] = new Decoder();
-            }
-            auto pair = decoders_[name]->DecodeFrame(buff + 1 + 16 + 4,
-                                                     aac_len);
-            auto pcm_buff = pair.first;
-            auto pcm_len = pair.second;
 
-            // 如果aac解压后的pcm长度小于一帧pcm的长度，直接发送
-            if (pcm_len <= kAudioFrameLen) {
-                Msg msg;
-                memcpy(msg.name, buff + 1, 16);
-                msg.frame.len = pcm_len;
-                memcpy(msg.frame.buff, pcm_buff, static_cast<size_t>(pcm_len));
-                emit SigOneMsgReady(msg);
-            } else {  // 如果大于则拆分成多个
-                for (int i = 0; i < pcm_len; i += kAudioFrameLen) {
-                    Msg msg;
-                    // 全帧初始化为0
-                    memset(msg.frame.buff, 0, sizeof(msg.frame.buff));
-                    memcpy(msg.name, buff + 1, 16);  // 用户名
-                    // pcm帧长度
-                    msg.frame.len = qMin(pcm_len - i, kAudioFrameLen);
-                    LOG_INFO("in udp connector: msg.frame.len{}",
-                             msg.frame.len);
-                    // pcm数据
-                    memcpy(msg.frame.buff, pcm_buff + i,
-                           static_cast<size_t>(msg.frame.len));
-                    emit SigOneMsgReady(msg);
-                }
+            if (decoders_.find(user_name) == decoders_.end()) {
+                decoders_[user_name] = new Decoder();
             }
-            delete pcm_buff;
-
-        } else if (buff[0] == 'f') {
-            QString name(buff + 1);
-            emit SigOneEmptyFrameReady(name);
+            auto pcm_data =
+                    decoders_[user_name]->DecodeFrame(aac_frame_base, aac_len);
+            LOG_INFO("decoder : {} --> {} ", aac_len, pcm_data.size());
+            emit SigOneMsgReady(user_name, pcm_data);
         } else {
-            qDebug("unkown type :%d[%c]", buff[0], buff[0]);
+            LOG_ERROR("unknown type({0:d})'{0:c}'", recv_pkt->mute_flag);
         }
     }
-    //    qDebug() << "onUdpReadyRead() end";
 }
 
 // 收到一个来自Collector的音频帧
-//加上头部消息：【'F'/'f' + room_id + user_name】，发送给服务器
-void UdpConnector::onAudioFrameReady(AudioFrame frame) {
+// 加上头部消息AuPackHeader，发送给服务器
+void UdpConnector::onAudioFrameReady(std::vector<char> frame) {
+    AuPackHeader header;
+    memset(&header, 0, sizeof(header));
+    header.room_id = room_id_;
+    auto str_arr = user_name_.toUtf8();
+    LOG_INFO("send user_name : '{}' (len={})", str_arr.data(), str_arr.size());
+    memcpy(&header.user_name, str_arr.data(),
+           static_cast<size_t>(str_arr.size()));
     if (is_muted_) {
-        char buff[1 + 4 + 16];
-        memset(buff, 0, sizeof(buff));
-        buff[0] = 'f';
-        *reinterpret_cast<int *>(buff + 1) = room_id_;
-        memcpy(buff + 1 + 4, user_name_.toLatin1().data(),
-               static_cast<size_t>(user_name_.size()));
-        udp_socket_->writeDatagram(buff, 1 + 4 + 16, destaddr_, port_);
+        header.mute_flag = kMutedFlag;
+
+        udp_socket_->writeDatagram(reinterpret_cast<char *>(&header),
+                                   sizeof(header), destaddr_, port_);
     } else {
         QMutexLocker locker(&mutex_);
+        header.mute_flag = kUnMutedFlag;
         encoder_->PushAudioFrame(frame);
 
         while (1) {
             LOG_INFO("befor get ziped frame");
             std::vector<char> aac_data = encoder_->GetZipedFrame();
-            LOG_INFO("ziped frame len = {}", aac_data.size());
             if (aac_data.size() == 0) { break; }
-
-            //     1     +    4   +   16  +     4     + AAC_FRAME_LEN
-            // 静音标识符 + 房间号 + 用户名 + aac帧长度 + aac帧数据
-            //                          （用于验证aac帧正确性）
-            std::size_t send_len = kClientToServerHeaderLen + aac_data.size();
-            std::vector<char> send_buff(send_len, 0);
-            LOG_INFO("send_buff.size = {}", send_buff.size());
-
-            // 1.禁言标识符号
-            send_buff[0] = kUnMutedFlag;
-
-            // 2.房间号
-            *reinterpret_cast<int *>(&send_buff[kClientToSererRoomIdPos]) =
-                    room_id_;
-
-            // 3.用户名（warning: 中文问题、长度问题）
-            memcpy(&send_buff[kClientToSererUserNamePos],
-                   user_name_.toLatin1().data(),
-                   static_cast<size_t>(user_name_.size()));
-
-            // 4.aac帧长度
-            *reinterpret_cast<int *>(&send_buff[kClientToSererAacLenPos]) =
-                    static_cast<int>(aac_data.size());
-
-            // 5.aac帧数据
-            memcpy(&send_buff[kClientToSererAacDataPos], &aac_data[0],
-                   aac_data.size());
+            std::vector<char> send_buff(sizeof(header) + aac_data.size());
+            memcpy(&send_buff[0], &header, sizeof(header));
+            memcpy(&send_buff[sizeof(header)], &aac_data[0], aac_data.size());
 
             auto len = udp_socket_->writeDatagram(
                     &send_buff[0], static_cast<qint64>(send_buff.size()),
                     destaddr_, port_);
-            LOG_INFO("udp_socket_->writeDatagram = {}", len);
+            LOG_INFO("udp send {} bytes", len);
         }
     }
 }
