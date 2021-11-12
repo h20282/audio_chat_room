@@ -6,10 +6,25 @@ ffmpeg/4.4
 [generators]
 cmake
 
-#[settings]
-#os=Windows
-#os_build=Windows
-#arch=x86_64
-#arch_build=x86_64
-#compiler=Visual Studio
-#compiler.version=15
+# cvte_pc
+# [settings]
+# os=Windows
+# os_build=Windows
+# arch=x86_64
+# arch_build=x86_64
+# compiler=Visual Studio
+# compiler.version=15
+
+
+# my_pc
+# [settings]
+# os=Windows
+# os_build=Windows
+# arch=x86_64
+# arch_build=x86_64
+# compiler=Visual Studio
+# compiler.version=15
+# build_type=Debug
+# [options]
+# [build_requires]
+# [env]
