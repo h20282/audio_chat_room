@@ -51,9 +51,9 @@
 
 #### 2.2登录和注册界面
 
-![image-20210806115503046](C:\Users\user\Desktop\设计文档.assets\image-20210806115503046.png)
+![image-20210806115503046](设计文档.assets\image-20210806115503046.png)
 
-![image-20210806115518295](C:\Users\user\Desktop\设计文档.assets\image-20210806115518295.png)
+![image-20210806115518295](设计文档.assets\image-20210806115518295.png)
 
 登录注册，单击登录和注册窗口时发送信号，将用户名和密码传输给服务器。
 
@@ -81,7 +81,7 @@ SIG_registerReq(QString name , QString passord);
 
 ##### 2.3.1创建房间
 
-![image-20210806161236209](C:\Users\user\Desktop\设计文档.assets\image-20210806161236209.png)
+![image-20210806161236209](设计文档.assets\image-20210806161236209.png)
 客户端单击星星图标发送信号，向服务端发送创建房间请求，服务器随机生成房间号返回。
 
 ```
@@ -100,7 +100,7 @@ SIG_joinRoom(int num);
 
 
 
-![image-20210806162521048](C:\Users\user\Desktop\设计文档.assets\image-20210806162521048.png)
+![image-20210806162521048](设计文档.assets\image-20210806162521048.png)
 
 ##### 2.3.3退出房间
 
@@ -119,7 +119,7 @@ SLOT_clientQuit();//服务器向客户端发出某个客户端退出信号，在
 
 音频方面需要**编码后再传输**，编码选择 **ffmpeg** 进行处理。音频的主要流程：
 
-![image-20210806164059828](C:\Users\user\Desktop\设计文档.assets\image-20210806164059828.png)
+![image-20210806164059828](设计文档.assets\image-20210806164059828.png)
 
 ​        语音采集指的是从麦克风采集音频数据，即声音样本转换成数字信号。编码可以极大的减小带宽。目前有很多常用的语音编码技术，像 **G.729、G.711、.iLBC、AAC、SPEEX** 等等。
 
@@ -236,7 +236,7 @@ SLOT_sendAudioData(QByteArray);
 
 ##### 2.7.1基本流程和概念
 
-![image-20210806171457257](C:\Users\user\Desktop\设计文档.assets\image-20210806171457257.png)
+![image-20210806171457257](设计文档.assets\image-20210806171457257.png)
 
 ##### 2.7.2带宽计算
 
