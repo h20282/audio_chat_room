@@ -18,14 +18,20 @@ if(MSVC)
 endif()
 
 # ffmpeg begin
-set(ffmpeg_libs_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/)
-set(ffmpeg_headers_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include)
-
-
-
-include_directories( ${ffmpeg_headers_DIR} )
-link_directories(${ffmpeg_libs_DIR} )
+#set(ffmpeg_libs_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/)
+#set(ffmpeg_headers_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include)
+#
+#
+#
+#include_directories( ${ffmpeg_headers_DIR} )
+#link_directories(${ffmpeg_libs_DIR} )
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 # ffmpeg end
+
+if(WIN32)
+    set(CMAKE_PREFIX_PATH $ENV{QT_HOME})
+endif()
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt5 COMPONENTS Core REQUIRED)

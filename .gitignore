@@ -10,6 +10,8 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+build
+
 
 # gitignore for Qt Creator like IDE for pure C/C++ project without Qt
 #

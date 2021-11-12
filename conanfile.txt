@@ -1,6 +1,15 @@
 [requires]
 fmt/8.0.1
 spdlog/1.9.2
+ffmpeg/4.4
 
 [generators]
 cmake
+
+#[settings]
+#os=Windows
+#os_build=Windows
+#arch=x86_64
+#arch_build=x86_64
+#compiler=Visual Studio
+#compiler.version=15
