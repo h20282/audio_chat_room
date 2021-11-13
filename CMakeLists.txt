@@ -17,17 +17,8 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /utf-8")
 endif()
 
-# ffmpeg begin
-#set(ffmpeg_libs_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/lib/)
-#set(ffmpeg_headers_DIR D:/ffmpeg/ffmpeg-4.0.2-win64-dev/include)
-#
-#
-#
-#include_directories( ${ffmpeg_headers_DIR} )
-#link_directories(${ffmpeg_libs_DIR} )
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
-# ffmpeg end
 
 if(WIN32)
     set(CMAKE_PREFIX_PATH $ENV{QT_HOME})
@@ -42,12 +33,7 @@ find_package(Qt5 COMPONENTS Multimedia REQUIRED)
 include(${CMAKE_SOURCE_DIR}/build/conanbuildinfo.cmake)
 conan_basic_setup()
 
-add_executable(cmakePro
-
-    #.h
-    audio/AbstractAudioFrameProvider.h
-    log/log.h
-
+set(SRC 
     #.cpp
     audio/AudioChat.cpp
     audio/audiocollector.cpp
@@ -87,9 +73,11 @@ add_executable(cmakePro
     mychatroom.ui
     myqq.ui
     videoitem.ui
-)#add_executable
+)
+set(QRC resource.qrc)
+add_executable(${PROJECT_NAME} ${SRC} ${QRC})
 
-target_link_libraries(cmakePro PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Widgets
     Qt5::Core
     Qt5::Gui
