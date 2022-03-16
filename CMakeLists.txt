@@ -35,30 +35,6 @@ conan_basic_setup()
 
 set(SRC 
     #.cpp
-    audio/AudioChat.cpp
-    audio/audiocollector.cpp
-    audio/audiolevel.cpp
-    audio/audioplayer.cpp
-    audio/audiosynthesizer.cpp
-    audio/UdpConnector.cpp
-
-    audio_codec/Decoder.cpp
-    audio_codec/Encoder.cpp
-
-    common/customwidget.cpp
-    common/IMToolBox.cpp
-
-    login_register/login.cpp
-    login_register/registerwin.cpp
-
-    meet_room/roomdialog.cpp
-    meet_room/useritem.cpp
-    meet_room/userlist.cpp
-    meet_room/userwidget.cpp
-
-    net_api/qmytcp_client.cpp
-    net_api/tcp_net.cpp
-
     main.cpp
     mainwindow.cpp
     mychatroom.cpp
@@ -74,6 +50,13 @@ set(SRC
     myqq.ui
     videoitem.ui
 )
+aux_source_directory(audio SRC)
+aux_source_directory(audio_codec SRC)
+aux_source_directory(common SRC)
+aux_source_directory(login_register SRC)
+aux_source_directory(meet_room SRC)
+aux_source_directory(net_api SRC)
+
 set(QRC resource.qrc)
 add_executable(${PROJECT_NAME} ${SRC} ${QRC})
 
