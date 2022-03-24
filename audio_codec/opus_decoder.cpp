@@ -18,3 +18,12 @@ AudioData ODecoder::Decode(AudioData data) {
     result->resize(len);
     return result;
 }
+
+AudioData ODecoder::Decode(const uint8_t *data, std::size_t len) {
+    auto result = std::make_shared<std::vector<uint8_t>>(len * 30);
+    auto re_len = opus_decode(decoder_.get(), data, len,
+                              reinterpret_cast<opus_int16 *>(result->data()),
+                              len / 2 / channels_, 0);
+    result->resize(re_len);
+    return result;
+}

@@ -1,13 +1,14 @@
 ﻿#pragma once
 
+#include <map>
 #include <vector>
 
 #include <QHostAddress>
 #include <QMutex>
 #include <QUdpSocket>
 
-#include "audio_codec/Decoder.h"
-#include "audio_codec/Encoder.h"
+#include "audio_codec/opus_decoder.h"
+#include "audio_codec/opus_encoder.h"
 
 class UdpConnector : public QObject {
     Q_OBJECT
@@ -20,11 +21,11 @@ public:
     void SetMuted(bool isMuted);
 
 signals:
-    void SigOneMsgReady(QString name, std::vector<char> data);
+    void SigOneMsgReady(QString name, AudioData);
     void SigOneEmptyFrameReady(QString name);
 
 public slots:
-    void onAudioFrameReady(std::vector<char> frame);
+    void onAudioFrameReady(AudioData frame);
 
 private slots:
     void onUdpReadyRead();
@@ -37,8 +38,8 @@ private:
     QString user_name_;
     int room_id_ = 0;
     bool is_muted_ = false;
-    Encoder *encoder_;
-    QMap<QString, Decoder *> decoders_;
+    OEncoder encoder_;
+    std::map<QString, ODecoder> decoders_;
 
     std::vector<char> recv_buff;
 };

@@ -1,5 +1,6 @@
 ﻿#include "UdpConnector.h"
 
+#include "Config.h"
 #include "log/log.h"
 
 namespace {
@@ -16,8 +17,10 @@ struct AuPackHeader {
 }  // namespace
 
 UdpConnector::UdpConnector(QString user_name, int room_id)
-        : port_(UDP_SERVER_PORT), user_name_(user_name), room_id_(room_id) {
-    encoder_ = new Encoder();
+        : port_(UDP_SERVER_PORT),
+          user_name_(user_name),
+          room_id_(room_id),
+          encoder_(kAudioSamRate, kAudioSamRate) {
 
     udp_socket_ = new QUdpSocket();
     udp_socket_->bind(QHostAddress::Any);
@@ -27,9 +30,6 @@ UdpConnector::UdpConnector(QString user_name, int room_id)
 }
 
 UdpConnector::~UdpConnector() {
-    delete encoder_;
-    for (auto decoder : decoders_) { delete decoder; }
-
     udp_socket_->close();
     delete udp_socket_;
 }
@@ -61,7 +61,7 @@ void UdpConnector::onUdpReadyRead() {
             memcpy(&aac_data[0], &recv_buff[sizeof(AuPackHeader)],
                    aac_data.size());
 
-            unsigned char *aac_frame_base = reinterpret_cast<unsigned char *>(
+            uint8_t *aac_frame_base = reinterpret_cast<uint8_t *>(
                     &recv_buff[sizeof(AuPackHeader)]);
             int aac_len = ((aac_frame_base[3] & 0x03) << (8 + 3)) +
                           (aac_frame_base[4] << 3) + (aac_frame_base[5] >> 5);
@@ -74,12 +74,14 @@ void UdpConnector::onUdpReadyRead() {
                 continue;
             }
 
-            if (decoders_.find(user_name) == decoders_.end()) {
-                decoders_[user_name] = new Decoder();
+            auto decoder = decoders_.find(user_name);
+            if (decoder == decoders_.end()) {
+                decoders_.insert(std::make_pair(
+                        user_name, ODecoder(kAudioSamRate, kAudioSamCount)));
             }
             auto pcm_data =
-                    decoders_[user_name]->DecodeFrame(aac_frame_base, aac_len);
-            LOG_INFO("decoder : {} --> {} ", aac_len, pcm_data.size());
+                    decoders_.at(user_name).Decode(aac_frame_base, aac_len);
+            LOG_INFO("decoder : {} --> {} ", aac_len, pcm_data->size());
             emit SigOneMsgReady(user_name, pcm_data);
         } else {
             LOG_ERROR("unknown type({0:d})'{0:c}'", recv_pkt->mute_flag);
@@ -89,7 +91,7 @@ void UdpConnector::onUdpReadyRead() {
 
 // 收到一个来自Collector的音频帧
 // 加上头部消息AuPackHeader，发送给服务器
-void UdpConnector::onAudioFrameReady(std::vector<char> frame) {
+void UdpConnector::onAudioFrameReady(AudioData frame) {
     AuPackHeader header;
     memset(&header, 0, sizeof(header));
     header.room_id = room_id_;
@@ -105,21 +107,17 @@ void UdpConnector::onAudioFrameReady(std::vector<char> frame) {
     } else {
         QMutexLocker locker(&mutex_);
         header.mute_flag = kUnMutedFlag;
-        encoder_->PushAudioFrame(frame);
 
-        while (1) {
-            LOG_INFO("befor get ziped frame");
-            std::vector<char> aac_data = encoder_->GetZipedFrame();
-            if (aac_data.size() == 0) { break; }
-            std::vector<char> send_buff(sizeof(header) + aac_data.size());
-            memcpy(&send_buff[0], &header, sizeof(header));
-            memcpy(&send_buff[sizeof(header)], &aac_data[0], aac_data.size());
-
-            auto len = udp_socket_->writeDatagram(
-                    &send_buff[0], static_cast<qint64>(send_buff.size()),
-                    destaddr_, port_);
-            LOG_INFO("udp send {} bytes", len);
-        }
+        auto encoded_data = encoder_.Encode(frame);
+        uint8_t *beg = reinterpret_cast<uint8_t *>(&header);
+        uint8_t *end =
+                reinterpret_cast<uint8_t *>(&header + sizeof(AuPackHeader));
+        std::vector<uint8_t> buffer(beg, end);
+        buffer.assign(encoded_data->begin(), encoded_data->end());
+        auto len = udp_socket_->writeDatagram(
+                reinterpret_cast<char *>(buffer.data()), buffer.size(),
+                destaddr_, port_);
+        LOG_INFO("udp send {} bytes", len);
     }
 }
 

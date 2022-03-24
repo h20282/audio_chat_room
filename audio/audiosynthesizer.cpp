@@ -49,12 +49,7 @@ std::vector<char> AudioSynthesizer::Synthese() {
             n += 100;
             auto curr_frame = queue.dequeue();
 
-            if (curr_frame.size() != 4096) {
-                LOG_ERROR("synthese len not 4096");
-                return {};
-            }
-
-            auto base_b = reinterpret_cast<short *>(&curr_frame[0]);
+            auto base_b = reinterpret_cast<short *>(curr_frame->data());
             for (std::size_t i = 0; i < au_data.size(); ++i) {
                 au_data[i] += base_b[i] * x;
             }
@@ -89,8 +84,9 @@ void AudioSynthesizer::SetVolume(QString name, int volume) {
 }
 
 // 每当有一个消息来临时，记录“该用户此时有信号”、入队
-void AudioSynthesizer::onOneFrameIn(QString name, std::vector<char> pcm_data) {
-    LOG_INFO("one msg from {}, len = {}", name.toUtf8().data(), pcm_data.size());
+void AudioSynthesizer::onOneFrameIn(QString name, AudioData pcm_data) {
+    LOG_INFO("one msg from {}, len = {}", name.toUtf8().data(),
+             pcm_data->size());
     QMutexLocker locker(&mutex_);
 
     is_muted_[name] = false;
@@ -102,11 +98,9 @@ void AudioSynthesizer::onOneFrameIn(QString name, std::vector<char> pcm_data) {
     }
 
     // get max volume:
-    short *p = reinterpret_cast<short*>(&pcm_data[0]);
-    auto max_volume = *std::max_element(p, p+pcm_data.size()/2);
-    if (volume_.find(name) == volume_.end()) {
-        volume_[name] = 100;
-    }
+    short *p = reinterpret_cast<short *>(pcm_data->data());
+    auto max_volume = *std::max_element(p, p + pcm_data->size() / 2);
+    if (volume_.find(name) == volume_.end()) { volume_[name] = 100; }
     auto vol = static_cast<double>(max_volume) / 32768 * volume_[name] / 200;
     if (volume_.find(name) != volume_.end()) {
         emit SigUserVolumeReady(name, vol);

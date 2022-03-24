@@ -9,7 +9,7 @@ using AudioData = std::shared_ptr<std::vector<uint8_t>>;
 class OEncoder {
 
 public:
-    OEncoder(opus_int32 fs, int channels);
+    OEncoder(opus_int32 sample_rate, int channels);
 
     AudioData Encode(AudioData data);
 
