@@ -35,7 +35,6 @@ conan_basic_setup()
 
 set(SRC 
     #.cpp
-    main.cpp
     mainwindow.cpp
     mychatroom.cpp
     myqq.cpp
@@ -58,7 +57,25 @@ aux_source_directory(meet_room SRC)
 aux_source_directory(net_api SRC)
 
 set(QRC resource.qrc)
-add_executable(${PROJECT_NAME} ${SRC} ${QRC})
+add_executable(${PROJECT_NAME} ${SRC} main.cpp ${QRC})
+
+if(BUILD_AUDIO_TEST)
+    add_executable(test audio/test/main.cpp ${SRC})
+endif()
+
+target_link_libraries(test PRIVATE
+    Qt5::Widgets
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Network
+    Qt5::Multimedia
+    ${CONAN_LIBS}
+    ws2_32
+    avcodec
+    swresample
+    avutil
+    avformat
+)#target_link_libraries
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Widgets

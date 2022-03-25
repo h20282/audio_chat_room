@@ -6,7 +6,7 @@
 // 1/25s(0.04s)的音频数据
 //#define kAudioFrameLen kAudioSamRate*kAudioSamSize*kAudioSamCount/8/25
 
-constexpr int kAudioSamRate = 44100;
+constexpr int kAudioSamRate = 48000;
 constexpr int kAudioSamSize = 16;
 constexpr int kAudioSamCount = 2;
 
