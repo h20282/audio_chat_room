@@ -4,6 +4,8 @@
 
 #include "types.h"
 
+namespace codec {
+
 using AudioData = std::shared_ptr<std::vector<uint8_t>>;
 
 class OEncoder {
@@ -11,6 +13,7 @@ class OEncoder {
 public:
     OEncoder(opus_int32 sample_rate, int channels);
 
+public:
     AudioData Encode(AudioData data);
 
 private:
@@ -18,3 +21,5 @@ private:
     opus_int32 sample_rate_;
     int channels_;
 };
+
+}  // namespace codec

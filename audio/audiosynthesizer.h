@@ -35,11 +35,11 @@ signals:
     void SigUserIsMutedStatusReady(QMap<QString, bool> userStatus);
 
 public slots:
-    void onOneFrameIn(QString name, AudioData pcm_data);
+    void onOneFrameIn(QString name, codec::AudioData pcm_data);
     void onOneEmptyMsgIn(QString userName);
 
 private:
-    QMap<QString, QQueue<AudioData>> queues_;
+    QMap<QString, QQueue<codec::AudioData>> queues_;
     QMap<QString, bool> is_muted_;
     QMap<QString, time_t> last_online_t_;
     QMap<QString, int> volume_;

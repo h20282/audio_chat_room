@@ -11,9 +11,9 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
+#include <QMessageBox>
 #include <QProcess>
 #include <QStyleFactory>  //修改风格1步
-#include <QMessageBox>
 
 #include "spdlog/spdlog.h"
 
@@ -25,6 +25,7 @@
 int main(int argc, char *argv[]) {
     {
         spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e][%l][%s,%!]:%v");
+        spdlog::set_level(spdlog::level::level_enum::err);
     }
 
     QApplication a(argc, argv);

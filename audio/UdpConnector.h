@@ -21,11 +21,11 @@ public:
     void SetMuted(bool isMuted);
 
 signals:
-    void SigOneMsgReady(QString name, AudioData);
+    void SigOneMsgReady(QString name, codec::AudioData);
     void SigOneEmptyFrameReady(QString name);
 
 public slots:
-    void onAudioFrameReady(AudioData frame);
+    void onAudioFrameReady(codec::AudioData frame);
 
 private slots:
     void onUdpReadyRead();
@@ -38,8 +38,8 @@ private:
     QString user_name_;
     int room_id_ = 0;
     bool is_muted_ = false;
-    OEncoder encoder_;
-    std::map<QString, ODecoder> decoders_;
+    codec::OEncoder encoder_;
+    std::map<QString, codec::ODecoder> decoders_;
 
     std::vector<char> recv_buff;
 };

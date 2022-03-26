@@ -47,8 +47,9 @@ void AudioCollector::run() {
 void AudioCollector::onReadyRead() {
     QMutexLocker locker(&mutex_);
 
-    AudioData pcm_data = std::make_shared<std::vector<uint8_t>>(
+    codec::AudioData pcm_data = std::make_shared<std::vector<uint8_t>>(
             static_cast<std::size_t>(input_->bytesReady()));
+    if (pcm_data->size() == 0) { return; }
 
     inputDevice_->read(reinterpret_cast<char *>(pcm_data->data()),
                        static_cast<qint64>(pcm_data->size()));

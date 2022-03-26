@@ -28,7 +28,7 @@ public:
     void SetInputDevice(QAudioDeviceInfo info);
 
 signals:
-    void SigAudioFrameReady(AudioData frame);
+    void SigAudioFrameReady(codec::AudioData frame);
     void SigAudioVolumeReady(double volume /*[0, 1]*/);
 
 private slots:

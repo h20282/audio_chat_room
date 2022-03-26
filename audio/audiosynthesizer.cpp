@@ -35,7 +35,15 @@ std::vector<char> AudioSynthesizer::Synthese() {
     }
     if (!has_data) { return {}; }
 
-    std::vector<char> synthesed_data(4096, 0);
+    std::size_t max_size = 0;
+    for (auto &queue : queues_) {
+        if (queue.size()) {
+            max_size = std::max(max_size, queue.back()->size());
+        }
+    }
+    if (max_size == 0) { return {}; }
+    LOG_ERROR("max_size = {}", max_size);
+    std::vector<char> synthesed_data(max_size, 0);
     double n = 0;
     std::vector<double> au_data(synthesed_data.size() / 2, 0);
 
@@ -84,7 +92,7 @@ void AudioSynthesizer::SetVolume(QString name, int volume) {
 }
 
 // 每当有一个消息来临时，记录“该用户此时有信号”、入队
-void AudioSynthesizer::onOneFrameIn(QString name, AudioData pcm_data) {
+void AudioSynthesizer::onOneFrameIn(QString name, codec::AudioData pcm_data) {
     LOG_INFO("one msg from {}, len = {}", name.toUtf8().data(),
              pcm_data->size());
     QMutexLocker locker(&mutex_);
