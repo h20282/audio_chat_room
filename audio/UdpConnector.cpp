@@ -9,7 +9,7 @@
 
 namespace {
 
-std::ofstream out("log.txt");
+// std::ofstream out("log.txt");
 char c(uint8_t v) {
     return v < 10 ? v + '0' : v - 10 + 'A';
 }
@@ -84,18 +84,18 @@ void UdpConnector::onUdpReadyRead() {
                         codec::ODecoder(kAudioSamRate, kAudioSamCount)));
                 LOG_ERROR("nodecoder");
             }
-            for (int i = 0; i < encoded_data_len; ++i) {
-                auto v = static_cast<uint8_t>(aac_frame_base[i]);
-                if (i % 16 == 0) out << std::endl;
-                out << "(" << to_string(v) << ")";
-            }
+            //            for (int i = 0; i < encoded_data_len; ++i) {
+            //                auto v = static_cast<uint8_t>(aac_frame_base[i]);
+            //                if (i % 16 == 0) out << std::endl;
+            //                out << "(" << to_string(v) << ")";
+            //            }
             auto pcm_data = decoders_.at(user_name).Decode(aac_frame_base,
                                                            encoded_data_len);
-            for (int i = 0; i < pcm_data->size(); ++i) {
-                auto v = static_cast<uint8_t>((*pcm_data)[i]);
-                if (i % 16 == 0) out << std::endl;
-                out << "[" << to_string(v) << "]";
-            }
+            //            for (int i = 0; i < pcm_data->size(); ++i) {
+            //                auto v = static_cast<uint8_t>((*pcm_data)[i]);
+            //                if (i % 16 == 0) out << std::endl;
+            //                out << "[" << to_string(v) << "]";
+            //            }
             LOG_INFO("decoder : {} --> {} ", encoded_data_len,
                      pcm_data->size());
             emit SigOneMsgReady(user_name, pcm_data);
