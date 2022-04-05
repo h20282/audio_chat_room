@@ -35,15 +35,17 @@ std::vector<char> AudioSynthesizer::Synthese() {
     }
     if (!has_data) { return {}; }
 
-    std::size_t max_size = 0;
-    for (auto &queue : queues_) {
+    std::size_t min_size = -1;
+    for (auto iter = queues_.begin(); iter != queues_.end(); ++iter) {
+        auto queue = iter.value();
         if (queue.size()) {
-            max_size = std::max(max_size, queue.back()->size());
+            min_size = std::min(min_size, queue.head().GetSize());
         }
+        if (min_size < 0) { min_size = queue.head().GetSize(); }
     }
-    if (max_size == 0) { return {}; }
-    LOG_ERROR("max_size = {}", max_size);
-    std::vector<char> synthesed_data(max_size, 0);
+    if (min_size == 0) { return {}; }
+    LOG_ERROR("min_size = {}", min_size);
+    std::vector<char> synthesed_data(min_size, 0);
     double n = 0;
     std::vector<double> au_data(synthesed_data.size() / 2, 0);
 
@@ -55,9 +57,11 @@ std::vector<char> AudioSynthesizer::Synthese() {
         if (queue.size()) {
             double x = f(volume_[name]);  // 权值
             n += 100;
-            auto curr_frame = queue.dequeue();
+            auto curr_frame = queue.head();
 
-            auto base_b = reinterpret_cast<short *>(curr_frame->data());
+            auto base_b = reinterpret_cast<short *>(curr_frame.GetBase());
+            curr_frame.Pop(min_size);
+            if (curr_frame.GetSize() == 0) { queue.dequeue(); }
             for (std::size_t i = 0; i < au_data.size(); ++i) {
                 au_data[i] += base_b[i] * x;
             }
@@ -98,7 +102,7 @@ void AudioSynthesizer::onOneFrameIn(QString name, codec::AudioData pcm_data) {
     QMutexLocker locker(&mutex_);
 
     is_muted_[name] = false;
-    queues_[name].enqueue(pcm_data);
+    queues_[name].enqueue(audio::Data(pcm_data));
     last_online_t_[name] = time(nullptr);
     if (queues_[name].size() > 9) {
         LOG_WARN("droped one frame");

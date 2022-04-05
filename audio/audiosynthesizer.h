@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <cassert>
 #include <cmath>
 
 #include <vector>
@@ -16,6 +17,30 @@
 
 #include "AbstractAudioFrameProvider.h"
 #include "audio_codec/types.h"
+
+namespace audio {
+class Data {
+public:
+    explicit Data(codec::AudioData data) : data_(data), curr_(0) {}
+    ~Data() = default;
+
+public:
+    std::size_t GetSize() const {
+        return data_->size() - curr_;
+    }
+    uint8_t *GetBase() const {
+        return data_->data() + curr_;
+    }
+    void Pop(std::size_t size) {
+        curr_ += size;
+        assert(curr_ <= data_->size() && "audio::Data::curr_ out of range");
+    }
+
+private:
+    codec::AudioData data_;
+    std::size_t curr_;
+};
+}  // namespace audio
 
 class AudioSynthesizer : public QObject, public AbstractAudioFrameProvider {
     Q_OBJECT
@@ -39,7 +64,7 @@ public slots:
     void onOneEmptyMsgIn(QString userName);
 
 private:
-    QMap<QString, QQueue<codec::AudioData>> queues_;
+    QMap<QString, QQueue<audio::Data>> queues_;
     QMap<QString, bool> is_muted_;
     QMap<QString, time_t> last_online_t_;
     QMap<QString, int> volume_;
