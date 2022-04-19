@@ -68,8 +68,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Multimedia
     ${CONAN_LIBS}
     ws2_32
-    avcodec
-    swresample
-    avutil
-    avformat
 )#target_link_libraries
