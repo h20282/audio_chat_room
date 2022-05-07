@@ -64,3 +64,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CONAN_LIBS}
     ws2_32
 )#target_link_libraries
+
+if (EXAMPLE)
+    aux_source_directory(src/audio ESRC)
+    aux_source_directory(src/audio_codec ESRC)
+    aux_source_directory(src/example ESRC)
+    add_executable(example ${ESRC} ${QRC} src/Config.h src/example/mainwindow.ui)
+    target_link_libraries(example PRIVATE
+        Qt5::Widgets
+        Qt5::Core
+        Qt5::Gui
+        Qt5::Network
+        Qt5::Multimedia
+        ${CONAN_LIBS}
+        ws2_32
+    )#target_link_libraries
+endif()
