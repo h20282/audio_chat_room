@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <QObject>
+#include <set>
 
 #include "UdpConnector.h"
 #include "audiocollector.h"
@@ -16,6 +17,7 @@ public:
     // 加入房间，同一个房间内的人互相能听到声音（开启声音采集、传输、合成、播放）
     void JoinRoom(QString user_name, int room_id);
     void SetInputDevice(QAudioDeviceInfo info);
+    std::set<std::string> GetInputDevices();
     void SetUserVolume(QString name, int volume /*[0,200]*/);
     void SetMuted(bool is_muted);
     bool IsMuted();

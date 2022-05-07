@@ -48,6 +48,15 @@ void AudioChat::SetInputDevice(QAudioDeviceInfo info) {
     this->collector_.SetInputDevice(info);
 }
 
+std::set<std::string> AudioChat::GetInputDevices() {
+    std::set<std::string> ret;
+    for (auto curr_info :
+         QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+        ret.insert(curr_info.deviceName().toStdString());
+    }
+    return ret;
+}
+
 void AudioChat::SetUserVolume(QString name, int volume /*[0,200]*/) {
     this->synthesizer_.SetVolume(name, volume);
 }
