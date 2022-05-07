@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     for (auto device_name : p->GetInputDevices()) {
         LOG_ERROR("{}", device_name);
     }
-    // p->JoinRoom("gzh", 122);
+    p->JoinRoom("gzh", 122123);
 }
 
 MainWindow::~MainWindow() {
