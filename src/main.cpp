@@ -19,12 +19,13 @@
 
 #include "./login_register/common.h"
 #include "./login_register/login.h"
+#include "Config.h"
 #include "mainwindow.h"
 #include "mychatroom.h"
 
 int main(int argc, char *argv[]) {
     {
-        spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e][thread %t][%l][%s,%!]:%v");
+        spdlog::set_pattern(kPattern);
         spdlog::set_level(spdlog::level::level_enum::debug);
     }
 

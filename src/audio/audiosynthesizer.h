@@ -71,4 +71,5 @@ private:
 
     QMutex mutex_;
     QTimer timer_;
+    std::map<int, int> cnt_;
 };

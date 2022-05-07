@@ -2,6 +2,10 @@
 
 #include "log/log.h"
 
+namespace {
+constexpr int kPer = kLogRate;
+}
+
 AudioPlayer::AudioPlayer() {
     QAudioFormat format;
     format.setSampleRate(kAudioSamRate);
@@ -44,12 +48,12 @@ void AudioPlayer::run() {
         if (output_->bytesFree() >= 4096) {
             auto frame = m_provider->GetAudioFrame();
             if (frame.size() == 0) {
-                LOG_WARN("a empty frame!(len == 0)");
+                LOG_PER(kPer, "a empty frame!(len == 0)");
                 QThread::msleep(50);
             } else {
                 auto write_cnt = audio_io_->write(
                         &frame[0], static_cast<qint64>(frame.size()));
-                LOG_INFO("audio player write {} bytes", write_cnt);
+                LOG_PER(kPer, "audio player write {} bytes", write_cnt);
             }
         }
     }

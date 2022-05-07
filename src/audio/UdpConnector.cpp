@@ -24,6 +24,8 @@ constexpr int kUserNameLen = 16;
 constexpr char kMutedFlag = 'f';
 constexpr char kUnMutedFlag = 'F';
 
+constexpr int kPer = kLogRate;
+
 struct AuPackHeader {
     char mute_flag;
     int room_id;
@@ -59,9 +61,7 @@ void UdpConnector::onUdpReadyRead() {
             recv_buff.resize(static_cast<size_t>(recv_len));
         }
         udp_socket_->readDatagram(&recv_buff[0], recv_len);
-        LOG_INFO("udp recv {} bytes", recv_len);
-        if (static_cast<size_t>(recv_len) < sizeof(AuPackHeader)) { continue; }
-
+        LOG_PER(kPer, "udp recv {} bytes", recv_len);
         AuPackHeader *recv_pkt =
                 reinterpret_cast<AuPackHeader *>(&recv_buff[0]);
         QString user_name = QString::fromUtf8(
@@ -96,8 +96,8 @@ void UdpConnector::onUdpReadyRead() {
             //                if (i % 16 == 0) out << std::endl;
             //                out << "[" << to_string(v) << "]";
             //            }
-            LOG_INFO("decoder : {} --> {} ", encoded_data_len,
-                     pcm_data->size());
+            LOG_PER(kPer, "decoder : {} --> {} ", encoded_data_len,
+                    pcm_data->size());
             emit SigOneMsgReady(user_name, pcm_data);
         } else {
             LOG_ERROR("unknown type({0:d})'{0:c}'", recv_pkt->mute_flag);
@@ -112,7 +112,8 @@ void UdpConnector::onAudioFrameReady(codec::AudioData frame) {
     memset(&header, 0, sizeof(header));
     header.room_id = room_id_;
     auto str_arr = user_name_.toUtf8();
-    LOG_INFO("send user_name : '{}' (len={})", str_arr.data(), str_arr.size());
+    LOG_PER(kPer, "send user_name : '{}' (len={})", str_arr.data(),
+            str_arr.size());
     memcpy(&header.user_name, str_arr.data(),
            static_cast<size_t>(str_arr.size()));
     if (is_muted_) {
@@ -129,7 +130,7 @@ void UdpConnector::onAudioFrameReady(codec::AudioData frame) {
             LOG_ERROR("encode error");
             return;
         }
-        LOG_INFO("encode {} -> {}", frame->size(), encoded_data->size());
+        LOG_PER(kPer, "encode {} -> {}", frame->size(), encoded_data->size());
         uint8_t *beg = reinterpret_cast<uint8_t *>(&header);
         uint8_t *end = beg + sizeof(AuPackHeader);
         std::vector<uint8_t> buffer(beg, end);
@@ -137,7 +138,7 @@ void UdpConnector::onAudioFrameReady(codec::AudioData frame) {
         auto len = udp_socket_->writeDatagram(
                 reinterpret_cast<char *>(buffer.data()), buffer.size(),
                 destaddr_, port_);
-        LOG_INFO("udp send {} bytes", len);
+        LOG_PER(kPer, "udp send {} bytes", len);
     }
 }
 

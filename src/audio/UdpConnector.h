@@ -42,4 +42,5 @@ private:
     std::map<QString, codec::ODecoder> decoders_;
 
     std::vector<char> recv_buff;
+    std::map<int, int> cnt_;
 };

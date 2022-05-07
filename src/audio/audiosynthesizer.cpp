@@ -1,11 +1,13 @@
 ﻿#include "audiosynthesizer.h"
 
+#include "Config.h"
 #include "log/log.h"
 
 namespace {
 double f(int x) {
     return (pow(1.0223, x) - 1) * (100 / 8.07478);
 }
+constexpr int kPer = kLogRate;
 }  // namespace
 
 AudioSynthesizer::AudioSynthesizer() {
@@ -44,7 +46,7 @@ std::vector<char> AudioSynthesizer::Synthese() {
         if (min_size < 0) { min_size = queue.head().GetSize(); }
     }
     if (min_size == 0) { return {}; }
-    LOG_ERROR("min_size = {}", min_size);
+    LOG_PER(kPer, "min_size = {}", min_size);
     std::vector<char> synthesed_data(min_size, 0);
     double n = 0;
     std::vector<double> au_data(synthesed_data.size() / 2, 0);
@@ -97,8 +99,8 @@ void AudioSynthesizer::SetVolume(QString name, int volume) {
 
 // 每当有一个消息来临时，记录“该用户此时有信号”、入队
 void AudioSynthesizer::onOneFrameIn(QString name, codec::AudioData pcm_data) {
-    LOG_INFO("one msg from {}, len = {}", name.toUtf8().data(),
-             pcm_data->size());
+    LOG_PER(kPer, "one msg from {}, len = {}", name.toUtf8().data(),
+            pcm_data->size());
     QMutexLocker locker(&mutex_);
 
     is_muted_[name] = false;

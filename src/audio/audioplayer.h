@@ -30,4 +30,5 @@ private:
     AbstractAudioFrameProvider *m_provider = nullptr;
     QMutex mutex_;
     bool playing_;
+    std::map<int, int> cnt_;
 };
