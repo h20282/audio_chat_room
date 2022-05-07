@@ -69,7 +69,7 @@ if (EXAMPLE)
     aux_source_directory(src/audio ESRC)
     aux_source_directory(src/audio_codec ESRC)
     aux_source_directory(src/example ESRC)
-    add_executable(example ${ESRC} ${QRC} src/Config.h src/example/mainwindow.ui)
+    add_executable(example ${ESRC} ${QRC} src/Config.h)
     target_link_libraries(example PRIVATE
         Qt5::Widgets
         Qt5::Core
