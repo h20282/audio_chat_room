@@ -17,6 +17,7 @@ public:
     // 加入房间，同一个房间内的人互相能听到声音（开启声音采集、传输、合成、播放）
     void JoinRoom(QString user_name, int room_id);
     void SetInputDevice(QAudioDeviceInfo info);
+    void SetInputDevice(QString device_name);
     std::set<std::string> GetInputDevices();
     void SetUserVolume(QString name, int volume /*[0,200]*/);
     void SetMuted(bool is_muted);
@@ -36,5 +37,5 @@ private:
     AudioCollector collector_;
     AudioPlayer player_;
     AudioSynthesizer synthesizer_;
-    UdpConnector *connector_;
+    UdpConnector *connector_{nullptr};
 };

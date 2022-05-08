@@ -48,6 +48,15 @@ void AudioChat::SetInputDevice(QAudioDeviceInfo info) {
     this->collector_.SetInputDevice(info);
 }
 
+void AudioChat::SetInputDevice(QString device_name) {
+    for (auto curr_info :
+         QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+        if (curr_info.deviceName() == device_name) {
+            this->SetInputDevice(curr_info);
+        }
+    }
+}
+
 std::set<std::string> AudioChat::GetInputDevices() {
     std::set<std::string> ret;
     for (auto curr_info :

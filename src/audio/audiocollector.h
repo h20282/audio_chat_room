@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <map>
 #include <vector>
 
 #include <QAudio>
@@ -35,7 +36,8 @@ private slots:
     void onReadyRead();
 
 private:
-    QAudioInput *input_;
-    QIODevice *inputDevice_;
+    QAudioInput *input_{};
+    QIODevice *inputDevice_{};
     QMutex mutex_;
+    std::map<int, int> cnt_;
 };

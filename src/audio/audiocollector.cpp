@@ -39,6 +39,7 @@ void AudioCollector::SetInputDevice(QAudioDeviceInfo info) {
 }
 
 void AudioCollector::run() {
+    LOG_INFO("start");
     inputDevice_ = input_->start();
     connect(inputDevice_, &QIODevice::readyRead, this,
             &AudioCollector::onReadyRead);
@@ -53,6 +54,7 @@ void AudioCollector::onReadyRead() {
 
     inputDevice_->read(reinterpret_cast<char *>(pcm_data->data()),
                        static_cast<qint64>(pcm_data->size()));
+    LOG_PER(50, "{} bytes ready", pcm_data->size());
     emit SigAudioFrameReady(pcm_data);
     // get max volume:
     short *p = reinterpret_cast<short *>(pcm_data->data());
