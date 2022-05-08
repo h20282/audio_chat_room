@@ -1,12 +1,16 @@
 #include "pair.h"
 
+#include <QMetaObject>
 #include <vector>
 
 #include "log/log.h"
 
 Pair::Pair(Connection con) : con_(con) {
 
-    audio_chat_.reset(new AudioChat());
+    QMetaObject::invokeMethod(this, [&]() {
+        LOG_INFO("new AudioChat");
+        audio_chat_.reset(new AudioChat());
+    });
 
     QObject::connect(audio_chat_.get(), &AudioChat::SigCollectorVolumeReady,
                      [](double volume) { LOG_INFO("volume: {}", volume); });
@@ -54,8 +58,9 @@ Pair::Pair(Connection con) : con_(con) {
                     LOG_ERROR("{} when hand msg: `{}`", e.what(), msg);
                 }
             });
-    con_->set_close_handler(
-            [this](websocketpp::connection_hdl) { audio_chat_.reset(); });
+    con_->set_close_handler([this](websocketpp::connection_hdl) {
+        QMetaObject::invokeMethod(this, [&] { audio_chat_.reset(); });
+    });
 }
 
 ///*QString user_name, int room_id) */
@@ -63,7 +68,10 @@ void Pair::JoinRoom(const nlohmann::json &msg) {
     auto user_name = msg.at("user_name").get<std::string>();
     auto room_id = msg.at("room_id").get<uint32_t>();
     LOG_INFO("user_name: {}, room_id: ", user_name, room_id);
-    audio_chat_->JoinRoom(QString(user_name.c_str()), room_id);
+    QMetaObject::invokeMethod(this, [=]() {
+        LOG_INFO("user_name: {}, room_id: ", user_name, room_id);
+        audio_chat_->JoinRoom(QString(user_name.c_str()), room_id);
+    });
 }
 ///*QString device_name*/
 void Pair::SetInputDevice(const nlohmann::json &msg) {

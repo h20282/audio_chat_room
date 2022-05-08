@@ -25,13 +25,5 @@ int main(int argc, char *argv[]) {
         p->JoinRoom("gzh", 122123);
     }
     */
-    {
-        auto p = new AudioChat();
-        p->JoinRoom("hello", 122);
-    }
-    {
-        auto p = new AudioChat();
-        p->JoinRoom("world", 122);
-    }
     return a.exec();
 }

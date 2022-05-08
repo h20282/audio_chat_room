@@ -1,12 +1,15 @@
 #pragma once
 
+#include <QObject>
 #include <nlohmann/json.hpp>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
 #include "audio/AudioChat.h"
 
-class Pair {
+class Pair : public QObject {
+    Q_OBJECT
+
 public:
     using Connection =
             websocketpp::server<websocketpp::config::asio>::connection_ptr;

@@ -1,11 +1,14 @@
 #include "audio_server.h"
 
+#include <QObject>
+
 AudioServer::~AudioServer() {}
 
 void AudioServer::run() {
     server.set_open_handler([&](websocketpp::connection_hdl hd) {
         auto con = server.get_con_from_hdl(hd);
-        pairs_.push_back(std::make_shared<Pair>(con));
+        QMetaObject::invokeMethod(
+                this, [&, con] { pairs_.push_back(std::make_shared<Pair>(con)); });
     });
     server.set_access_channels(websocketpp::log::alevel::all);
     server.set_error_channels(websocketpp::log::elevel::all);
