@@ -89,7 +89,10 @@ void Pair::JoinRoom(const nlohmann::json &msg) {
 ///*QString device_name*/
 void Pair::SetInputDevice(const nlohmann::json &msg) {
     auto device_name = msg.at("device_name").get<std::string>();
-    audio_chat_->SetInputDevice(QString(device_name.c_str()));
+    QMetaObject::invokeMethod(this, [=]() {
+        LOG_INFO("device_name: {}", device_name);
+        audio_chat_->SetInputDevice(QString(device_name.c_str()));
+    });
 }
 //// ->/*std::set<std::string>*/
 void Pair::GetInputDevices(const nlohmann::json &msg) {

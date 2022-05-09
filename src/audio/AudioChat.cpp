@@ -53,8 +53,10 @@ void AudioChat::SetInputDevice(QString device_name) {
          QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
         if (curr_info.deviceName() == device_name) {
             this->SetInputDevice(curr_info);
+            return;
         }
     }
+    LOG_ERROR("device_name: `{}` not found", device_name.toStdString());
 }
 
 std::set<std::string> AudioChat::GetInputDevices() {
