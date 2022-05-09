@@ -16,7 +16,7 @@ AudioSynthesizer::AudioSynthesizer() {
         emit SigUserListReady(GetUserList());
         emit SigUserIsMutedStatusReady(is_muted_);
     });
-    timer_.start(300);
+    timer_.start(2000);
 }
 
 AudioSynthesizer::~AudioSynthesizer() {}
@@ -94,6 +94,11 @@ QList<QString> AudioSynthesizer::GetUserList() {
 }
 
 void AudioSynthesizer::SetVolume(QString name, int volume) {
+    LOG_INFO("name: {}, volume: {}", name.toStdString(), volume);
+    if (volume_.find(name) == volume_.end()) {
+        LOG_ERROR("name: {} not found", name.toStdString());
+        return;
+    }
     if (volume >= 0 && volume <= 200) { volume_[name] = volume; }
 }
 

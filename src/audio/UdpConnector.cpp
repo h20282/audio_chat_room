@@ -65,7 +65,7 @@ void UdpConnector::onUdpReadyRead() {
         AuPackHeader *recv_pkt =
                 reinterpret_cast<AuPackHeader *>(&recv_buff[0]);
         QString user_name = QString::fromUtf8(
-                reinterpret_cast<char *>(&recv_pkt->user_name), 16);
+                reinterpret_cast<char *>(&recv_pkt->user_name));
         if (recv_pkt->mute_flag == kMutedFlag) {
 
             emit SigOneEmptyFrameReady(user_name);

@@ -13,22 +13,35 @@ Pair::Pair(Connection con) : con_(con) {
     });
 
     QObject::connect(audio_chat_.get(), &AudioChat::SigCollectorVolumeReady,
-                     [](double volume) { LOG_INFO("volume: {}", volume); });
+                     [this](double volume) {
+                         nlohmann::json msg = {
+                                 {"type", "SigCollectorVolumeReady"},
+                                 {"volume", volume},
+                         };
+                         con_->send(msg.dump());
+                         LOG_TRACE("volume: {}", volume);
+                     });
 
     QObject::connect(audio_chat_.get(), &AudioChat::SigUserVolumeReady,
-                     [](QString name, double volume) {
-                         LOG_INFO("name: {}, volume: {}", name.toStdString(),
-                                  volume);
+                     [this](QString name, double volume) {
+                         nlohmann::json msg = {
+                                 {"type", "SigUserVolumeReady"},
+                                 {"name", name.toStdString()},
+                                 {"volume", volume},
+                         };
+                         con_->send(msg.dump());
+                         LOG_TRACE("name: {}, volume: {}", name.toStdString(),
+                                   volume);
                      });
 
     QObject::connect(audio_chat_.get(), &AudioChat::SigUserListReady,
-                     [](QList<QString> list) {
+                     [this](QList<QString> list) {
                          for (auto v : list) { LOG_ERROR("v"); }
                      });
 
     QObject::connect(audio_chat_.get(), &AudioChat::SigUserIsMutedStatusReady,
                      [](QMap<QString, bool> user_status) {
-                         LOG_INFO("SigUserIsMutedStatusReady");
+                         LOG_TRACE("SigUserIsMutedStatusReady");
                      });
 
     con_->set_message_handler(
@@ -80,20 +93,20 @@ void Pair::SetInputDevice(const nlohmann::json &msg) {
 }
 //// ->/*std::set<std::string>*/
 void Pair::GetInputDevices(const nlohmann::json &msg) {
-    std::vector<std::string> device_names;
+    nlohmann::json ret;
+
     for (auto device_name : audio_chat_->GetInputDevices()) {
-        device_names.push_back(device_name);
+        ret.push_back(device_name);
     }
-    nlohmann::json reply{
-            // TODO fill the list
-    };
+    nlohmann::json reply{{"type", "ret.GetInputDevices"}, {"ret", ret}};
     con_->send(reply.dump());
 }
 ///*QString name, int volume [0,200]*/
 void Pair::SetUserVolume(const nlohmann::json &msg) {
     auto name = msg.at("name").get<std::string>();
-    auto volume = msg.at("volume").get<double>();
-    audio_chat_->SetUserVolume(QString(name.c_str()), volume);
+    auto volume = msg.at("volume").get<std::string>();
+    LOG_INFO("name:{}, volume: {}", name, volume);
+    audio_chat_->SetUserVolume(QString(name.c_str()), stoi(volume));
 }
 ///*bool is_muted*/
 void Pair::SetMuted(const nlohmann::json &msg) {
