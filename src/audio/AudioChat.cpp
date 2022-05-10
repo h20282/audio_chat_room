@@ -13,7 +13,7 @@ void AudioChat::JoinRoom(QString user_name, int room_id) {
     LOG_INFO("{} join room {}", user_name.toLatin1().data(), room_id);
     connector_ = new UdpConnector(user_name, room_id);
 
-    collector_.start();
+    collector_.Start();
     player_.SetProvider(&synthesizer_);
     player_.start();
 

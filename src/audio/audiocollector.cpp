@@ -38,7 +38,7 @@ void AudioCollector::SetInputDevice(QAudioDeviceInfo info) {
             &AudioCollector::onReadyRead);
 }
 
-void AudioCollector::run() {
+void AudioCollector::Start() {
     LOG_INFO("start");
     inputDevice_ = input_->start();
     connect(inputDevice_, &QIODevice::readyRead, this,
