@@ -23,6 +23,7 @@ public:
 public:
     /*QString user_name, int room_id) */
     void JoinRoom(const nlohmann::json &);
+    void LeaveRoom(const nlohmann::json &);
     /*QString device_name*/
     void SetInputDevice(const nlohmann::json &);
     // ->/*std::set<std::string>*/
@@ -31,6 +32,9 @@ public:
     void SetUserVolume(const nlohmann::json &);
     /*bool is_muted*/
     void SetMuted(const nlohmann::json &);
+
+private:
+    void Init();
 
 private:
     Connection con_;
