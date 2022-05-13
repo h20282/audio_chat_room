@@ -1,0 +1,68 @@
+@startuml
+
+class AudioChat{
+
+    void JoinRoom(QString user_name, int room_id);
+    void SetInputDevice(QAudioDeviceInfo info);
+    void SetInputDevice(QString device_name);
+    std::set<std::string> GetInputDevices();
+    void SetUserVolume(QString name, int volume /*[0,200]*/);
+    void SetMuted(bool is_muted);
+    bool IsMuted();
+
+    void SigCollectorVolumeReady(double volume);
+    void SigUserVolumeReady(QString name, double volume);
+    void SigUserListReady(QList<QString> list);
+    void SigUserIsMutedStatusReady(QMap<QString, bool> user_status);
+
+}
+
+class AudioCollector{
+    void Start();
+    void SetInputDevice(QAudioDeviceInfo info);
+
+    void SigAudioFrameReady(codec::AudioData frame);
+    void SigAudioVolumeReady(double volume /*[0, 1]*/);
+
+}
+
+class AudioPlayer {
+
+}
+
+class AudioSynthesizer {
+
+}
+
+class UdpConnector {
+
+}
+class OpusEncoder {
+
+}
+
+class OpusDecoder {
+
+}
+
+abstract class AudioProvider {
+
+}
+
+class AudioSynthesizer implements  AudioProvider
+
+AudioPlayer *-- AudioProvider
+
+AudioChat *-- AudioCollector
+AudioChat *-- UdpConnector
+AudioChat *-- AudioSynthesizer
+AudioChat *-- AudioPlayer
+
+UdpConnector *-- OpusEncoder
+UdpConnector *-- OpusDecoder
+
+
+AudioController *-- AudioChat 
+
+@enduml
+
