@@ -27,7 +27,7 @@ private:
     QAudioOutput *output_;
     QIODevice *audio_io_;
 
-    AbstractAudioFrameProvider *m_provider = nullptr;
+    AbstractAudioFrameProvider *provider_ = nullptr;
     QMutex mutex_;
     bool playing_;
     std::map<int, int> cnt_;

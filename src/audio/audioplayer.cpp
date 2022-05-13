@@ -46,7 +46,7 @@ void AudioPlayer::run() {
         auto currBytesFree = output_->bytesFree();
         if (currBytesFree > maxFree) { maxFree = currBytesFree; }
         if (output_->bytesFree() >= 4096) {
-            auto frame = m_provider->GetAudioFrame();
+            auto frame = provider_->GetAudioFrame();
             if (frame.size() == 0) {
                 LOG_PER(kPer, "a empty frame!(len == 0)");
                 QThread::msleep(50);
@@ -61,5 +61,5 @@ void AudioPlayer::run() {
 }
 
 void AudioPlayer::SetProvider(AbstractAudioFrameProvider *provider) {
-    m_provider = provider;
+    provider_ = provider;
 }
