@@ -12,7 +12,7 @@ constexpr int kAudioSamCount = 2;
 
 constexpr int kLogRate = 100;
 
-#define kPattern "[%Y-%m-%d %H:%M:%S.%e][%t][%l][%!:%#]:%v"
+#define kPattern "[%Y-%m-%d %H:%M:%S.%e][%t][%l][%s][%!:%#]:%v"
 
 #define SERVER_IP "119.91.116.26"
 //#define SERVER_IP "192.168.11.129"
