@@ -1,52 +1,113 @@
 @startuml
 
+class AudioController{
+    - audio_chat_ : AudioChat
+    + JoinRoom(const nlohmann::json &) : void
+    + LeaveRoom(const nlohmann::json &) : void
+    + SetInputDevice(const nlohmann::json &) : void
+    + GetInputDevices(const nlohmann::json &) : void
+    + SetUserVolume(const nlohmann::json &) : void
+    + SetMuted(const nlohmann::json &) : void
+}
+
 class AudioChat{
 
-    void JoinRoom(QString user_name, int room_id);
-    void SetInputDevice(QAudioDeviceInfo info);
-    void SetInputDevice(QString device_name);
-    std::set<std::string> GetInputDevices();
-    void SetUserVolume(QString name, int volume /*[0,200]*/);
-    void SetMuted(bool is_muted);
-    bool IsMuted();
+    + JoinRoom(QString user_name, int room_id) : void
+    + SetInputDevice(QAudioDeviceInfo info) : void
+    + SetInputDevice(QString device_name) : void
+    + GetInputDevices() : set<string>
+    + SetUserVolume(QString name, int volume) : void
+    + SetMuted(bool is_muted) : void
+    + IsMuted() : bool
 
-    void SigCollectorVolumeReady(double volume);
-    void SigUserVolumeReady(QString name, double volume);
-    void SigUserListReady(QList<QString> list);
-    void SigUserIsMutedStatusReady(QMap<QString, bool> user_status);
+    + SigCollectorVolumeReady(double volume)
+    + SigUserVolumeReady(QString name, double volume)
+    + SigUserListReady(QList<QString> list)
+    + SigUserIsMutedStatusReady(QMap<QString, bool> user_status)
 
+    -  collector_ : AudioCollector
+    -  player_ : AudioPlayer
+    -  synthesizer_ : AudioSynthesizer
+    -  *connector_ : UdpConnector
 }
 
 class AudioCollector{
-    void Start();
-    void SetInputDevice(QAudioDeviceInfo info);
+    + Start(): void
+    + SetInputDevice(QAudioDeviceInfo info): void
 
-    void SigAudioFrameReady(codec::AudioData frame);
-    void SigAudioVolumeReady(double volume /*[0, 1]*/);
+    + SigAudioFrameReady(AudioData frame)
+    + SigAudioVolumeReady(double volume)
 
+    - QAudioInput *input_
+    - QIODevice *inputDevice_
+    - QMutex mutex_
 }
 
 class AudioPlayer {
-
+    + run() : void
+    + SetProvider(AudioProvider *provider) : void
+    
+    - output_ : QAudioOutput*
+    - audio_io_ : QIODevice*
+    - provider_ : AbstractAudioFrameProvider*
+    - mutex_ : QMutex
+    - playing_ : bool
 }
 
 class AudioSynthesizer {
+    + GetAudioFrame() : vector<char>
+    + GetUserList() : QList<QString>
+    + SetVolume(QString name, int volume) : void
+    - Synthese() : vector<char>
 
+    + SigUserVolumeReady(QString name, double volume) : void 
+    + SigUserListReady(QList<QString> list) : void 
+    + SigUserIsMutedStatusReady(QMap<QString, bool> userStatus) : void 
+
+    + onOneFrameIn(QString name, AudioData pcm_data) : void
+    + onOneEmptyMsgIn(QString userName) : void
+
+
+    - queues_ : QMap<QString, QQueue<Data>>
+    - is_muted_ : QMap<QString, bool>
+    - last_online_t_ : QMap<QString, time_t>
+    - volume_ : QMap<QString, int>
+    - mutex_ : QMutex
+    - timer_ : QTimer
 }
 
 class UdpConnector {
+    + ToggleMute() : void
+    + IsMuted() : bool
+    + SetMuted(bool isMuted) : void
+    + SigOneMsgReady(QString name, AudioData) : void
+    + SigOneEmptyFrameReady(QString name) : void
+    + onAudioFrameReady(AudioData frame) : void
+
+    - udp_socket_ : QUdpSocket*
+    - destaddr_ : QHostAddress
+    - port_ : quint16
+    - mutex_ : QMutex
+    - user_name_ : QString
+    - room_id_ : int
+    - is_muted_ : bool
+    - encoder_ : OEncoder
+    - decoders_ : map<QString, ODecoder>
+    - recv_buff : vector<char>
 
 }
-class OpusEncoder {
-
+class Encoder {
+    + AudioData Encode(AudioData data)
+    - encoder_ : OpusEncoder
 }
 
-class OpusDecoder {
-
+class Decoder {
+    + AudioData Decode(AudioData data)
+    - decoder_ : OpusDecoder
 }
 
 abstract class AudioProvider {
-
+    virtual ~AbstractAudioFrameProvider()
 }
 
 class AudioSynthesizer implements  AudioProvider
@@ -58,8 +119,8 @@ AudioChat *-- UdpConnector
 AudioChat *-- AudioSynthesizer
 AudioChat *-- AudioPlayer
 
-UdpConnector *-- OpusEncoder
-UdpConnector *-- OpusDecoder
+UdpConnector *-- Encoder
+UdpConnector *-- Decoder
 
 
 AudioController *-- AudioChat 
