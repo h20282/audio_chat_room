@@ -1,0 +1,38 @@
+@startuml
+
+actor AudioChatService
+actor UI
+actor Server
+actor AudioForwardServer
+
+UI -> Server: connect
+
+group 注册
+    UI -> Server: request.regist
+    Server -> Server: sql query
+    UI <- Server: reply.regist
+end
+
+group 登录
+    UI -> Server: request.login
+    Server -> Server: sql query
+    UI <- Server: reply.login
+end
+
+UI -> Server: request.createRoom
+Server -> Server: DoCreate
+UI <- Server: reply.createRoom
+
+UI -> Server: request.joinRoom
+UI <- Server: reply.joinRoom
+
+UI -> AudioChatService: JoinRoom
+AudioChatService -> AudioChatService: init
+AudioChatService -> AudioChatService: open audio io device
+
+loop 
+    AudioChatService -> AudioForwardServer: Audio Data
+    AudioChatService <- AudioForwardServer: Audio Data
+end
+
+@enduml
