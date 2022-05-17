@@ -7,7 +7,7 @@
 
 #include "audio/AudioChat.h"
 
-class Pair : public QObject {
+class Controller : public QObject {
     Q_OBJECT
 
 public:
@@ -15,10 +15,10 @@ public:
             websocketpp::server<websocketpp::config::asio>::connection_ptr;
 
 public:
-    Pair() = delete;
-    ~Pair() = default;
+    Controller() = delete;
+    ~Controller() = default;
 
-    Pair(Connection con);
+    Controller(Connection con);
 
 public:
     /*QString user_name, int room_id) */

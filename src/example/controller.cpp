@@ -5,7 +5,7 @@
 
 #include "log/log.h"
 
-Pair::Pair(Connection con) : con_(con) {
+Controller::Controller(Connection con) : con_(con) {
 
     con_->set_message_handler(
             [this](websocketpp::connection_hdl hd,
@@ -18,14 +18,14 @@ Pair::Pair(Connection con) : con_(con) {
 
                     auto type = json.at("type").get<std::string>();
                     const static std::map<
-                            std::string, void (Pair::*)(const nlohmann::json &)>
+                            std::string, void (Controller::*)(const nlohmann::json &)>
                             handlers = {
-                                    {"JoinRoom", &Pair::JoinRoom},
-                                    {"LeaveRoom", &Pair::LeaveRoom},
-                                    {"SetInputDevice", &Pair::SetInputDevice},
-                                    {"GetInputDevices", &Pair::GetInputDevices},
-                                    {"SetUserVolume", &Pair::SetUserVolume},
-                                    {"SetMuted", &Pair::SetMuted},
+                                    {"JoinRoom", &Controller::JoinRoom},
+                                    {"LeaveRoom", &Controller::LeaveRoom},
+                                    {"SetInputDevice", &Controller::SetInputDevice},
+                                    {"GetInputDevices", &Controller::GetInputDevices},
+                                    {"SetUserVolume", &Controller::SetUserVolume},
+                                    {"SetMuted", &Controller::SetMuted},
                             };
                     auto handler = handlers.at(type);
                     (this->*handler)(json);
@@ -40,7 +40,7 @@ Pair::Pair(Connection con) : con_(con) {
 }
 
 ///*QString user_name, int room_id) */
-void Pair::JoinRoom(const nlohmann::json &msg) {
+void Controller::JoinRoom(const nlohmann::json &msg) {
     QMetaObject::invokeMethod(this, [&]() { Init(); });
     auto user_name = msg.at("user_name").get<std::string>();
     auto room_id = msg.at("room_id").get<uint32_t>();
@@ -50,11 +50,11 @@ void Pair::JoinRoom(const nlohmann::json &msg) {
         audio_chat_->JoinRoom(QString(user_name.c_str()), room_id);
     });
 }
-void Pair::LeaveRoom(const nlohmann::json &msg) {
+void Controller::LeaveRoom(const nlohmann::json &msg) {
     QMetaObject::invokeMethod(this, [&] { audio_chat_.reset(); });
 }
 ///*QString device_name*/
-void Pair::SetInputDevice(const nlohmann::json &msg) {
+void Controller::SetInputDevice(const nlohmann::json &msg) {
     auto device_name = msg.at("device_name").get<std::string>();
     QMetaObject::invokeMethod(this, [=]() {
         LOG_INFO("device_name: {}", device_name);
@@ -62,7 +62,7 @@ void Pair::SetInputDevice(const nlohmann::json &msg) {
     });
 }
 //// ->/*std::set<std::string>*/
-void Pair::GetInputDevices(const nlohmann::json &msg) {
+void Controller::GetInputDevices(const nlohmann::json &msg) {
     nlohmann::json ret;
 
     for (auto device_name : audio_chat_->GetInputDevices()) {
@@ -72,19 +72,19 @@ void Pair::GetInputDevices(const nlohmann::json &msg) {
     con_->send(reply.dump());
 }
 ///*QString name, int volume [0,200]*/
-void Pair::SetUserVolume(const nlohmann::json &msg) {
+void Controller::SetUserVolume(const nlohmann::json &msg) {
     auto name = msg.at("name").get<std::string>();
     auto volume = msg.at("volume").get<std::string>();
     LOG_INFO("name:{}, volume: {}", name, volume);
     audio_chat_->SetUserVolume(QString(name.c_str()), stoi(volume));
 }
 ///*bool is_muted*/
-void Pair::SetMuted(const nlohmann::json &msg) {
+void Controller::SetMuted(const nlohmann::json &msg) {
     auto is_muted = msg.at("is_muted").get<bool>();
     audio_chat_->SetMuted(is_muted);
 }
 
-void Pair::Init() {
+void Controller::Init() {
     LOG_INFO("new AudioChat");
     audio_chat_.reset(new AudioChat());
 

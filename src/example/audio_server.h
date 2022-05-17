@@ -27,5 +27,5 @@ public:
 
 private:
     WsServer server;
-    std::vector<std::shared_ptr<Pair>> pairs_;
+    std::vector<std::shared_ptr<Controller>> controllers_;
 };

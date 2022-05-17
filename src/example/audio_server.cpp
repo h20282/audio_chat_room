@@ -8,7 +8,7 @@ void AudioServer::run() {
     server.set_open_handler([&](websocketpp::connection_hdl hd) {
         auto con = server.get_con_from_hdl(hd);
         QMetaObject::invokeMethod(this, [&, con] {
-            pairs_.push_back(std::make_shared<Pair>(con));
+            controllers_.push_back(std::make_shared<Controller>(con));
         });
     });
     server.set_access_channels(websocketpp::log::alevel::all);
