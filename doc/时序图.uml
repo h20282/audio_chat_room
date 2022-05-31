@@ -1,38 +1,46 @@
 @startuml
 
-actor AudioChatService
-actor UI
-actor Server
-actor AudioForwardServer
+actor 音频数据转发服务
+actor 本地音频服务
+actor 界面
+actor 业务服务
 
-UI -> Server: connect
+界面 -> 业务服务: connect
 
 group 注册
-    UI -> Server: request.regist
-    Server -> Server: sql query
-    UI <- Server: reply.regist
+    界面 -> 业务服务: request.regist
+    业务服务 -> 业务服务: sql query
+    界面 <- 业务服务: reply.regist
 end
 
 group 登录
-    UI -> Server: request.login
-    Server -> Server: sql query
-    UI <- Server: reply.login
+    界面 -> 业务服务: request.login
+    业务服务 -> 业务服务: sql query
+    界面 <- 业务服务: reply.login
 end
 
-UI -> Server: request.createRoom
-Server -> Server: DoCreate
-UI <- Server: reply.createRoom
+界面 -> 业务服务: request.createRoom
+业务服务 -> 业务服务: DoCreate
+界面 <- 业务服务: reply.createRoom
 
-UI -> Server: request.joinRoom
-UI <- Server: reply.joinRoom
+界面 -> 业务服务: request.joinRoom
+界面 <- 业务服务: reply.joinRoom
 
-UI -> AudioChatService: JoinRoom
-AudioChatService -> AudioChatService: init
-AudioChatService -> AudioChatService: open audio io device
+界面 -> 本地音频服务: connect
+界面 -> 本地音频服务: JoinRoom
+本地音频服务 -> 本地音频服务: init
+本地音频服务 -> 本地音频服务: open audio io device
 
 loop 
-    AudioChatService -> AudioForwardServer: Audio Data
-    AudioChatService <- AudioForwardServer: Audio Data
+    本地音频服务 -> 音频数据转发服务: Audio Data
+    本地音频服务 -> 界面: SigCollectorVolumeReady
+    本地音频服务 -> 界面: SigUserVolumeReady
+    本地音频服务 <- 音频数据转发服务: Audio Data
 end
+界面 -> 本地音频服务: JoinRoom
+界面 -> 本地音频服务: GetInputDevices
+界面 -> 本地音频服务: SetInputDevice
+界面 -> 本地音频服务: SetUserVolume
+界面 -> 本地音频服务: SetMuted
 
 @enduml

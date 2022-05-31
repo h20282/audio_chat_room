@@ -13,12 +13,10 @@ class AudioController{
 class AudioChat{
 
     + JoinRoom(QString user_name, int room_id) : void
-    + SetInputDevice(QAudioDeviceInfo info) : void
     + SetInputDevice(QString device_name) : void
     + GetInputDevices() : set<string>
     + SetUserVolume(QString name, int volume) : void
     + SetMuted(bool is_muted) : void
-    + IsMuted() : bool
     + SigCollectorVolumeReady(double volume)
     + SigUserVolumeReady(QString name, double volume)
     + SigUserListReady(QList<QString> list)
@@ -53,18 +51,10 @@ class AudioPlayer {
 
 class AudioSynthesizer {
     + GetAudioFrame() : vector<char>
-    + GetUserList() : QList<QString>
     + SetVolume(QString name, int volume) : void
     - Synthese() : vector<char>
     + SigUserVolumeReady(QString name, double volume) : void 
-    + SigUserListReady(QList<QString> list) : void 
-    + SigUserIsMutedStatusReady(QMap<QString, bool> userStatus) : void 
     + onOneFrameIn(QString name, AudioData pcm_data) : void
-    + onOneEmptyMsgIn(QString userName) : void
-
-    - queues_ : QMap<QString, QQueue<Data>>
-    - is_muted_ : QMap<QString, bool>
-    - volume_ : QMap<QString, int>
 }
 
 class UdpConnector {
@@ -74,9 +64,6 @@ class UdpConnector {
     + SigOneEmptyFrameReady(QString name) : void
     + onAudioFrameReady(AudioData frame) : void
 
-    - udp_socket_ : QUdpSocket*
-    - mutex_ : QMutex
-    - user_name_ : QString
     - room_id_ : int
     - is_muted_ : bool
     - encoder_ : OEncoder
