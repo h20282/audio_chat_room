@@ -34,49 +34,15 @@ include(${CMAKE_SOURCE_DIR}/build/conanbuildinfo.cmake)
 include_directories(src)
 conan_basic_setup()
 
-set(SRC 
-    #.ui
-    src/login_register/login.ui
-    src/login_register/registerwin.ui
-    src/mainwindow.ui
-    src/meet_room/roomdialog.ui
-    src/mychatroom.ui
-    src/myqq.ui
-    src/videoitem.ui
-)
-aux_source_directory(src SRC)
 aux_source_directory(src/audio SRC)
 aux_source_directory(src/audio_codec SRC)
-aux_source_directory(src/common SRC)
-aux_source_directory(src/login_register SRC)
-aux_source_directory(src/meet_room SRC)
-aux_source_directory(src/net_api SRC)
-
-set(QRC resource.qrc)
-add_executable(${PROJECT_NAME} ${SRC} ${QRC})
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
+aux_source_directory(src/example SRC)
+add_executable(example ${SRC} src/Config.h)
+target_link_libraries(example PRIVATE
     Qt5::Widgets
     Qt5::Core
-    Qt5::Gui
     Qt5::Network
     Qt5::Multimedia
     ${CONAN_LIBS}
     ws2_32
 )#target_link_libraries
-
-if (EXAMPLE)
-    aux_source_directory(src/audio ESRC)
-    aux_source_directory(src/audio_codec ESRC)
-    aux_source_directory(src/example ESRC)
-    add_executable(example ${ESRC} ${QRC} src/Config.h)
-    target_link_libraries(example PRIVATE
-        Qt5::Widgets
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Network
-        Qt5::Multimedia
-        ${CONAN_LIBS}
-        ws2_32
-    )#target_link_libraries
-endif()

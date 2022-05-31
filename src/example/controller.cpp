@@ -1,4 +1,4 @@
-#include "pair.h"
+#include "controller.h"
 
 #include <QMetaObject>
 #include <vector>
@@ -17,14 +17,18 @@ Controller::Controller(Connection con) : con_(con) {
                     auto json = nlohmann::json::parse(msg);
 
                     auto type = json.at("type").get<std::string>();
-                    const static std::map<
-                            std::string, void (Controller::*)(const nlohmann::json &)>
+                    const static std::map<std::string,
+                                          void (Controller::*)(
+                                                  const nlohmann::json &)>
                             handlers = {
                                     {"JoinRoom", &Controller::JoinRoom},
                                     {"LeaveRoom", &Controller::LeaveRoom},
-                                    {"SetInputDevice", &Controller::SetInputDevice},
-                                    {"GetInputDevices", &Controller::GetInputDevices},
-                                    {"SetUserVolume", &Controller::SetUserVolume},
+                                    {"SetInputDevice",
+                                     &Controller::SetInputDevice},
+                                    {"GetInputDevices",
+                                     &Controller::GetInputDevices},
+                                    {"SetUserVolume",
+                                     &Controller::SetUserVolume},
                                     {"SetMuted", &Controller::SetMuted},
                             };
                     auto handler = handlers.at(type);

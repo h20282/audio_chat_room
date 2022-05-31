@@ -10,7 +10,7 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
-#include "pair.h"
+#include "controller.h"
 
 class AudioServer : public QThread {
     Q_OBJECT
